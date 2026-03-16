@@ -6,6 +6,7 @@ import { Sidebar } from '../layout/Sidebar';
 import { ChatView } from '../chat/ChatView';
 import { SettingsPage } from '../settings/SettingsPage';
 import { GroupPanel } from '../groups/GroupPanel';
+import { supabase } from '../../lib/supabase';
 import type { Group, Topic } from '../../types';
 
 type View = 'chat' | 'settings';
@@ -48,6 +49,43 @@ export function MainLayout() {
       window.history.pushState({ view: 'chat', groupId: group.id }, '');
     }
   }, [fetchGroup, fetchTopics, setCurrentGroup]);
+
+  // Handle join links
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const joinId = params.get('join');
+    
+    if (joinId && user) {
+      const handleJoin = async () => {
+        const { joinGroup, groups } = useGroupStore.getState();
+        const existing = groups.find(g => g.id === joinId);
+        
+        if (existing) {
+          handleSelectGroup(existing);
+          window.history.replaceState({}, '', '/');
+          return;
+        }
+
+        const result = await joinGroup(joinId);
+        if (result === 'joined') {
+          const { data: group } = await supabase
+            .from('groups')
+            .select('*')
+            .eq('id', joinId)
+            .single();
+          if (group) handleSelectGroup(group);
+        } else if (result === 'requested') {
+          alert('Solicitud de unión enviada. Espera a que un administrador te apruebe.');
+        } else {
+          alert('No se pudo encontrar el grupo o hubo un error al unirse.');
+        }
+        
+        window.history.replaceState({}, '', '/');
+      };
+
+      handleJoin();
+    }
+  }, [user, handleSelectGroup]);
 
   const handleSelectTopic = useCallback((topic: Topic) => {
     setCurrentTopic(topic.id);

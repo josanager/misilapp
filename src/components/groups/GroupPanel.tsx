@@ -70,6 +70,21 @@ export function GroupPanel({ group, onClose }: GroupPanelProps) {
         <p style={{ marginTop: 8, fontSize: 12, color: 'var(--text-muted)' }}>
           {group.is_public ? '🌐 Grupo público' : '🔒 Grupo privado'}
         </p>
+
+        {(isAdmin || canDelete) && (
+          <button 
+            className="btn btn-secondary btn-sm"
+            style={{ marginTop: 16, gap: 8 }}
+            onClick={() => {
+              const url = `${window.location.origin}/?join=${group.id}`;
+              navigator.clipboard.writeText(url);
+              alert('Enlace copiado al portapapeles');
+            }}
+          >
+            <Link2 size={16} />
+            Compartir enlace
+          </button>
+        )}
       </div>
 
       <div className="group-panel-tabs" style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginTop: 16, padding: '0 16px' }}>

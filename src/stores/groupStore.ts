@@ -19,6 +19,7 @@ interface GroupState {
   createGroup: (name: string, description: string, isPublic: boolean) => Promise<Group | null>;
   searchGroups: (query: string) => Promise<void>;
   requestJoin: (groupId: string) => Promise<boolean>;
+  joinGroup: (groupId: string) => Promise<'joined' | 'requested' | 'error'>;
   handleJoinRequest: (requestId: string, approve: boolean) => Promise<boolean>;
   createTopic: (groupId: string, name: string, description: string) => Promise<Topic | null>;
   setCurrentGroup: (group: Group | null) => void;
@@ -217,6 +218,47 @@ export const useGroupStore = create<GroupState>((set, get) => ({
       return !error;
     } catch {
       return false;
+    }
+  },
+
+  joinGroup: async (groupId: string) => {
+    const { groups } = get();
+    if (groups.some(g => g.id === groupId)) return 'joined';
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return 'error';
+
+      // Get group details
+      const { data: group } = await supabase
+        .from('groups')
+        .select('*')
+        .eq('id', groupId)
+        .single();
+
+      if (!group) return 'error';
+
+      if (group.is_public) {
+        // Direct join for public groups
+        const { error } = await supabase
+          .from('group_members')
+          .insert({ group_id: groupId, user_id: user.id, role: 'member' });
+        
+        if (!error) {
+          await get().fetchMyGroups();
+          return 'joined';
+        }
+      } else {
+        // Request join for private groups
+        const { error } = await supabase
+          .from('join_requests')
+          .insert({ group_id: groupId, user_id: user.id, status: 'pending' });
+        
+        if (!error) return 'requested';
+      }
+      return 'error';
+    } catch {
+      return 'error';
     }
   },
 
