@@ -69,14 +69,26 @@ export function MainLayout() {
         currentGroup={currentGroup}
         user={user}
         onSelectGroup={handleSelectGroup}
-        onOpenSettings={() => { setView('settings'); setCurrentGroup(null); }}
+        onOpenSettings={() => { 
+          setView('settings'); 
+          setCurrentGroup(null);
+          if (window.innerWidth <= 768) {
+            setShowSidebar(false);
+            window.history.pushState({ view: 'settings' }, '');
+          }
+        }}
         visible={showSidebar}
         onToggle={() => setShowSidebar(!showSidebar)}
       />
 
       <div className="main-area">
         {view === 'settings' ? (
-          <SettingsPage onBack={() => setView('chat')} />
+          <SettingsPage onBack={() => {
+            setView('chat');
+            if (window.innerWidth <= 768) {
+              setShowSidebar(true);
+            }
+          }} />
         ) : currentGroup ? (
           <ChatView
             group={currentGroup}
