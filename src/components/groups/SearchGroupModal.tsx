@@ -42,7 +42,7 @@ export function SearchGroupModal({ onClose, onJoined: _onJoined }: SearchGroupMo
             <input
               className="form-input"
               style={{ paddingLeft: 36 }}
-              placeholder="Buscar por nombre..."
+              placeholder=""
               value={query}
               onChange={e => handleSearch(e.target.value)}
               autoFocus

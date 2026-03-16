@@ -155,7 +155,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                   value={displayName}
                   onChange={e => setDisplayName(e.target.value)}
                   maxLength={30}
-                  placeholder="Tu nombre visible"
+                  placeholder=""
                 />
               </div>
 
@@ -166,7 +166,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                   value={status}
                   onChange={e => setStatus(e.target.value)}
                   maxLength={100}
-                  placeholder="¿Qué estás haciendo?"
+                  placeholder=""
                 />
               </div>
 

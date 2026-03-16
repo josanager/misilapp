@@ -301,7 +301,7 @@ export function MediaUploadModal({ files, topicId, onClose }: MediaUploadModalPr
         {/* Caption per file */}
         <input
           className="media-upload-caption"
-          placeholder="Añadir descripción (opcional)..."
+          placeholder=""
           value={captions[previewIndex] || ''}
           onChange={(e) => {
             const newCaptions = [...captions];

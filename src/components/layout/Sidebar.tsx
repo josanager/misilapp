@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useGroupStore } from '../../stores/groupStore';
-import { Settings, Search, Plus, LogOut, Menu } from 'lucide-react';
+import { Settings, Search, Plus, LogOut, Menu, X } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { CreateGroupModal } from '../groups/CreateGroupModal';
 import { SearchGroupModal } from '../groups/SearchGroupModal';
@@ -34,8 +34,11 @@ export function Sidebar({ groups, currentGroup, user, onSelectGroup, onOpenSetti
     <>
       <aside className={`sidebar ${!visible ? 'hidden' : ''}`}>
         <div className="sidebar-header">
-          <button className="btn-icon" onClick={onToggle} style={{ display: window.innerWidth <= 768 ? 'flex' : 'none' }}>
-            <Menu size={20} />
+          <button 
+            className="btn-icon mobile-sidebar-toggle" 
+            onClick={onToggle}
+          >
+            {visible ? <X size={20} /> : <Menu size={20} />}
           </button>
           <h2 className="hide-on-mobile">Chat Latino</h2>
           <button className="btn-icon" onClick={() => setShowSearchModal(true)} title="Buscar grupos">
@@ -51,7 +54,7 @@ export function Sidebar({ groups, currentGroup, user, onSelectGroup, onOpenSetti
         <div className="search-bar">
           <input
             className="search-input"
-            placeholder="Buscar en mis grupos..."
+            placeholder=""
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />

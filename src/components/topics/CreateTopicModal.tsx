@@ -34,7 +34,7 @@ export function CreateTopicModal({ groupId, onClose }: CreateTopicModalProps) {
               <label>Nombre del tema</label>
               <input
                 className="form-input"
-                placeholder="Ej: Anuncios, Off-topic, Videos..."
+                placeholder=""
                 value={name}
                 onChange={e => setName(e.target.value)}
                 required
@@ -46,7 +46,7 @@ export function CreateTopicModal({ groupId, onClose }: CreateTopicModalProps) {
               <label>Descripción (opcional)</label>
               <input
                 className="form-input"
-                placeholder="¿De qué se hablará aquí?"
+                placeholder=""
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 maxLength={200}

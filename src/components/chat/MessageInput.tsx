@@ -98,7 +98,7 @@ export function MessageInput({ topicId, replyTo, onCancelReply, pendingFiles, on
           <textarea
             ref={textareaRef}
             className="message-input"
-            placeholder="Escribe un mensaje o arrastra un archivo..."
+            placeholder=""
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}

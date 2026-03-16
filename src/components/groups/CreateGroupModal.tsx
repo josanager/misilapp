@@ -37,7 +37,7 @@ export function CreateGroupModal({ onClose }: CreateGroupModalProps) {
               <label>Nombre del grupo</label>
               <input
                 className="form-input"
-                placeholder="Ej: Comunidad Latina"
+                placeholder=""
                 value={name}
                 onChange={e => setName(e.target.value)}
                 required
@@ -49,7 +49,7 @@ export function CreateGroupModal({ onClose }: CreateGroupModalProps) {
               <label>Descripción</label>
               <input
                 className="form-input"
-                placeholder="¿De qué trata este grupo?"
+                placeholder=""
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 maxLength={200}

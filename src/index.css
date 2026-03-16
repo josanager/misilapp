@@ -1319,9 +1319,41 @@ html, body, #root {
     display: flex !important;
     margin-right: var(--space-xs);
   }
+
+  .mobile-sidebar-toggle {
+    display: flex !important;
+  }
+
+  .show-on-mobile {
+    display: flex !important;
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .empty-state .mobile-header {
+    padding: var(--space-md) var(--space-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+    width: 100%;
+  }
+
+  .empty-state-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
-.mobile-back-btn {
+.mobile-sidebar-toggle, .show-on-mobile {
   display: none;
 }
 

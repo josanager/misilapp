@@ -88,13 +88,26 @@ export function MainLayout() {
           />
         ) : (
           <div className="empty-state">
-            <div className="empty-state-icon">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
+            <div className="mobile-header show-on-mobile">
+              <button 
+                className="btn-icon" 
+                onClick={() => setShowSidebar(true)}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 12h18M3 6h18M3 18h18" />
+                </svg>
+              </button>
+              <h3>Chat Latino</h3>
             </div>
-            <h3>Chat Latino</h3>
-            <p>Selecciona un grupo para empezar a chatear o crea uno nuevo</p>
+            <div className="empty-state-content">
+              <div className="empty-state-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+              </div>
+              <h3>Chat Latino</h3>
+              <p>Selecciona un grupo para empezar a chatear o crea uno nuevo</p>
+            </div>
           </div>
         )}
       </div>

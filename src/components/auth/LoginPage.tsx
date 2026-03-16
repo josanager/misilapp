@@ -43,7 +43,7 @@ export function LoginPage() {
             <input
               className="form-input"
               type="text"
-              placeholder="Tu username único"
+              placeholder=""
               value={username}
               onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
               required
@@ -59,7 +59,7 @@ export function LoginPage() {
               <input
                 className="form-input"
                 type="text"
-                placeholder="¿Cómo te llamarán?"
+                placeholder=""
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 maxLength={30}
@@ -73,7 +73,7 @@ export function LoginPage() {
               <input
                 className="form-input"
                 type={showPassword ? "text" : "password"}
-                placeholder="Tu contraseña"
+                placeholder=""
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
