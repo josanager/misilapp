@@ -139,14 +139,26 @@ export function VideoPlayer({ src, className = '', style = {}, previewMode = fal
   const toggleFullscreen = (e: React.MouseEvent) => {
     e.stopPropagation();
     const container = containerRef.current;
-    if (!container) return;
+    const video = videoRef.current;
+    if (!container || !video) return;
 
     if (!document.fullscreenElement) {
-      container.requestFullscreen().catch(err => {
-        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
-      });
+      if (container.requestFullscreen) {
+        container.requestFullscreen().catch(err => {
+          console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+          // Fallback if container fullscreen fails (e.g. mobile Safari)
+          if ((video as any).webkitEnterFullscreen) {
+            (video as any).webkitEnterFullscreen();
+          }
+        });
+      } else if ((video as any).webkitEnterFullscreen) {
+        // Mobile Safari / iOS fallback
+        (video as any).webkitEnterFullscreen();
+      }
     } else {
-      document.exitFullscreen();
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
     }
   };
 

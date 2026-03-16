@@ -3,7 +3,7 @@ import { useChatStore } from '../../stores/chatStore';
 import { useGroupStore } from '../../stores/groupStore';
 import { useAuthStore } from '../../stores/authStore';
 import { MessageInput } from './MessageInput';
-import { Users, Plus, Menu, Hash, SmilePlus, Edit2, Trash2, X } from 'lucide-react';
+import { Users, Plus, Hash, SmilePlus, Edit2, Trash2, X, ArrowLeft } from 'lucide-react';
 import { CreateTopicModal } from '../topics/CreateTopicModal';
 import { EmojiPicker, ReactionDisplay } from './EmojiPicker';
 import { VideoPlayer } from './VideoPlayer';
@@ -19,7 +19,7 @@ interface ChatViewProps {
   onShowSidebar: () => void;
 }
 
-export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggleGroupPanel, onShowSidebar }: ChatViewProps) {
+export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggleGroupPanel }: ChatViewProps) {
   const { 
     messages, loading, fetchMessages, subscribeToMessages, subscribeToPresence, 
     replyTo, setReplyTo, reactions, toggleReaction, subscribeToReactions,
@@ -224,23 +224,33 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
         <p style={{ color: 'rgba(106,178,242,0.7)', fontSize: 14 }}>Puedes soltar varios archivos a la vez</p>
       </div>
     )}
-      <div className="chat-header">
-        <button className="btn-icon" onClick={onShowSidebar} style={{ display: 'none' }}>
-          <Menu size={20} />
-        </button>
-        <div className="group-avatar" style={{ width: 40, height: 40, fontSize: 14 }}>
-          {getInitials(group.name)}
-        </div>
+      <header className="chat-header">
         <div className="chat-header-info">
-          <h3>{group.name}</h3>
-          <p>{members.length} miembros</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button 
+              className="btn-icon mobile-back-btn" 
+              onClick={() => window.history.back()}
+              title="Volver"
+            >
+              <ArrowLeft size={22} />
+            </button>
+            <div className="group-avatar" style={{ width: 40, height: 40 }}>
+              {getInitials(group.name)}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <h3 style={{ margin: 0 }}>{group.name}</h3>
+              <p style={{ margin: 0, opacity: 0.7, fontSize: 12 }}>
+                {members.length} miembros • {currentTopic?.name || 'Sin tema'}
+              </p>
+            </div>
+          </div>
         </div>
         <div className="chat-header-actions">
-          <button className="btn-icon" onClick={onToggleGroupPanel} title="Info del grupo">
+          <button className="btn-icon" onClick={onToggleGroupPanel} title="Información del grupo">
             <Users size={20} />
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Topic tabs */}
       {topics.length > 0 && (

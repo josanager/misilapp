@@ -22,14 +22,30 @@ export function MainLayout() {
     fetchMyGroups();
   }, [fetchMyGroups]);
 
+  // Handle browser back button on mobile
+  useEffect(() => {
+    const handlePopState = () => {
+      if (window.innerWidth <= 768) {
+        // If we were in a chat/settings, and user hits back, go back to group list
+        setShowSidebar(true);
+        setCurrentGroup(null);
+        setView('chat');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [setCurrentGroup]);
+
   const handleSelectGroup = useCallback(async (group: Group) => {
     setCurrentGroup(group);
     await fetchGroup(group.id);
     await fetchTopics(group.id);
     setView('chat');
-    // On mobile, hide sidebar when group is selected
+    // On mobile, hide sidebar when group is selected and push history state
     if (window.innerWidth <= 768) {
       setShowSidebar(false);
+      window.history.pushState({ view: 'chat', groupId: group.id }, '');
     }
   }, [fetchGroup, fetchTopics, setCurrentGroup]);
 

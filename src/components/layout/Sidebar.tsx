@@ -37,7 +37,7 @@ export function Sidebar({ groups, currentGroup, user, onSelectGroup, onOpenSetti
           <button className="btn-icon" onClick={onToggle} style={{ display: window.innerWidth <= 768 ? 'flex' : 'none' }}>
             <Menu size={20} />
           </button>
-          <h2>Chat Latino</h2>
+          <h2 className="hide-on-mobile">Chat Latino</h2>
           <button className="btn-icon" onClick={() => setShowSearchModal(true)} title="Buscar grupos">
             <Search size={20} />
           </button>
@@ -90,7 +90,7 @@ export function Sidebar({ groups, currentGroup, user, onSelectGroup, onOpenSetti
           </div>
           <div className="group-info" style={{ flex: 1 }}>
             <div className="group-name">{user.display_name || user.username}</div>
-            <div className="group-preview">@{user.username}</div>
+            <div className="group-preview hide-on-mobile">@{user.username}</div>
           </div>
           <button className="btn-icon" onClick={(e) => { e.stopPropagation(); onOpenSettings(); }} title="Configuración">
             <Settings size={18} />

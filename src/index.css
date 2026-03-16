@@ -1310,6 +1310,19 @@ html, body, #root {
   .message {
     max-width: 90%;
   }
+
+  .hide-on-mobile {
+    display: none !important;
+  }
+
+  .mobile-back-btn {
+    display: flex !important;
+    margin-right: var(--space-xs);
+  }
+}
+
+.mobile-back-btn {
+  display: none;
 }
 
 /* =================== SEARCH MODAL =================== */
