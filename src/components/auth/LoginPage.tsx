@@ -1,10 +1,11 @@
 import { useState, FormEvent } from 'react';
 import { useAuthStore } from '../../stores/authStore';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, Eye, EyeOff } from 'lucide-react';
 
 export function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isRegister, setIsRegister] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const { login, register, loading, error, clearError } = useAuthStore();
@@ -68,16 +69,26 @@ export function LoginPage() {
 
           <div className="form-group">
             <label>Contraseña</label>
-            <input
-              className="form-input"
-              type="password"
-              placeholder="Tu contraseña"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              autoComplete={isRegister ? 'new-password' : 'current-password'}
-            />
+            <div className="password-input-container">
+              <input
+                className="form-input"
+                type={showPassword ? "text" : "password"}
+                placeholder="Tu contraseña"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                autoComplete={isRegister ? 'new-password' : 'current-password'}
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
 
           <button
