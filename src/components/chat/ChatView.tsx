@@ -5,6 +5,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { MessageInput } from './MessageInput';
 import { Users, Plus, Hash, SmilePlus, Edit2, Trash2, X, ArrowLeft } from 'lucide-react';
 import { CreateTopicModal } from '../topics/CreateTopicModal';
+import { useLongPress } from '../../hooks/useLongPress';
 import { EmojiPicker, ReactionDisplay } from './EmojiPicker';
 import { VideoPlayer } from './VideoPlayer';
 import { ImageViewer } from './ImageViewer';
@@ -17,6 +18,20 @@ interface ChatViewProps {
   onSelectTopic: (topic: Topic) => void;
   onToggleGroupPanel: () => void;
   onShowSidebar: () => void;
+}
+
+function MessageBubble({ children, onLongPress, onClick }: { children: React.ReactNode, onLongPress: (e: any) => void, onClick: () => void }) {
+  const longPressProps = useLongPress(onLongPress, onClick);
+  
+  return (
+    <div 
+      className="message-bubble" 
+      {...longPressProps}
+      style={{ cursor: 'pointer' }}
+    >
+      {children}
+    </div>
+  );
 }
 
 export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggleGroupPanel }: ChatViewProps) {
@@ -98,19 +113,23 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
     }
   });
 
-  const handleContextMenu = (e: React.MouseEvent | React.TouchEvent, msg: Message, isOwn: boolean) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleContextMenu = (e: any, msg: Message, isOwn: boolean) => {
+    if (e.preventDefault) e.preventDefault();
+    if (e.stopPropagation) e.stopPropagation();
     
     let clientX = 0;
     let clientY = 0;
 
-    if ('touches' in e) {
+    if (e.touches && e.touches.length > 0) {
       clientX = e.touches[0].clientX;
       clientY = e.touches[0].clientY;
+    } else if (e.clientX !== undefined) {
+      clientX = e.clientX;
+      clientY = e.clientY;
     } else {
-      clientX = (e as React.MouseEvent).clientX;
-      clientY = (e as React.MouseEvent).clientY;
+      // Fallback to center of screen if coordinates missing
+      clientX = window.innerWidth / 2;
+      clientY = window.innerHeight / 2;
     }
 
     setShowEmojiPicker(null);
@@ -155,8 +174,10 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
       return;
     }
     
-    //@ts-ignore - sendMessage in store might have slightly different signature if not updated fully
-    const success = await sendMessage(currentTopicId!, content, type, fileUrl, fileName, fileSize, mediaGroupId);
+    if (!currentTopicId) return;
+
+    //@ts-ignore
+    const success = await sendMessage(currentTopicId, content, type, fileUrl, fileName, fileSize, mediaGroupId);
     if (success) {
       if (replyTo) setReplyTo(null);
       // scroll is handled by useEffect on messages change
@@ -321,11 +342,9 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
                       </div>
                     )}
                     <div className="message-wrapper">
-                      <div 
-                        className="message-bubble" 
-                        onClick={() => setReplyTo(msg)} 
-                        onContextMenu={(e) => handleContextMenu(e, msg, isOwn)}
-                        style={{ cursor: 'pointer' }}
+                      <MessageBubble 
+                        onLongPress={(e) => handleContextMenu(e, msg, isOwn)}
+                        onClick={() => setReplyTo(msg)}
                       >
                         <button 
                           className="message-react-btn"
@@ -454,7 +473,7 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
                           {formatTime(msg.created_at)}
                           {msg.is_edited && <span style={{fontSize: '0.85em', opacity: 0.7, marginLeft: '4px'}}>(editado)</span>}
                         </div>
-                      </div>
+                      </MessageBubble>
                       
                       <ReactionDisplay 
                         reactions={processReactions(msg.id)} 
@@ -535,7 +554,7 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
       {/* Message input */}
       {currentTopicId && (
         <MessageInput
-          topicId={currentTopicId}
+          topicId={currentTopicId || ''}
           replyTo={replyTo}
           onCancelReply={() => setReplyTo(null)}
           pendingFiles={pendingDropFiles}

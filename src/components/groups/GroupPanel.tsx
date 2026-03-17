@@ -15,6 +15,7 @@ export function GroupPanel({ group, onClose }: GroupPanelProps) {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'members' | 'media' | 'links' | 'files'>('members');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showCopied, setShowCopied] = useState(false);
 
   useEffect(() => {
     fetchMembers(group.id);
@@ -72,18 +73,26 @@ export function GroupPanel({ group, onClose }: GroupPanelProps) {
         </p>
 
         {(isAdmin || canDelete) && (
-          <button 
-            className="btn btn-secondary btn-sm"
-            style={{ marginTop: 16, gap: 8 }}
-            onClick={() => {
-              const url = `${window.location.origin}/?join=${group.id}`;
-              navigator.clipboard.writeText(url);
-              alert('Enlace copiado al portapapeles');
-            }}
-          >
-            <Link2 size={16} />
-            Compartir enlace
-          </button>
+          <div style={{ position: 'relative', marginTop: 16 }}>
+            <button 
+              className="btn btn-secondary btn-sm btn-touch-feedback"
+              style={{ gap: 8, width: '100%' }}
+              onClick={() => {
+                const url = `${window.location.origin}/?join=${group.id}`;
+                navigator.clipboard.writeText(url);
+                setShowCopied(true);
+                setTimeout(() => setShowCopied(false), 2000);
+              }}
+            >
+              <Link2 size={16} />
+              Compartir enlace
+            </button>
+            {showCopied && (
+              <div className="copied-toast">
+                ¡Enlace copiado!
+              </div>
+            )}
+          </div>
         )}
       </div>
 

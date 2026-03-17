@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useGroupStore } from '../../stores/groupStore';
-import { Settings, Search, Plus, LogOut, Menu, X } from 'lucide-react';
+import { Settings, Search, Plus, LogOut, Menu, X, UserPlus, Check } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { CreateGroupModal } from '../groups/CreateGroupModal';
-import { SearchGroupModal } from '../groups/SearchGroupModal';
 import type { Profile, Group } from '../../types';
 
 interface SidebarProps {
@@ -18,13 +17,28 @@ interface SidebarProps {
 
 export function Sidebar({ groups, currentGroup, user, onSelectGroup, onOpenSettings, visible, onToggle }: SidebarProps) {
   const { logout } = useAuthStore();
+  const { searchResults, searchGroups, joinGroup } = useGroupStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showSearchModal, setShowSearchModal] = useState(false);
   const [filter, setFilter] = useState('');
+  const [requestedIds, setRequestedIds] = useState<string[]>([]);
 
-  const filteredGroups = groups.filter(g =>
-    g.name.toLowerCase().includes(filter.toLowerCase())
-  );
+  const handleSearchChange = (val: string) => {
+    setFilter(val);
+    if (val.length >= 2) {
+      searchGroups(val);
+    }
+  };
+
+  const handleJoinAction = async (e: React.MouseEvent, group: Group) => {
+    e.stopPropagation();
+    const result = await joinGroup(group.id);
+    if (result === 'requested') {
+      setRequestedIds([...requestedIds, group.id]);
+    } else if (result === 'joined') {
+      onSelectGroup(group);
+      setFilter('');
+    }
+  };
 
   const getInitials = (name: string) => {
     return name.slice(0, 2).toUpperCase();
@@ -40,29 +54,27 @@ export function Sidebar({ groups, currentGroup, user, onSelectGroup, onOpenSetti
           >
             {visible ? <X size={20} /> : <Menu size={20} />}
           </button>
-          <h2 className="hide-on-mobile">Chat Latino</h2>
-          <button className="btn-icon" onClick={() => setShowSearchModal(true)} title="Buscar grupos">
-            <Search size={20} />
+          <h2>Chat Latino</h2>
+          <div style={{ flex: 1 }} />
+          <button className="btn-icon" onClick={() => setShowCreateModal(true)} title="Crear grupo">
+            <Plus size={20} />
           </button>
-          {user.can_create_groups && (
-            <button className="btn-icon" onClick={() => setShowCreateModal(true)} title="Crear grupo">
-              <Plus size={20} />
-            </button>
-          )}
         </div>
 
         <div className="search-bar">
+          <Search size={16} className="search-icon" />
           <input
             className="search-input"
             placeholder=""
             value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
 
         <div className="sidebar-content">
           <ul className="group-list">
-            {filteredGroups.map(group => (
+            {/* Joined groups */}
+            {groups.filter(g => g.name.toLowerCase().includes(filter.toLowerCase())).map(group => (
               <li
                 key={group.id}
                 className={`group-item ${currentGroup?.id === group.id ? 'active' : ''}`}
@@ -77,7 +89,40 @@ export function Sidebar({ groups, currentGroup, user, onSelectGroup, onOpenSetti
                 </div>
               </li>
             ))}
-            {filteredGroups.length === 0 && (
+
+            {/* Global Search Results */}
+            {filter.length >= 2 && searchResults.length > 0 && (
+              <>
+                <div className="search-divider" style={{ padding: '12px 16px', fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Descubrir grupos
+                </div>
+                {searchResults.map(group => (
+                  <li key={group.id} className="group-item search-result">
+                    <div className="group-avatar" style={{ opacity: 0.7 }}>
+                      {getInitials(group.name)}
+                    </div>
+                    <div className="group-info">
+                      <div className="group-name">{group.name}</div>
+                      <div className="group-preview">{group.description || 'Sin descripción'}</div>
+                    </div>
+                    {requestedIds.includes(group.id) ? (
+                      <Check size={16} style={{ color: 'var(--accent-green)', marginRight: 12 }} />
+                    ) : (
+                      <button 
+                        className="btn-icon" 
+                        style={{ marginRight: 8, color: 'var(--accent)' }}
+                        onClick={(e) => handleJoinAction(e, group)}
+                        title="Unirme"
+                      >
+                        <UserPlus size={18} />
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </>
+            )}
+
+            {groups.filter(g => g.name.toLowerCase().includes(filter.toLowerCase())).length === 0 && searchResults.length === 0 && (
               <div className="empty-state" style={{ padding: '48px 24px' }}>
                 <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
                   {filter ? 'No se encontraron grupos' : 'No tienes grupos aún. ¡Crea uno!'}
@@ -106,9 +151,6 @@ export function Sidebar({ groups, currentGroup, user, onSelectGroup, onOpenSetti
 
       {showCreateModal && (
         <CreateGroupModal onClose={() => setShowCreateModal(false)} />
-      )}
-      {showSearchModal && (
-        <SearchGroupModal onClose={() => setShowSearchModal(false)} onJoined={() => { setShowSearchModal(false); useGroupStore.getState().fetchMyGroups(); }} />
       )}
     </>
   );

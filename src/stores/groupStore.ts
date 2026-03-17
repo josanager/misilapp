@@ -84,11 +84,34 @@ export const useGroupStore = create<GroupState>((set, get) => ({
   },
 
   fetchTopics: async (groupId: string) => {
-    const { data } = await supabase
+    let { data, error } = await supabase
       .from('topics')
       .select('*')
       .eq('group_id', groupId)
       .order('position', { ascending: true });
+
+    if ((!data || data.length === 0) && !error) {
+      // If no topics exist, try to create a default "General" one
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // Check if user is member/admin to have permission
+        const { data: member } = await supabase
+          .from('group_members')
+          .select('role')
+          .eq('group_id', groupId)
+          .eq('user_id', user.id)
+          .single();
+        
+        if (member) {
+          const { data: newTopic } = await supabase
+            .from('topics')
+            .insert({ group_id: groupId, name: 'General', description: 'Tema general', created_by: user.id, position: 0 })
+            .select()
+            .single();
+          if (newTopic) data = [newTopic];
+        }
+      }
+    }
     set({ topics: data || [] });
   },
 
@@ -138,7 +161,7 @@ export const useGroupStore = create<GroupState>((set, get) => ({
   },
 
   searchGroups: async (query: string) => {
-    if (!query.trim()) {
+    if (!query.trim() || query.length < 2) {
       set({ searchResults: [] });
       return;
     }
@@ -147,8 +170,14 @@ export const useGroupStore = create<GroupState>((set, get) => ({
       .select('*')
       .eq('is_public', true)
       .ilike('name', `%${query}%`)
-      .limit(20);
-    set({ searchResults: data || [] });
+      .limit(10);
+    
+    // Filter out groups the user is already in
+    const { groups } = get();
+    const joinedIds = new Set(groups.map(g => g.id));
+    const filtered = (data || []).filter(g => !joinedIds.has(g.id));
+    
+    set({ searchResults: filtered });
   },
 
   deleteGroup: async (groupId: string) => {
@@ -222,10 +251,10 @@ export const useGroupStore = create<GroupState>((set, get) => ({
   },
 
   joinGroup: async (groupId: string) => {
-    const { groups } = get();
-    if (groups.some(g => g.id === groupId)) return 'joined';
-
     try {
+      const { groups } = get();
+      if (groups.some(g => g.id === groupId)) return 'joined';
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return 'error';
 
@@ -239,22 +268,21 @@ export const useGroupStore = create<GroupState>((set, get) => ({
       if (!group) return 'error';
 
       if (group.is_public) {
-        // Direct join for public groups
         const { error } = await supabase
           .from('group_members')
           .insert({ group_id: groupId, user_id: user.id, role: 'member' });
         
-        if (!error) {
+        if (!error || error.code === '23505') { // 23505 is unique violation (already a member)
           await get().fetchMyGroups();
           return 'joined';
         }
       } else {
-        // Request join for private groups
         const { error } = await supabase
           .from('join_requests')
           .insert({ group_id: groupId, user_id: user.id, status: 'pending' });
         
         if (!error) return 'requested';
+        if (error.code === '23505') return 'requested'; // Already requested
       }
       return 'error';
     } catch {
