@@ -38,16 +38,20 @@ export function MainLayout() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [setCurrentGroup]);
 
-  const handleSelectGroup = useCallback(async (group: Group) => {
+  const handleSelectGroup = useCallback((group: Group) => {
+    // 1. Instant UI update
     setCurrentGroup(group);
-    await fetchGroup(group.id);
-    await fetchTopics(group.id);
     setView('chat');
-    // On mobile, hide sidebar when group is selected and push history state
+
+    // On mobile, hide sidebar immediately
     if (window.innerWidth <= 768) {
       setShowSidebar(false);
       window.history.pushState({ view: 'chat', groupId: group.id }, '');
     }
+
+    // 2. Fetch data in the background (non-blocking)
+    fetchGroup(group.id);
+    fetchTopics(group.id);
   }, [fetchGroup, fetchTopics, setCurrentGroup]);
 
   // Handle join links
