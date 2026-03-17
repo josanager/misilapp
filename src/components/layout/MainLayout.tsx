@@ -50,11 +50,6 @@ export function MainLayout() {
     }
   }, [fetchGroup, fetchTopics, setCurrentGroup]);
 
-  // Expose toggle logic for empty state
-  const handleToggleSidebar = () => {
-    setShowSidebar(!showSidebar);
-  };
-
   // Handle join links
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -142,18 +137,7 @@ export function MainLayout() {
             onShowSidebar={() => setShowSidebar(true)}
           />
         ) : (
-          <div className="empty-state">
-            <div className="mobile-header show-on-mobile">
-              <button 
-                className="btn-icon mobile-sidebar-toggle"
-                onClick={handleToggleSidebar}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M3 12h18M3 6h18M3 18h18" />
-                </svg>
-              </button>
-              <h3 style={{ marginLeft: 12 }}>Chat Latino</h3>
-            </div>
+          <div className="empty-state hide-on-mobile">
             <div className="empty-state-content">
               <div className="empty-state-icon">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

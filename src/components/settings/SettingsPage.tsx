@@ -52,7 +52,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
       <div className="chat-header">
         <button
           className="btn-icon mobile-back-btn show-on-mobile"
-          onClick={view === 'main' ? () => { onBack(); window.history.back(); } : () => setView('main')}
+          onClick={view === 'main' ? onBack : () => setView('main')}
           style={{ padding: '8px 4px', marginRight: 0 }}
         >
           <ArrowLeft size={24} />
