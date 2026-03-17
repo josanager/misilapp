@@ -16,6 +16,7 @@ export function GroupPanel({ group, onClose }: GroupPanelProps) {
   const [activeTab, setActiveTab] = useState<'members' | 'media' | 'links' | 'files'>('members');
   const [isDeleting, setIsDeleting] = useState(false);
   const [showCopied, setShowCopied] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     fetchMembers(group.id);
@@ -46,17 +47,7 @@ export function GroupPanel({ group, onClose }: GroupPanelProps) {
           <button 
             className="btn-icon text-danger" 
             style={{ position: 'absolute', top: 0, right: 16 }}
-            onClick={async () => {
-              if (window.confirm('¿Estás seguro de que deseas eliminar este grupo? Esta acción no se puede deshacer y borrará todos los mensajes.')) {
-                setIsDeleting(true);
-                const success = await deleteGroup(group.id);
-                if (success) {
-                  setCurrentGroup(null);
-                  onClose();
-                }
-                setIsDeleting(false);
-              }
-            }}
+            onClick={() => setShowDeleteConfirm(true)}
             disabled={isDeleting}
             title="Eliminar grupo"
           >
@@ -272,6 +263,38 @@ export function GroupPanel({ group, onClose }: GroupPanelProps) {
               </a>
             ))
           )}
+        </div>
+      )}
+
+      {showDeleteConfirm && (
+        <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Eliminar grupo</h3>
+            </div>
+            <div className="modal-body">
+              <p>¿Estás seguro de que deseas eliminar este grupo? Esta acción no se puede deshacer y borrará todos los mensajes.</p>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setShowDeleteConfirm(false)}>Cancelar</button>
+              <button
+                className="btn btn-danger"
+                onClick={async () => {
+                  setIsDeleting(true);
+                  const success = await deleteGroup(group.id);
+                  if (success) {
+                    setCurrentGroup(null);
+                    onClose();
+                  }
+                  setIsDeleting(false);
+                  setShowDeleteConfirm(false);
+                }}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Eliminando...' : 'Sí, eliminar'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

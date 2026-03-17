@@ -50,7 +50,7 @@ export function Sidebar({ groups, currentGroup, user, onSelectGroup, onOpenSetti
         <div className="sidebar-header">
           <h2>Chat Latino</h2>
           <div style={{ flex: 1 }} />
-          <button className="btn-icon" onClick={() => setShowCreateModal(true)} title="Crear grupo">
+          <button className="btn-icon" onClick={(e) => { e.stopPropagation(); setShowCreateModal(true); }} title="Crear grupo">
             <Plus size={22} />
           </button>
         </div>
