@@ -1397,6 +1397,14 @@ html, body, #root {
     width: 100%;
     min-width: 100%;
   }
+
+  /* Prevent auto-zoom on iOS by forcing font-size >= 16px */
+  .form-input,
+  .search-input,
+  .message-input,
+  .media-upload-caption {
+    font-size: 16px !important;
+  }
 }
 
 .mobile-sidebar-toggle, .show-on-mobile {
