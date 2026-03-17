@@ -351,12 +351,26 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
                       >
                         <button 
                           className="message-react-btn"
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onTouchStart={(e) => e.stopPropagation()}
                           onClick={(e) => {
                             e.stopPropagation();
+                            let clientX = e.clientX;
+                            let clientY = e.clientY;
+                            if (e.nativeEvent && 'touches' in e.nativeEvent && (e.nativeEvent as any).touches.length > 0) {
+                              clientX = (e.nativeEvent as any).touches[0].clientX;
+                              clientY = (e.nativeEvent as any).touches[0].clientY;
+                            }
+                            // Fallback if x,y are 0 (sometimes happens with touchend simulated clicks)
+                            if (clientX === 0 && clientY === 0) {
+                                const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                clientX = rect.left + rect.width / 2;
+                                clientY = rect.top + rect.height / 2;
+                            }
                             setShowEmojiPicker({ 
                               msgId: msg.id, 
-                              x: e.clientX, 
-                              y: e.clientY 
+                              x: clientX,
+                              y: clientY
                             });
                           }}
                         >
@@ -540,10 +554,12 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
           </div>
           {optionsMenu.isOwn && (
             <>
-              <div className="dropdown-item" onClick={handleEdit}>
-                <Edit2 size={16} style={{marginRight: '8px'}} />
-                <span>Editar</span>
-              </div>
+              {messages.find(m => m.id === optionsMenu.messageId)?.type === 'text' && (
+                <div className="dropdown-item" onClick={handleEdit}>
+                  <Edit2 size={16} style={{marginRight: '8px'}} />
+                  <span>Editar</span>
+                </div>
+              )}
               <div className="dropdown-item text-danger" onClick={handleDelete} style={{ color: '#ff4b4b' }}>
                 <Trash2 size={16} style={{marginRight: '8px'}} />
                 <span>Eliminar</span>
