@@ -26,6 +26,7 @@ interface GroupState {
   clearError: () => void;
   deleteGroup: (groupId: string) => Promise<boolean>;
   fetchGroupMedia: (groupId: string) => Promise<void>;
+  updateGroupSettings: (groupId: string, settings: Partial<Group>) => Promise<boolean>;
 }
 
 export const useGroupStore = create<GroupState>((set, get) => ({
@@ -193,6 +194,34 @@ export const useGroupStore = create<GroupState>((set, get) => ({
       return true;
     } catch (e) {
       console.error('Error deleting group:', e);
+      return false;
+    }
+  },
+
+  updateGroupSettings: async (groupId: string, settings: Partial<Group>) => {
+    try {
+      const { data, error } = await supabase
+        .from('groups')
+        .update(settings)
+        .eq('id', groupId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating group settings:', error);
+        return false;
+      }
+
+      if (data) {
+        const { groups, currentGroup } = get();
+        set({
+          groups: groups.map(g => g.id === groupId ? data : g),
+          currentGroup: currentGroup?.id === groupId ? data : currentGroup
+        });
+      }
+      return true;
+    } catch (e) {
+      console.error('Exception updating group settings:', e);
       return false;
     }
   },

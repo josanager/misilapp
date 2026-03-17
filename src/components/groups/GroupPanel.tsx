@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useGroupStore } from '../../stores/groupStore';
 import { useAuthStore } from '../../stores/authStore';
-import { X, Check, XCircle, Shield, Crown, User, Trash2, Image as ImageIcon, Link2, FileText, LayoutGrid } from 'lucide-react';
+import { X, Check, XCircle, Shield, Crown, User, Trash2, Image as ImageIcon, Link2, FileText, LayoutGrid, Settings as SettingsIcon } from 'lucide-react';
 import type { Group } from '../../types';
 import { useState } from 'react';
 
@@ -11,12 +11,19 @@ interface GroupPanelProps {
 }
 
 export function GroupPanel({ group, onClose }: GroupPanelProps) {
-  const { members, joinRequests, fetchMembers, fetchJoinRequests, handleJoinRequest, groupMedia, fetchGroupMedia, deleteGroup, setCurrentGroup } = useGroupStore();
+  const { members, joinRequests, fetchMembers, fetchJoinRequests, handleJoinRequest, groupMedia, fetchGroupMedia, deleteGroup, setCurrentGroup, updateGroupSettings } = useGroupStore();
   const { user } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<'members' | 'media' | 'links' | 'files'>('members');
+  const [activeTab, setActiveTab] = useState<'members' | 'media' | 'links' | 'files' | 'settings'>('members');
   const [isDeleting, setIsDeleting] = useState(false);
   const [showCopied, setShowCopied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  // Group settings state (fallback to true/unlimited if undefined)
+  const [allowMessages, setAllowMessages] = useState(group.allow_messages ?? true);
+  const [allowMedia, setAllowMedia] = useState(group.allow_media ?? true);
+  const [allowLinks, setAllowLinks] = useState(group.allow_links ?? true);
+  const [maxMembers, setMaxMembers] = useState<string>(group.max_members ? group.max_members.toString() : '');
 
   useEffect(() => {
     fetchMembers(group.id);
@@ -120,7 +127,97 @@ export function GroupPanel({ group, onClose }: GroupPanelProps) {
         >
           <FileText size={20} />
         </button>
+        {isAdmin && (
+          <button
+            className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
+            onClick={() => setActiveTab('settings')}
+            style={{ flex: 1, padding: '12px 0', background: 'none', border: 'none', borderBottom: activeTab === 'settings' ? '2px solid var(--accent)' : '2px solid transparent', color: activeTab === 'settings' ? 'var(--accent)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            title="Configuración"
+          >
+            <SettingsIcon size={20} />
+          </button>
+        )}
       </div>
+
+      {activeTab === 'settings' && isAdmin && (
+        <div className="settings-section" style={{ padding: '16px' }}>
+          <h4 style={{ marginBottom: 20 }}>Permisos de miembros</h4>
+
+          <div className="settings-item">
+            <div className="settings-item-label">
+              <div>
+                <span>Enviar mensajes</span>
+                <small>Permitir a los miembros enviar texto</small>
+              </div>
+            </div>
+            <div
+              className={`toggle ${allowMessages ? 'active' : ''}`}
+              onClick={() => setAllowMessages(!allowMessages)}
+            />
+          </div>
+
+          <div className="settings-item">
+            <div className="settings-item-label">
+              <div>
+                <span>Enviar contenido multimedia</span>
+                <small>Fotos, videos y archivos</small>
+              </div>
+            </div>
+            <div
+              className={`toggle ${allowMedia ? 'active' : ''}`}
+              onClick={() => setAllowMedia(!allowMedia)}
+            />
+          </div>
+
+          <div className="settings-item">
+            <div className="settings-item-label">
+              <div>
+                <span>Permitir enlaces</span>
+                <small>Ayuda a evitar el spam</small>
+              </div>
+            </div>
+            <div
+              className={`toggle ${allowLinks ? 'active' : ''}`}
+              onClick={() => setAllowLinks(!allowLinks)}
+            />
+          </div>
+
+          <h4 style={{ marginTop: 24, marginBottom: 16 }}>Límites del grupo</h4>
+          <div className="form-group" style={{ marginBottom: 24 }}>
+            <label style={{ fontSize: 13 }}>Límite de miembros (dejar vacío para sin límite)</label>
+            <input
+              type="number"
+              className="form-input"
+              value={maxMembers}
+              onChange={(e) => setMaxMembers(e.target.value)}
+              placeholder="Ej: 100"
+              min={1}
+            />
+          </div>
+
+          <button
+            className="btn btn-primary btn-full"
+            disabled={isSavingSettings}
+            onClick={async () => {
+              setIsSavingSettings(true);
+              const success = await updateGroupSettings(group.id, {
+                allow_messages: allowMessages,
+                allow_media: allowMedia,
+                allow_links: allowLinks,
+                max_members: maxMembers ? parseInt(maxMembers) : null
+              });
+              setIsSavingSettings(false);
+              if (success) {
+                alert('Ajustes guardados correctamente (asegúrate de que estas columnas existan en tu tabla de Supabase).');
+              } else {
+                alert('Error al guardar. Verifica que las columnas allow_messages, allow_media, allow_links y max_members existan en la tabla groups.');
+              }
+            }}
+          >
+            {isSavingSettings ? 'Guardando...' : 'Guardar configuración'}
+          </button>
+        </div>
+      )}
 
       {activeTab === 'members' && (
         <>
