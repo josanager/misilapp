@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { supabase, type Profile } from '../lib/supabase';
 
 interface AuthState {
@@ -15,13 +16,20 @@ interface AuthState {
   clearError: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
   user: null,
   session: null,
   loading: true,
   error: null,
 
   initialize: async () => {
+    // Si ya tenemos un usuario en cache, quitamos el loading de inmediato
+    if (get().user) {
+      set({ loading: false });
+    }
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
@@ -165,4 +173,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   clearError: () => set({ error: null }),
-}));
+    }),
+    {
+      name: 'chat-latino-auth-storage',
+      partialize: (state) => ({ user: state.user }),
+    }
+  )
+);

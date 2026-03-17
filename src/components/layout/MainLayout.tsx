@@ -62,30 +62,36 @@ export function MainLayout() {
         
         if (existing) {
           handleSelectGroup(existing);
+          // Clean URL without reloading
           window.history.replaceState({}, '', '/');
           return;
         }
 
+        // Show toast immediately so user knows it's doing something
+        setToastMsg('Uniéndote al grupo...');
+
         const result = await joinGroup(joinId);
         if (result === 'joined') {
+          // fetch group using standard approach
           const { data: group } = await supabase
             .from('groups')
             .select('*')
             .eq('id', joinId)
             .single();
-          if (group) handleSelectGroup(group);
+          if (group) {
+            handleSelectGroup(group);
+            setToastMsg('¡Te has unido al grupo!');
+          }
         } else if (result === 'requested') {
           setToastMsg('Solicitud de unión enviada. Espera a que un administrador te apruebe.');
         } else {
           setToastMsg('No se pudo encontrar el grupo o hubo un error al unirse.');
         }
-        
-        window.history.replaceState({}, '', '/');
       };
 
       handleJoin();
     }
-  }, [user, handleSelectGroup]);
+  }, [user, handleSelectGroup]); // Removed group list dependencies to prevent loop/re-runs
 
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   useEffect(() => {
