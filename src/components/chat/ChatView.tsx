@@ -289,7 +289,7 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
               {topic.name}
             </button>
           ))}
-          <button className="topic-tab-add" onClick={() => setShowCreateTopic(true)}>
+          <button className="topic-tab-add" onClick={(e) => { e.stopPropagation(); setShowCreateTopic(true); }}>
             <Plus size={14} /> Tema
           </button>
         </div>

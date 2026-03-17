@@ -75,7 +75,17 @@ export function MediaUploadModal({ files, topicId, onClose }: MediaUploadModalPr
 
 
 
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   const handleUploadAll = async (sendType: 'media' | 'file') => {
+    // Total size check
+    const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+    if (totalSize > MAX_SIZE) {
+      setErrorMsg(`El tamaño total (${(totalSize/1024/1024).toFixed(1)}MB) supera el límite de 50MB.`);
+      return;
+    }
+
+    setErrorMsg(null);
     setUploading(true);
     setUploadedBytes(0);
     setOverallProgress(0);
@@ -118,7 +128,7 @@ export function MediaUploadModal({ files, topicId, onClose }: MediaUploadModalPr
     } catch (err) {
       if (isCancelledRef.current) return;
       console.error('Upload failed:', err);
-      alert(`Error al subir a R2: ${err instanceof Error ? err.message : 'Error desconocido'}.`);
+      setErrorMsg(`Error al subir a R2: ${err instanceof Error ? err.message : 'Error desconocido'}.`);
     } finally {
       setUploading(false);
     }
@@ -221,6 +231,12 @@ export function MediaUploadModal({ files, topicId, onClose }: MediaUploadModalPr
             </button>
           )}
         </div>
+
+        {errorMsg && (
+          <div className="error-message" style={{ margin: '16px 0', padding: '8px 12px', fontSize: 13, textAlign: 'left' }}>
+            {errorMsg}
+          </div>
+        )}
 
         {/* Main preview area */}
         <div className="media-upload-preview" style={{ position: 'relative' }}>

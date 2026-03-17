@@ -75,9 +75,9 @@ export function MainLayout() {
             .single();
           if (group) handleSelectGroup(group);
         } else if (result === 'requested') {
-          alert('Solicitud de unión enviada. Espera a que un administrador te apruebe.');
+          setToastMsg('Solicitud de unión enviada. Espera a que un administrador te apruebe.');
         } else {
-          alert('No se pudo encontrar el grupo o hubo un error al unirse.');
+          setToastMsg('No se pudo encontrar el grupo o hubo un error al unirse.');
         }
         
         window.history.replaceState({}, '', '/');
@@ -86,6 +86,14 @@ export function MainLayout() {
       handleJoin();
     }
   }, [user, handleSelectGroup]);
+
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  useEffect(() => {
+    if (toastMsg) {
+      const timer = setTimeout(() => setToastMsg(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMsg]);
 
   const handleSelectTopic = useCallback((topic: Topic) => {
     setCurrentTopic(topic.id);
@@ -156,6 +164,12 @@ export function MainLayout() {
           group={currentGroup}
           onClose={() => setShowGroupPanel(false)}
         />
+      )}
+
+      {toastMsg && (
+        <div className="toast-container">
+          <div className="toast info">{toastMsg}</div>
+        </div>
       )}
     </div>
   );
