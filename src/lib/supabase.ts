@@ -43,6 +43,11 @@ export type Group = {
   is_public: boolean;
   created_at: string;
   member_count?: number;
+
+  allow_links?: boolean;
+  allow_media?: boolean;
+  allow_messages?: boolean;
+  max_members?: number | null;
 };
 
 export type GroupMember = {
