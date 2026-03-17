@@ -5,7 +5,6 @@ import { useAuthStore } from '../../stores/authStore';
 import { MessageInput } from './MessageInput';
 import { Users, Plus, Hash, SmilePlus, Edit2, Trash2, X, ArrowLeft } from 'lucide-react';
 import { CreateTopicModal } from '../topics/CreateTopicModal';
-import { useLongPress } from '../../hooks/useLongPress';
 import { EmojiPicker, ReactionDisplay } from './EmojiPicker';
 import { VideoPlayer } from './VideoPlayer';
 import { ImageViewer } from './ImageViewer';
@@ -20,13 +19,11 @@ interface ChatViewProps {
   onShowSidebar: () => void;
 }
 
-function MessageBubble({ children, onLongPress, onClick }: { children: React.ReactNode, onLongPress: (e: any) => void, onClick: () => void }) {
-  const longPressProps = useLongPress(onLongPress, onClick);
-  
+function MessageBubble({ children, onClick }: { children: React.ReactNode, onClick: (e: any) => void }) {
   return (
     <div 
       className="message-bubble" 
-      {...longPressProps}
+      onClick={onClick}
       style={{ cursor: 'pointer' }}
     >
       {children}
@@ -113,7 +110,7 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
     }
   });
 
-  const handleContextMenu = (e: any, msg: Message, isOwn: boolean) => {
+  const handleMessageClick = (e: any, msg: Message, isOwn: boolean) => {
     if (e.preventDefault) e.preventDefault();
     if (e.stopPropagation) e.stopPropagation();
     
@@ -337,7 +334,7 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
                   <div 
                     key={msg.id} 
                     className={`message ${isOwn ? 'own' : ''} ${isChain ? 'chain' : ''}`}
-                    onContextMenu={(e) => handleContextMenu(e, msg, isOwn)}
+                    onContextMenu={(e) => handleMessageClick(e, msg, isOwn)}
                   >
                     {!isOwn && (
                       <div className="message-avatar" style={{ visibility: isChain ? 'hidden' : 'visible' }}>
@@ -346,37 +343,8 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
                     )}
                     <div className="message-wrapper">
                       <MessageBubble 
-                        onLongPress={(e) => handleContextMenu(e, msg, isOwn)}
-                        onClick={() => setReplyTo(msg)}
+                        onClick={(e) => handleMessageClick(e, msg, isOwn)}
                       >
-                        <button 
-                          className="message-react-btn"
-                          onPointerDown={(e) => e.stopPropagation()}
-                          onTouchStart={(e) => e.stopPropagation()}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            let clientX = e.clientX;
-                            let clientY = e.clientY;
-                            if (e.nativeEvent && 'touches' in e.nativeEvent && (e.nativeEvent as any).touches.length > 0) {
-                              clientX = (e.nativeEvent as any).touches[0].clientX;
-                              clientY = (e.nativeEvent as any).touches[0].clientY;
-                            }
-                            // Fallback if x,y are 0 (sometimes happens with touchend simulated clicks)
-                            if (clientX === 0 && clientY === 0) {
-                                const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                                clientX = rect.left + rect.width / 2;
-                                clientY = rect.top + rect.height / 2;
-                            }
-                            setShowEmojiPicker({ 
-                              msgId: msg.id, 
-                              x: clientX,
-                              y: clientY
-                            });
-                          }}
-                        >
-                          <SmilePlus size={16} />
-                        </button>
-                        
                         {!isOwn && !isChain && <div className="message-sender">{senderName}</div>}
                         {repliedMsg && (
                           <div className="message-reply">
@@ -537,7 +505,7 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
           style={{
             position: 'fixed',
             left: Math.min(optionsMenu.x, window.innerWidth - 160),
-            top: Math.min(optionsMenu.y, window.innerHeight - (optionsMenu.isOwn ? 120 : 60)),
+          top: Math.min(optionsMenu.y, window.innerHeight - (optionsMenu.isOwn ? 160 : 100)),
             zIndex: 1000,
             display: 'flex',
             flexDirection: 'column',
@@ -549,6 +517,14 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
           }}
           onClick={(e) => e.stopPropagation()}
         >
+        <div className="dropdown-item" onClick={(e) => {
+          e.stopPropagation();
+          setShowEmojiPicker({ msgId: optionsMenu.messageId, x: optionsMenu.x, y: optionsMenu.y - 60 });
+          setOptionsMenu(null);
+        }}>
+           <SmilePlus size={16} style={{marginRight: '8px'}} />
+           <span>Reaccionar</span>
+        </div>
           <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); setReplyTo(messages.find(m => m.id === optionsMenu.messageId) || null); setOptionsMenu(null); }}>
              <span>↩️ Responder</span>
           </div>
