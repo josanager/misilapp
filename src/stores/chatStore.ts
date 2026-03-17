@@ -64,10 +64,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       const { replyTo, messages } = get();
       
-      // OPTIMISTIC UPDATE: Creamos un mensaje temporal falso
-      const tempId = `temp-${Date.now()}`;
-      const tempMessage: Message = {
-        id: tempId,
+      // OPTIMISTIC UPDATE: Use a real UUID instead of a temporary ID
+      // This prevents React from unmounting and remounting the DOM node when the ID changes
+      const finalId = crypto.randomUUID();
+      const optimisticMessage: Message = {
+        id: finalId,
         topic_id: topicId,
         user_id: user.id,
         content,
@@ -78,17 +79,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
         replied_to: replyTo?.id || null,
         media_group_id: mediaGroupId || null,
         created_at: new Date().toISOString(),
-        profile: { username: '...' } as any, // Perfil falso, no se mostrará para mensajes propios
+        profile: { username: '...', display_name: '...' } as any, // Fake profile for UI
       };
 
-      // Lo agregamos a la UI inmediatamente para que el usuario sienta velocidad
+      // Add to UI immediately
       set({ 
-        messages: [...messages, tempMessage],
+        messages: [...messages, optimisticMessage],
         replyTo: null 
       });
 
-      // Luego hacemos el insert real en la base de datos
+      // Insert real into database using the exact same ID
       const { data, error } = await supabase.from('messages').insert({
+        id: finalId,
         topic_id: topicId,
         user_id: user.id,
         content,
@@ -105,17 +107,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
 
       if (error) {
-        // Revertir en caso de que falle
+        // Revert on failure
         set(state => ({
-          messages: state.messages.filter(m => m.id !== tempId)
+          messages: state.messages.filter(m => m.id !== finalId)
         }));
         return false;
       }
       
       if (data) {
-        // Reemplazar el temporal con el real de la DB
+        // Silently update the object properties (like exact timestamps and profiles)
+        // without changing the array length or IDs, ensuring no animation trigger.
         set(state => ({
-          messages: state.messages.map(m => m.id === tempId ? data : m)
+          messages: state.messages.map(m => m.id === finalId ? data : m)
         }));
       }
 

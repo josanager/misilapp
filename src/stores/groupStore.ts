@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { supabase, type Group, type GroupMember, type JoinRequest, type Topic } from '../lib/supabase';
 
 interface GroupState {
@@ -29,7 +30,9 @@ interface GroupState {
   updateGroupSettings: (groupId: string, settings: Partial<Group>) => Promise<boolean>;
 }
 
-export const useGroupStore = create<GroupState>((set, get) => ({
+export const useGroupStore = create<GroupState>()(
+  persist(
+    (set, get) => ({
   groups: [],
   currentGroup: null,
   members: [],
@@ -41,28 +44,33 @@ export const useGroupStore = create<GroupState>((set, get) => ({
   error: null,
 
   fetchMyGroups: async () => {
-    set({ loading: true });
+    // We do NOT set loading to true here if we already have cached groups,
+    // to prevent the UI from flickering or showing spinners unnecessarily.
+    if (get().groups.length === 0) set({ loading: true });
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: memberships } = await supabase
+      // Use a single query with inner join to fetch the groups directly
+      const { data, error } = await supabase
         .from('group_members')
-        .select('group_id')
+        .select('groups!inner(*)')
         .eq('user_id', user.id);
 
-      if (memberships && memberships.length > 0) {
-        const groupIds = memberships.map(m => m.group_id);
-        const { data: groups } = await supabase
-          .from('groups')
-          .select('*')
-          .in('id', groupIds)
-          .order('created_at', { ascending: false });
-        set({ groups: groups || [], loading: false });
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        // Extract the groups array from the join result
+        const groups = data.map((item: any) => item.groups).sort((a: Group, b: Group) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        set({ groups, loading: false });
       } else {
         set({ groups: [], loading: false });
       }
-    } catch {
+    } catch (err) {
+      console.error('Error fetching groups:', err);
       set({ loading: false });
     }
   },
@@ -234,7 +242,10 @@ export const useGroupStore = create<GroupState>((set, get) => ({
         .select('id')
         .eq('group_id', groupId);
 
-      if (!topics || topics.length === 0) return set({ groupMedia: [] });
+      if (!topics || topics.length === 0) {
+        set({ groupMedia: [] });
+        return;
+      }
 
       const topicIds = topics.map(t => t.id);
 
@@ -368,4 +379,12 @@ export const useGroupStore = create<GroupState>((set, get) => ({
 
   setCurrentGroup: (group) => set({ currentGroup: group }),
   clearError: () => set({ error: null }),
-}));
+    }),
+    {
+      name: 'chat-latino-groups-storage',
+      // Only persist the `groups` list to cache it for instant loading.
+      // Other states like currentGroup or topics are transient.
+      partialize: (state) => ({ groups: state.groups }),
+    }
+  )
+);
