@@ -35,6 +35,8 @@ export function EmojiPicker({ onSelect, onClose, position }: EmojiPickerProps) {
         <button
           key={emoji}
           className="emoji-btn"
+          onPointerDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation();
             onSelect(emoji);

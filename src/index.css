@@ -1557,7 +1557,7 @@ html, body, #root {
   gap: 4px;
   width: 280px;
   box-shadow: var(--shadow-lg);
-  animation: popIn 0.2s var(--transition-spring);
+  animation: slideInBounce 0.25s ease-out;
 }
 
 .emoji-btn {
