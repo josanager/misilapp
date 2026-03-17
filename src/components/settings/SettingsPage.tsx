@@ -50,10 +50,17 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
   return (
     <div className="settings-page">
       <div className="chat-header">
-        <button className="btn-icon" onClick={view === 'main' ? onBack : () => setView('main')}>
+        <button
+          className="btn-icon mobile-back-btn show-on-mobile"
+          onClick={view === 'main' ? () => { onBack(); window.history.back(); } : () => setView('main')}
+          style={{ padding: '8px 4px', marginRight: 0 }}
+        >
+          <ArrowLeft size={24} />
+        </button>
+        <button className="btn-icon hide-on-mobile" onClick={view === 'main' ? onBack : () => setView('main')}>
           <ArrowLeft size={20} />
         </button>
-        <div className="chat-header-info">
+        <div className="chat-header-info" style={{ marginLeft: 12 }}>
           <h3>{view === 'main' ? 'Configuración' : view === 'profile' ? 'Editar perfil' : view === 'password' ? 'Cambiar contraseña' : 'Notificaciones'}</h3>
         </div>
       </div>
