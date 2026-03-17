@@ -252,7 +252,6 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
               className="btn-icon mobile-back-btn show-on-mobile"
               onClick={() => {
                 onShowSidebar();
-                window.history.back();
               }}
               title="Volver a chats"
               style={{ padding: '8px 4px', marginRight: 0 }}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useGroupStore } from '../../stores/groupStore';
-import { Settings, Search, Plus, LogOut, Menu, X, UserPlus, Check } from 'lucide-react';
+import { Settings, Search, Plus, LogOut, UserPlus, Check } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { CreateGroupModal } from '../groups/CreateGroupModal';
 import type { Profile, Group } from '../../types';
@@ -15,7 +15,7 @@ interface SidebarProps {
   onToggle: () => void;
 }
 
-export function Sidebar({ groups, currentGroup, user, onSelectGroup, onOpenSettings, visible, onToggle }: SidebarProps) {
+export function Sidebar({ groups, currentGroup, user, onSelectGroup, onOpenSettings, visible }: SidebarProps) {
   const { logout } = useAuthStore();
   const { searchResults, searchGroups, joinGroup } = useGroupStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -48,13 +48,6 @@ export function Sidebar({ groups, currentGroup, user, onSelectGroup, onOpenSetti
     <>
       <aside className={`sidebar ${!visible ? 'hidden' : ''}`}>
         <div className="sidebar-header">
-          <button 
-            className="btn-icon mobile-sidebar-toggle" 
-            onClick={onToggle}
-            style={{ marginRight: 8 }}
-          >
-            {visible ? <X size={24} /> : <Menu size={24} />}
-          </button>
           <h2>Chat Latino</h2>
           <div style={{ flex: 1 }} />
           <button className="btn-icon" onClick={() => setShowCreateModal(true)} title="Crear grupo">
