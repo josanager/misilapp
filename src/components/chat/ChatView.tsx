@@ -34,7 +34,7 @@ function MessageBubble({ children, onLongPress, onClick }: { children: React.Rea
   );
 }
 
-export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggleGroupPanel }: ChatViewProps) {
+export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggleGroupPanel, onShowSidebar }: ChatViewProps) {
   const { 
     messages, loading, fetchMessages, subscribeToMessages, subscribeToPresence, 
     replyTo, setReplyTo, reactions, toggleReaction, subscribeToReactions,
@@ -249,11 +249,15 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
         <div className="chat-header-info">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button 
-              className="btn-icon mobile-back-btn" 
-              onClick={() => window.history.back()}
-              title="Volver"
+              className="btn-icon mobile-back-btn show-on-mobile"
+              onClick={() => {
+                onShowSidebar();
+                window.history.back();
+              }}
+              title="Volver a chats"
+              style={{ padding: '8px 4px', marginRight: 0 }}
             >
-              <ArrowLeft size={22} />
+              <ArrowLeft size={24} />
             </button>
             <div className="group-avatar" style={{ width: 40, height: 40 }}>
               {getInitials(group.name)}

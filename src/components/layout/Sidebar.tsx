@@ -51,13 +51,14 @@ export function Sidebar({ groups, currentGroup, user, onSelectGroup, onOpenSetti
           <button 
             className="btn-icon mobile-sidebar-toggle" 
             onClick={onToggle}
+            style={{ marginRight: 8 }}
           >
-            {visible ? <X size={20} /> : <Menu size={20} />}
+            {visible ? <X size={24} /> : <Menu size={24} />}
           </button>
           <h2>Chat Latino</h2>
           <div style={{ flex: 1 }} />
           <button className="btn-icon" onClick={() => setShowCreateModal(true)} title="Crear grupo">
-            <Plus size={20} />
+            <Plus size={22} />
           </button>
         </div>
 
