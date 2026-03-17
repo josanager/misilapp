@@ -25,6 +25,11 @@ export function GroupPanel({ group, onClose }: GroupPanelProps) {
   const [allowLinks, setAllowLinks] = useState(group.allow_links ?? true);
   const [maxMembers, setMaxMembers] = useState<string>(group.max_members ? group.max_members.toString() : '');
 
+  const [showMembersTab, setShowMembersTab] = useState(group.show_members ?? true);
+  const [showMediaTab, setShowMediaTab] = useState(group.show_media ?? true);
+  const [showLinksTab, setShowLinksTab] = useState(group.show_links ?? true);
+  const [showFilesTab, setShowFilesTab] = useState(group.show_files ?? true);
+
   useEffect(() => {
     fetchMembers(group.id);
     fetchJoinRequests(group.id);
@@ -95,38 +100,46 @@ export function GroupPanel({ group, onClose }: GroupPanelProps) {
       </div>
 
       <div className="group-panel-tabs" style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginTop: 16, padding: '0 16px' }}>
-        <button 
-          className={`tab-btn ${activeTab === 'members' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('members')}
-          style={{ flex: 1, padding: '12px 0', background: 'none', border: 'none', borderBottom: activeTab === 'members' ? '2px solid var(--accent)' : '2px solid transparent', color: activeTab === 'members' ? 'var(--accent)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          title="Miembros"
-        >
-          <User size={20} />
-        </button>
-        <button 
-          className={`tab-btn ${activeTab === 'media' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('media')}
-          style={{ flex: 1, padding: '12px 0', background: 'none', border: 'none', borderBottom: activeTab === 'media' ? '2px solid var(--accent)' : '2px solid transparent', color: activeTab === 'media' ? 'var(--accent)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          title="Medios"
-        >
-          <ImageIcon size={20} />
-        </button>
-        <button 
-          className={`tab-btn ${activeTab === 'links' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('links')}
-          style={{ flex: 1, padding: '12px 0', background: 'none', border: 'none', borderBottom: activeTab === 'links' ? '2px solid var(--accent)' : '2px solid transparent', color: activeTab === 'links' ? 'var(--accent)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          title="Enlaces"
-        >
-          <Link2 size={20} />
-        </button>
-        <button 
-          className={`tab-btn ${activeTab === 'files' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('files')}
-          style={{ flex: 1, padding: '12px 0', background: 'none', border: 'none', borderBottom: activeTab === 'files' ? '2px solid var(--accent)' : '2px solid transparent', color: activeTab === 'files' ? 'var(--accent)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          title="Archivos"
-        >
-          <FileText size={20} />
-        </button>
+        {(isAdmin || group.show_members !== false) && (
+          <button
+            className={`tab-btn ${activeTab === 'members' ? 'active' : ''}`}
+            onClick={() => setActiveTab('members')}
+            style={{ flex: 1, padding: '12px 0', background: 'none', border: 'none', borderBottom: activeTab === 'members' ? '2px solid var(--accent)' : '2px solid transparent', color: activeTab === 'members' ? 'var(--accent)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            title="Miembros"
+          >
+            <User size={20} />
+          </button>
+        )}
+        {(isAdmin || group.show_media !== false) && (
+          <button
+            className={`tab-btn ${activeTab === 'media' ? 'active' : ''}`}
+            onClick={() => setActiveTab('media')}
+            style={{ flex: 1, padding: '12px 0', background: 'none', border: 'none', borderBottom: activeTab === 'media' ? '2px solid var(--accent)' : '2px solid transparent', color: activeTab === 'media' ? 'var(--accent)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            title="Medios"
+          >
+            <ImageIcon size={20} />
+          </button>
+        )}
+        {(isAdmin || group.show_links !== false) && (
+          <button
+            className={`tab-btn ${activeTab === 'links' ? 'active' : ''}`}
+            onClick={() => setActiveTab('links')}
+            style={{ flex: 1, padding: '12px 0', background: 'none', border: 'none', borderBottom: activeTab === 'links' ? '2px solid var(--accent)' : '2px solid transparent', color: activeTab === 'links' ? 'var(--accent)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            title="Enlaces"
+          >
+            <Link2 size={20} />
+          </button>
+        )}
+        {(isAdmin || group.show_files !== false) && (
+          <button
+            className={`tab-btn ${activeTab === 'files' ? 'active' : ''}`}
+            onClick={() => setActiveTab('files')}
+            style={{ flex: 1, padding: '12px 0', background: 'none', border: 'none', borderBottom: activeTab === 'files' ? '2px solid var(--accent)' : '2px solid transparent', color: activeTab === 'files' ? 'var(--accent)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            title="Archivos"
+          >
+            <FileText size={20} />
+          </button>
+        )}
         {isAdmin && (
           <button
             className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
@@ -195,6 +208,60 @@ export function GroupPanel({ group, onClose }: GroupPanelProps) {
             />
           </div>
 
+          <h4 style={{ marginTop: 24, marginBottom: 16 }}>Visibilidad de pestañas (Ocultar a miembros)</h4>
+
+          <div className="settings-item">
+            <div className="settings-item-label">
+              <div>
+                <span>Mostrar miembros</span>
+                <small>Permitir ver la lista de usuarios</small>
+              </div>
+            </div>
+            <div
+              className={`toggle ${showMembersTab ? 'active' : ''}`}
+              onClick={() => setShowMembersTab(!showMembersTab)}
+            />
+          </div>
+
+          <div className="settings-item">
+            <div className="settings-item-label">
+              <div>
+                <span>Mostrar medios</span>
+                <small>Galería de fotos y videos</small>
+              </div>
+            </div>
+            <div
+              className={`toggle ${showMediaTab ? 'active' : ''}`}
+              onClick={() => setShowMediaTab(!showMediaTab)}
+            />
+          </div>
+
+          <div className="settings-item">
+            <div className="settings-item-label">
+              <div>
+                <span>Mostrar enlaces</span>
+                <small>Historial de links compartidos</small>
+              </div>
+            </div>
+            <div
+              className={`toggle ${showLinksTab ? 'active' : ''}`}
+              onClick={() => setShowLinksTab(!showLinksTab)}
+            />
+          </div>
+
+          <div className="settings-item">
+            <div className="settings-item-label">
+              <div>
+                <span>Mostrar archivos</span>
+                <small>Documentos compartidos</small>
+              </div>
+            </div>
+            <div
+              className={`toggle ${showFilesTab ? 'active' : ''}`}
+              onClick={() => setShowFilesTab(!showFilesTab)}
+            />
+          </div>
+
           <button
             className="btn btn-primary btn-full"
             disabled={isSavingSettings}
@@ -204,13 +271,17 @@ export function GroupPanel({ group, onClose }: GroupPanelProps) {
                 allow_messages: allowMessages,
                 allow_media: allowMedia,
                 allow_links: allowLinks,
-                max_members: maxMembers ? parseInt(maxMembers) : null
+                max_members: maxMembers ? parseInt(maxMembers) : null,
+                show_members: showMembersTab,
+                show_media: showMediaTab,
+                show_links: showLinksTab,
+                show_files: showFilesTab
               });
               setIsSavingSettings(false);
               if (success) {
                 alert('Ajustes guardados correctamente (asegúrate de que estas columnas existan en tu tabla de Supabase).');
               } else {
-                alert('Error al guardar. Verifica que las columnas allow_messages, allow_media, allow_links y max_members existan en la tabla groups.');
+                alert('Error al guardar. Verifica que las nuevas columnas booleanas existan en la tabla groups.');
               }
             }}
           >

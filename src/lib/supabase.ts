@@ -48,6 +48,11 @@ export type Group = {
   allow_media?: boolean;
   allow_messages?: boolean;
   max_members?: number | null;
+
+  show_members?: boolean;
+  show_media?: boolean;
+  show_links?: boolean;
+  show_files?: boolean;
 };
 
 export type GroupMember = {
