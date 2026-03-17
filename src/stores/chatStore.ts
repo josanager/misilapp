@@ -151,18 +151,39 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   deleteMessage: async (messageId: string) => {
     try {
-      // 1. Fetch the message to see if it has a file or media_group_id
+      // 1. Optimistic Update: Immediately remove message from UI to feel blazing fast
+      // But we need to remember the state in case it fails and we need to revert
+      const prevState = get().messages;
+
+      // First find if this message belongs to a media group locally
+      const msgToDeleteLocal = prevState.find(m => m.id === messageId);
+      if (!msgToDeleteLocal) return false;
+
+      let localIdsToRemove = [messageId];
+      if (msgToDeleteLocal.media_group_id) {
+        localIdsToRemove = prevState
+          .filter(m => m.media_group_id === msgToDeleteLocal.media_group_id && m.user_id === msgToDeleteLocal.user_id)
+          .map(m => m.id);
+      }
+
+      set(state => ({
+        messages: state.messages.filter(m => !localIdsToRemove.includes(m.id))
+      }));
+
+      // 2. Fetch the message from DB to make sure we clean up files properly
       const { data: msg } = await supabase
         .from('messages')
         .select('*')
         .eq('id', messageId)
         .single();
         
-      if (!msg) return false;
+      if (!msg) {
+        // If it wasn't in DB (e.g. temporary message), we are already done
+        return true;
+      }
 
-      // 2. Determine which messages to delete
+      // 3. Determine all DB messages to delete (media group logic)
       let messagesToDelete = [msg];
-      
       if (msg.media_group_id) {
         const { data: groupMsgs } = await supabase
           .from('messages')
@@ -175,21 +196,30 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }
       }
 
-      const messageIds = messagesToDelete.map(m => m.id);
+      const dbMessageIds = messagesToDelete.map(m => m.id);
 
-      // 3. Delete files from R2 via Cloudflare Worker
+      // 4. Delete the database records FIRST so it syncs to other clients faster
+      const { error } = await supabase
+        .from('messages')
+        .delete()
+        .in('id', dbMessageIds);
+
+      if (error) {
+        console.error('❌ Supabase delete error:', error);
+        // Revert optimistic update
+        set({ messages: prevState });
+        return false;
+      }
+
+      // 5. Delete files from R2 in the background (fire and forget to not block UI)
       const workerUrl = import.meta.env.VITE_UPLOAD_WORKER_URL || 'http://localhost:8787';
       const { data: { session } } = await supabase.auth.getSession();
       
-      console.log('🗑️ Deleting message(s):', messageIds);
-      console.log('☁️ Worker URL:', workerUrl);
-
-      for (const m of messagesToDelete) {
+      Promise.all(messagesToDelete.map(async (m) => {
         if (m.file_url) {
           const key = m.file_url.split('/').pop();
           if (key) {
             try {
-              console.log('📡 Sending delete request to worker for key:', key);
               const response = await fetch(`${workerUrl}/delete-file`, {
                 method: 'DELETE',
                 headers: {
@@ -198,38 +228,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 },
                 body: JSON.stringify({ fileName: key }),
               });
-              
-              if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                console.warn(`⚠️ Worker failed to delete ${key}:`, response.status, errorData);
-              } else {
-                console.log('✅ Deleted file from R2:', key);
-              }
+              if (!response.ok) console.warn(`⚠️ Worker failed to delete ${key}`);
             } catch (err) {
               console.error('❌ Failed to delete file from R2:', err);
             }
           }
         }
-      }
+      })).catch(console.error);
 
-      // 4. Delete the database records
-      const { error } = await supabase
-        .from('messages')
-        .delete()
-        .in('id', messageIds);
-
-      if (error) {
-        console.error('❌ Supabase delete error:', error);
-        throw error;
-      }
-      
-      console.log('✨ Supabase deletion complete');
-
-      // Update local state immediately
-      set(state => ({
-        messages: state.messages.filter(m => !messageIds.includes(m.id))
-      }));
-      
       return true;
     } catch (error) {
       console.error('Error deleting message:', error);
