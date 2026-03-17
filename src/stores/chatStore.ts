@@ -35,7 +35,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
   reactions: {},
 
   fetchMessages: async (topicId: string) => {
-    set({ loading: true });
+    // Solo mostramos loading si no tenemos mensajes previos,
+    // para evitar el parpadeo de la UI al cambiar entre temas ya cacheados
+    if (get().currentTopicId !== topicId) {
+      set({ loading: true, messages: [] });
+    }
+
     const { data } = await supabase
       .from('messages')
       .select('*, profile:profiles(*)')
@@ -46,7 +51,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const messages = data || [];
     set({ messages, loading: false, currentTopicId: topicId });
     
-    // Fetch reactions for all loaded messages
+    // Fetch reactions for all loaded messages en background
     if (messages.length > 0) {
       get().fetchReactions(messages.map(m => m.id));
     }

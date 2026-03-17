@@ -351,11 +351,19 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition-fast);
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, color 0.15s ease;
+  will-change: transform;
 }
 .btn-icon:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
+  transform: scale(1.05);
+}
+.btn-icon:active {
+  transform: scale(0.9);
+  background: var(--bg-active);
+  color: white;
+  transition: transform 0.1s ease, background-color 0.1s ease;
 }
 
 /* Touch feedback for mobile */
@@ -365,7 +373,7 @@ html, body, #root {
   .topic-tab:active,
   .group-item:active {
     background: var(--bg-active) !important;
-    transform: scale(0.96);
+    transform: scale(0.94);
     transition: transform 0.1s ease;
   }
 }
@@ -512,9 +520,10 @@ html, body, #root {
   gap: var(--space-md);
   padding: var(--space-md) var(--space-lg);
   cursor: pointer;
-  transition: all var(--transition-normal);
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease;
   border-bottom: 1px solid var(--border);
   position: relative;
+  will-change: transform;
 }
 .group-item::before {
   content: '';
@@ -525,7 +534,7 @@ html, body, #root {
   width: 3px;
   background: var(--accent-gradient);
   transform: scaleY(0);
-  transition: transform var(--transition-normal);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   border-radius: 0 3px 3px 0;
 }
 .group-item:hover {
@@ -535,7 +544,9 @@ html, body, #root {
   transform: scaleY(1);
 }
 .group-item:active {
-  transform: scale(0.99);
+  transform: scale(0.97);
+  background: var(--bg-active) !important;
+  transition: transform 0.1s ease;
 }
 .group-item.active {
   background: var(--bg-active);
@@ -587,6 +598,7 @@ html, body, #root {
   height: 100%;
   background: var(--bg-primary);
   min-width: 0;
+  animation: fadeIn 0.15s ease-out;
 }
 
 .chat-header {
