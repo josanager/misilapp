@@ -1546,41 +1546,6 @@ html, body, #root {
 
 
 /* =================== EMOJI REACTIONS =================== */
-.message-react-btn {
-  position: absolute;
-  right: -8px;
-  bottom: -10px;
-  width: 26px;
-  height: 26px;
-  border-radius: var(--radius-full);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  cursor: pointer;
-  opacity: 0;
-  transform: scale(0.8);
-  transition: all var(--transition-fast);
-  z-index: 10;
-  box-shadow: var(--shadow-sm);
-}
-.message-bubble:hover .message-react-btn,
-.message-wrapper:hover .message-react-btn {
-  opacity: 1;
-  transform: scale(1);
-}
-.message-react-btn:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-  background: var(--bg-hover);
-  transform: scale(1.1) !important;
-}
-.message.own .message-react-btn {
-  right: auto;
-  left: -8px;
-}
 
 .emoji-picker {
   background: var(--bg-modal);
