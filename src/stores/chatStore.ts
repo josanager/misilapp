@@ -1,7 +1,9 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { supabase, type Message, type MessageReaction } from '../lib/supabase';
 
 interface ChatState {
+  messagesByTopic: Record<string, Message[]>;
   messages: Message[];
   currentTopicId: string | null;
   loading: boolean;
@@ -24,7 +26,10 @@ interface ChatState {
   subscribeToReactions: (topicId: string) => () => void;
 }
 
-export const useChatStore = create<ChatState>((set, get) => ({
+export const useChatStore = create<ChatState>()(
+  persist(
+    (set, get) => ({
+  messagesByTopic: {},
   messages: [],
   currentTopicId: null,
   loading: false,
@@ -35,25 +40,43 @@ export const useChatStore = create<ChatState>((set, get) => ({
   reactions: {},
 
   fetchMessages: async (topicId: string) => {
-    // Solo mostramos loading si no tenemos mensajes previos,
-    // para evitar el parpadeo de la UI al cambiar entre temas ya cacheados
+    // Si tenemos mensajes en caché para este tema, los mostramos instantáneamente
+    const cachedMessages = get().messagesByTopic[topicId] || [];
+
+    // Solo mostramos un pequeño parpadeo si no hay nada en caché
     if (get().currentTopicId !== topicId) {
-      set({ loading: true, messages: [] });
+      set({
+        currentTopicId: topicId,
+        messages: cachedMessages,
+        loading: cachedMessages.length === 0
+      });
     }
 
-    const { data } = await supabase
-      .from('messages')
-      .select('*, profile:profiles(*)')
-      .eq('topic_id', topicId)
-      .order('created_at', { ascending: true })
-      .limit(100);
-    
-    const messages = data || [];
-    set({ messages, loading: false, currentTopicId: topicId });
-    
-    // Fetch reactions for all loaded messages en background
-    if (messages.length > 0) {
-      get().fetchReactions(messages.map(m => m.id));
+    try {
+      const { data } = await supabase
+        .from('messages')
+        .select('*, profile:profiles(*)')
+        .eq('topic_id', topicId)
+        .order('created_at', { ascending: true })
+        .limit(100);
+
+      const newMessages = data || [];
+
+      set(state => ({
+        messages: newMessages,
+        loading: false,
+        messagesByTopic: {
+          ...state.messagesByTopic,
+          [topicId]: newMessages
+        }
+      }));
+
+      // Fetch reactions for all loaded messages en background
+      if (newMessages.length > 0) {
+        get().fetchReactions(newMessages.map(m => m.id));
+      }
+    } catch (e) {
+      set({ loading: false });
     }
   },
 
@@ -101,10 +124,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
       };
 
       // Add to UI immediately
-      set({ 
-        messages: [...messages, optimisticMessage],
+      const updatedMessages = [...messages, optimisticMessage];
+      set(state => ({
+        messages: updatedMessages,
+        messagesByTopic: {
+          ...state.messagesByTopic,
+          [topicId]: updatedMessages
+        },
         replyTo: null 
-      });
+      }));
 
       // Insert real into database using the exact same ID
       const { data, error } = await supabase.from('messages').insert({
@@ -126,18 +154,32 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       if (error) {
         // Revert on failure
-        set(state => ({
-          messages: state.messages.filter(m => m.id !== finalId)
-        }));
+        set(state => {
+          const reverted = state.messages.filter(m => m.id !== finalId);
+          return {
+            messages: reverted,
+            messagesByTopic: {
+              ...state.messagesByTopic,
+              [topicId]: reverted
+            }
+          };
+        });
         return false;
       }
       
       if (data) {
         // Solo actualizamos de manera silenciosa si las propiedades clave (como id o timestamp) difieren,
         // para minimizar aún más los re-renders innecesarios.
-        set(state => ({
-          messages: state.messages.map(m => m.id === finalId ? { ...m, ...data } : m)
-        }));
+        set(state => {
+          const finalMessages = state.messages.map(m => m.id === finalId ? { ...m, ...data } : m);
+          return {
+            messages: finalMessages,
+            messagesByTopic: {
+              ...state.messagesByTopic,
+              [topicId]: finalMessages
+            }
+          };
+        });
       }
 
       return true;
@@ -157,11 +199,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
       if (error) throw error;
       
       // Update local state immediately for better UX
-      set(state => ({
-        messages: state.messages.map(m => 
+      set(state => {
+        const newMessages = state.messages.map(m =>
           m.id === messageId ? { ...m, content: newContent, is_edited: true } : m
-        )
-      }));
+        );
+        const topicId = state.currentTopicId;
+        return {
+          messages: newMessages,
+          messagesByTopic: topicId ? { ...state.messagesByTopic, [topicId]: newMessages } : state.messagesByTopic
+        };
+      });
       
       return true;
     } catch (error) {
@@ -187,9 +234,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
           .map(m => m.id);
       }
 
-      set(state => ({
-        messages: state.messages.filter(m => !localIdsToRemove.includes(m.id))
-      }));
+      set(state => {
+        const filtered = state.messages.filter(m => !localIdsToRemove.includes(m.id));
+        const topicId = state.currentTopicId;
+        return {
+          messages: filtered,
+          messagesByTopic: topicId ? { ...state.messagesByTopic, [topicId]: filtered } : state.messagesByTopic
+        };
+      });
 
       // 2. Fetch the message from DB to make sure we clean up files properly
       const { data: msg } = await supabase
@@ -228,7 +280,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
       if (error) {
         console.error('❌ Supabase delete error:', error);
         // Revert optimistic update
-        set({ messages: prevState });
+        set(state => {
+          const topicId = state.currentTopicId;
+          return {
+            messages: prevState,
+            messagesByTopic: topicId ? { ...state.messagesByTopic, [topicId]: prevState } : state.messagesByTopic
+          };
+        });
         return false;
       }
 
@@ -264,7 +322,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  setCurrentTopic: (topicId) => set({ currentTopicId: topicId, messages: [], reactions: {} }),
+  setCurrentTopic: (topicId) => {
+    if (!topicId) {
+      set({ currentTopicId: null, messages: [], reactions: {} });
+      return;
+    }
+    // Carga instantánea desde caché si existe
+    const cached = get().messagesByTopic[topicId] || [];
+    set({ currentTopicId: topicId, messages: cached, reactions: {} });
+  },
 
   setReplyTo: (message) => set({ replyTo: message }),
 
@@ -288,19 +354,31 @@ export const useChatStore = create<ChatState>((set, get) => ({
           if (data) {
             const { messages } = get();
             if (!messages.find(m => m.id === data.id)) {
-              set({ messages: [...messages, data] });
+              set(state => {
+                const newMsgs = [...state.messages, data];
+                return {
+                  messages: newMsgs,
+                  messagesByTopic: { ...state.messagesByTopic, [topicId]: newMsgs }
+                };
+              });
             }
           }
         } else if (payload.eventType === 'UPDATE') {
-          set((state) => ({
-            messages: state.messages.map((m) =>
-              m.id === payload.new.id ? { ...m, ...payload.new } : m
-            ),
-          }));
+          set((state) => {
+            const newMsgs = state.messages.map((m) => m.id === payload.new.id ? { ...m, ...payload.new } : m);
+            return {
+              messages: newMsgs,
+              messagesByTopic: { ...state.messagesByTopic, [topicId]: newMsgs }
+            };
+          });
         } else if (payload.eventType === 'DELETE') {
-          set((state) => ({
-            messages: state.messages.filter((m) => m.id !== payload.old.id),
-          }));
+          set((state) => {
+            const newMsgs = state.messages.filter((m) => m.id !== payload.old.id);
+            return {
+              messages: newMsgs,
+              messagesByTopic: { ...state.messagesByTopic, [topicId]: newMsgs }
+            };
+          });
         }
       })
       .subscribe();
@@ -338,7 +416,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
   addMessage: (message: Message) => {
     const { messages } = get();
     if (!messages.find(m => m.id === message.id)) {
-      set({ messages: [...messages, message] });
+      set(state => {
+        const newMsgs = [...state.messages, message];
+        const topicId = state.currentTopicId;
+        return {
+          messages: newMsgs,
+          messagesByTopic: topicId ? { ...state.messagesByTopic, [topicId]: newMsgs } : state.messagesByTopic
+        };
+      });
     }
   },
 
@@ -415,5 +500,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
       supabase.removeChannel(channel);
     };
   },
-}));
+    }),
+    {
+      name: 'chat-latino-messages-storage',
+      // Solo persistimos el caché de mensajes. Dejamos currentTopicId y messages limpios
+      // para que cada vez que se inicie la sesión comience de cero
+      partialize: (state) => ({ messagesByTopic: state.messagesByTopic }),
+    }
+  )
+);
 
