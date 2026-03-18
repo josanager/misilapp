@@ -72,6 +72,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
       // OPTIMISTIC UPDATE: Use a real UUID instead of a temporary ID
       // This prevents React from unmounting and remounting the DOM node when the ID changes
       const finalId = crypto.randomUUID();
+
+      // Intentar obtener el perfil real de authStore si está disponible para evitar el glitch de "..."
+      let userProfile = { username: 'Usuario', display_name: 'Usuario' };
+      try {
+        const { useAuthStore } = await import('./authStore');
+        const authUser = useAuthStore.getState().user;
+        if (authUser) {
+          userProfile = { username: authUser.username, display_name: authUser.display_name || authUser.username };
+        }
+      } catch (e) {
+        // Fallback silently if circular dependency or error
+      }
+
       const optimisticMessage: Message = {
         id: finalId,
         topic_id: topicId,
@@ -84,7 +97,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         replied_to: replyTo?.id || null,
         media_group_id: mediaGroupId || null,
         created_at: new Date().toISOString(),
-        profile: { username: '...', display_name: '...' } as any, // Fake profile for UI
+        profile: userProfile as any,
       };
 
       // Add to UI immediately
@@ -120,10 +133,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
       
       if (data) {
-        // Silently update the object properties (like exact timestamps and profiles)
-        // without changing the array length or IDs, ensuring no animation trigger.
+        // Solo actualizamos de manera silenciosa si las propiedades clave (como id o timestamp) difieren,
+        // para minimizar aún más los re-renders innecesarios.
         set(state => ({
-          messages: state.messages.map(m => m.id === finalId ? data : m)
+          messages: state.messages.map(m => m.id === finalId ? { ...m, ...data } : m)
         }));
       }
 
