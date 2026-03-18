@@ -8,6 +8,7 @@ import { CreateTopicModal } from '../topics/CreateTopicModal';
 import { EmojiPicker, ReactionDisplay } from './EmojiPicker';
 import { VideoPlayer } from './VideoPlayer';
 import { ImageViewer } from './ImageViewer';
+import { getUserColor } from '../../lib/avatar';
 import type { Group, Topic, Message } from '../../types';
 
 interface ChatViewProps {
@@ -244,7 +245,7 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
     )}
       <header className="chat-header">
         <div className="chat-header-info">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button 
               className="btn-icon mobile-back-btn show-on-mobile"
               onClick={() => {
@@ -255,7 +256,7 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
             >
               <ArrowLeft size={24} />
             </button>
-            <div className="group-avatar" style={{ width: 40, height: 40 }}>
+            <div className="group-avatar" style={{ border: '2px solid var(--border)', width: 40, height: 40, background: getUserColor(group.id) }}>
               {getInitials(group.name)}
             </div>
             <div style={{ minWidth: 0 }}>
@@ -337,7 +338,7 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
                     onContextMenu={(e) => handleMessageClick(e, msg, isOwn)}
                   >
                     {!isOwn && (
-                      <div className="message-avatar" style={{ visibility: isChain ? 'hidden' : 'visible' }}>
+                      <div className="message-avatar" style={{ visibility: isChain ? 'hidden' : 'visible', background: getUserColor(msg.user_id) }}>
                         {getInitials(senderName)}
                       </div>
                     )}
@@ -466,7 +467,7 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
                       />
                     </div>
                     {isOwn && (
-                      <div className="message-avatar" style={{ visibility: isChain ? 'hidden' : 'visible' }}>
+                      <div className="message-avatar" style={{ visibility: isChain ? 'hidden' : 'visible', background: getUserColor(user?.id) }}>
                         {getInitials(senderName)}
                       </div>
                     )}

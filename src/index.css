@@ -559,7 +559,6 @@ html, body, #root {
   width: 48px;
   height: 48px;
   border-radius: var(--radius-full);
-  background: var(--accent-gradient);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -732,7 +731,6 @@ html, body, #root {
   width: 34px;
   height: 34px;
   border-radius: var(--radius-full);
-  background: var(--accent-gradient);
   display: flex;
   align-items: center;
   justify-content: center;

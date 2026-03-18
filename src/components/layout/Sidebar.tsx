@@ -3,6 +3,7 @@ import { useGroupStore } from '../../stores/groupStore';
 import { Settings, Search, Plus, LogOut, UserPlus, Check } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { CreateGroupModal } from '../groups/CreateGroupModal';
+import { getUserColor } from '../../lib/avatar';
 import type { Profile, Group } from '../../types';
 
 interface SidebarProps {
@@ -74,7 +75,7 @@ export function Sidebar({ groups, currentGroup, user, onSelectGroup, onOpenSetti
                 className={`group-item ${currentGroup?.id === group.id ? 'active' : ''}`}
                 onClick={() => onSelectGroup(group)}
               >
-                <div className="group-avatar">
+                <div className="group-avatar" style={{ background: getUserColor(group.id) }}>
                   {getInitials(group.name)}
                 </div>
                 <div className="group-info">
@@ -92,7 +93,7 @@ export function Sidebar({ groups, currentGroup, user, onSelectGroup, onOpenSetti
                 </div>
                 {searchResults.map(group => (
                   <li key={group.id} className="group-item search-result">
-                    <div className="group-avatar" style={{ opacity: 0.7 }}>
+                    <div className="group-avatar" style={{ opacity: 0.7, background: getUserColor(group.id) }}>
                       {getInitials(group.name)}
                     </div>
                     <div className="group-info">
@@ -127,7 +128,7 @@ export function Sidebar({ groups, currentGroup, user, onSelectGroup, onOpenSetti
         </div>
 
         <div className="user-profile-bar" onClick={onOpenSettings}>
-          <div className="group-avatar">
+          <div className="group-avatar" style={{ background: getUserColor(user.id) }}>
             {getInitials(user.display_name || user.username)}
           </div>
           <div className="group-info" style={{ flex: 1 }}>
