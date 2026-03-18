@@ -19,7 +19,7 @@ export function DesktopLayout() {
 
   const handleSelectGroup = useCallback((group: Group) => {
     setCurrentGroup(group);
-    setCurrentTopic(null); // General por defecto
+    setCurrentTopic(null); // Se auto-seleccionará el primero al cargar los topics en MainLayout
     setView('chat');
 
     fetchGroup(group.id);

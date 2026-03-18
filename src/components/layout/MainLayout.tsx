@@ -81,9 +81,8 @@ export function MainLayout() {
   const storeTopics = useGroupStore(state => state.topics);
   useEffect(() => {
     if (storeTopics.length > 0 && (!currentTopicId || !storeTopics.find(t => t.id === currentTopicId))) {
-      // Find "General" or fallback to first
-      const generalTopic = storeTopics.find(t => t.name.toLowerCase() === 'general') || storeTopics[0];
-      setCurrentTopic(generalTopic.id);
+      // Seleccionar el primer grupo disponible de la lista (que por orden de la base de datos es el correcto, no obligamos 'General')
+      setCurrentTopic(storeTopics[0].id);
     }
   }, [storeTopics, currentTopicId, setCurrentTopic]);
 
