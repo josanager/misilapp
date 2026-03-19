@@ -1,12 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase, type Message, type MessageReaction } from '../lib/supabase';
+import { realtimeService } from '../services/realtime/SupabaseRealtimeAdapter';
 
 interface ChatState {
   messagesByTopic: Record<string, Message[]>;
   messages: Message[];
   currentTopicId: string | null;
   loading: boolean;
+  initialFetchDone: Record<string, boolean>;
   sending: boolean;
   replyTo: Message | null;
   typingUsers: string[];
@@ -14,6 +16,7 @@ interface ChatState {
   reactions: Record<string, MessageReaction[]>;
   fetchMessages: (topicId: string) => Promise<void>;
   sendMessage: (topicId: string, content: string, type?: string, fileUrl?: string, fileName?: string, fileSize?: number, mediaGroupId?: string) => Promise<boolean>;
+  retryMessage: (messageId: string) => Promise<boolean>;
   editMessage: (messageId: string, newContent: string) => Promise<boolean>;
   deleteMessage: (messageId: string) => Promise<boolean>;
   setCurrentTopic: (topicId: string | null) => void;
@@ -33,6 +36,7 @@ export const useChatStore = create<ChatState>()(
   messages: [],
   currentTopicId: null,
   loading: false,
+  initialFetchDone: {},
   sending: false,
   replyTo: null,
   typingUsers: [],
@@ -40,18 +44,20 @@ export const useChatStore = create<ChatState>()(
   reactions: {},
 
   fetchMessages: async (topicId: string) => {
-    // Si tenemos mensajes en caché para este tema, los mostramos instantáneamente
+    // 1. Restore from cache immediately
     const cachedMessages = get().messagesByTopic[topicId] || [];
+    const hasBeenFetched = get().initialFetchDone[topicId];
 
-    // Solo mostramos un pequeño parpadeo si no hay nada en caché
     if (get().currentTopicId !== topicId) {
       set({
         currentTopicId: topicId,
         messages: cachedMessages,
-        loading: cachedMessages.length === 0
+        // Only show full page loading if there's no cache and it hasn't been fetched
+        loading: cachedMessages.length === 0 && !hasBeenFetched
       });
     }
 
+    // 2. Fetch fresh data in the background
     try {
       const { data } = await supabase
         .from('messages')
@@ -63,12 +69,11 @@ export const useChatStore = create<ChatState>()(
       const newMessages = data || [];
 
       set(state => ({
-        messages: newMessages,
+        // Solo sobrescribimos messages si es el topicId actual para evitar race conditions
+        messages: state.currentTopicId === topicId ? newMessages : state.messages,
         loading: false,
-        messagesByTopic: {
-          ...state.messagesByTopic,
-          [topicId]: newMessages
-        }
+        initialFetchDone: { ...state.initialFetchDone, [topicId]: true },
+        messagesByTopic: { ...state.messagesByTopic, [topicId]: newMessages }
       }));
 
       // Fetch reactions for all loaded messages en background
@@ -121,6 +126,7 @@ export const useChatStore = create<ChatState>()(
         media_group_id: mediaGroupId || null,
         created_at: new Date().toISOString(),
         profile: userProfile as any,
+        status: 'pending',
       };
 
       // Add to UI immediately
@@ -153,38 +159,106 @@ export const useChatStore = create<ChatState>()(
       }
 
       if (error) {
-        // Revert on failure
+        console.error('❌ Supabase insert error:', error);
+        // Marcamos como error en lugar de revertir, para que el usuario pueda reintentar
         set(state => {
-          const reverted = state.messages.filter(m => m.id !== finalId);
+          const errored = state.messages.map(m => m.id === finalId ? { ...m, status: 'error' as const } : m);
           return {
-            messages: reverted,
-            messagesByTopic: {
-              ...state.messagesByTopic,
-              [topicId]: reverted
-            }
+            messages: errored,
+            messagesByTopic: { ...state.messagesByTopic, [topicId]: errored }
           };
         });
         return false;
       }
       
       if (data) {
-        // Solo actualizamos de manera silenciosa si las propiedades clave (como id o timestamp) difieren,
-        // para minimizar aún más los re-renders innecesarios.
+        // Marcamos como "sent" explícitamente y actualizamos atributos remotos (como timestamps reales).
         set(state => {
-          const finalMessages = state.messages.map(m => m.id === finalId ? { ...m, ...data } : m);
+          const finalMessages = state.messages.map(m => m.id === finalId ? { ...m, ...data, status: 'sent' as const } : m);
           return {
             messages: finalMessages,
-            messagesByTopic: {
-              ...state.messagesByTopic,
-              [topicId]: finalMessages
-            }
+            messagesByTopic: { ...state.messagesByTopic, [topicId]: finalMessages }
           };
         });
       }
 
       return true;
-    } catch {
+    } catch (e) {
+      console.error('❌ Exception in sendMessage:', e);
       if (isMedia) set({ sending: false });
+
+      // Fallback: marcamos el mensaje insertado optimísticamente como fallido
+      // buscando el último pending the este usuario (si finalId se perdió en un error síncrono previo)
+      set(state => {
+        // Find the last pending message for this user/topic
+        const pendingMsgs = state.messages.filter(m => m.status === 'pending' && m.topic_id === topicId);
+        const lastPending = pendingMsgs[pendingMsgs.length - 1];
+        if (!lastPending) return state;
+
+        const errored = state.messages.map(m => m.id === lastPending.id ? { ...m, status: 'error' as const } : m);
+        return {
+          messages: errored,
+          messagesByTopic: { ...state.messagesByTopic, [topicId]: errored }
+        };
+      });
+      return false;
+    }
+  },
+
+  retryMessage: async (messageId: string) => {
+    try {
+      const state = get();
+      const msg = state.messages.find(m => m.id === messageId);
+
+      if (!msg || msg.status !== 'error') return false;
+
+      // Volver a estado "pending" visualmente de inmediato
+      set(s => {
+        const pendingMsgs = s.messages.map(m => m.id === messageId ? { ...m, status: 'pending' as const } : m);
+        return {
+          messages: pendingMsgs,
+          messagesByTopic: msg.topic_id ? { ...s.messagesByTopic, [msg.topic_id]: pendingMsgs } : s.messagesByTopic
+        };
+      });
+
+      // Intentar enviar a base de datos
+      const { data, error } = await supabase.from('messages').insert({
+        id: msg.id, // Reusamos el ID
+        topic_id: msg.topic_id,
+        user_id: msg.user_id,
+        content: msg.content,
+        type: msg.type,
+        file_url: msg.file_url,
+        file_name: msg.file_name,
+        file_size: msg.file_size,
+        replied_to: msg.replied_to,
+        media_group_id: msg.media_group_id,
+      }).select('*, profile:profiles(*)').single();
+
+      if (error) {
+        set(s => {
+          const errored = s.messages.map(m => m.id === messageId ? { ...m, status: 'error' as const } : m);
+          return {
+            messages: errored,
+            messagesByTopic: msg.topic_id ? { ...s.messagesByTopic, [msg.topic_id]: errored } : s.messagesByTopic
+          };
+        });
+        return false;
+      }
+
+      if (data) {
+        set(s => {
+          const sentMsgs = s.messages.map(m => m.id === messageId ? { ...m, ...data, status: 'sent' as const } : m);
+          return {
+            messages: sentMsgs,
+            messagesByTopic: msg.topic_id ? { ...s.messagesByTopic, [msg.topic_id]: sentMsgs } : s.messagesByTopic
+          };
+        });
+      }
+
+      return true;
+    } catch (e) {
+      console.error('Error retrying message:', e);
       return false;
     }
   },
@@ -335,82 +409,57 @@ export const useChatStore = create<ChatState>()(
   setReplyTo: (message) => set({ replyTo: message }),
 
   subscribeToMessages: (topicId: string) => {
-    const channel = supabase
-      .channel(`messages:${topicId}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'messages',
-        filter: `topic_id=eq.${topicId}`,
-      }, async (payload) => {
-        if (payload.eventType === 'INSERT') {
-          // Fetch the full message with profile
-          const { data } = await supabase
-            .from('messages')
-            .select('*, profile:profiles(*)')
-            .eq('id', payload.new.id)
-            .single();
-
-          if (data) {
-            const { messages } = get();
-            if (!messages.find(m => m.id === data.id)) {
-              set(state => {
-                const newMsgs = [...state.messages, data];
-                return {
-                  messages: newMsgs,
-                  messagesByTopic: { ...state.messagesByTopic, [topicId]: newMsgs }
-                };
-              });
-            }
-          }
-        } else if (payload.eventType === 'UPDATE') {
-          set((state) => {
-            const newMsgs = state.messages.map((m) => m.id === payload.new.id ? { ...m, ...payload.new } : m);
-            return {
-              messages: newMsgs,
-              messagesByTopic: { ...state.messagesByTopic, [topicId]: newMsgs }
-            };
-          });
-        } else if (payload.eventType === 'DELETE') {
-          set((state) => {
-            const newMsgs = state.messages.filter((m) => m.id !== payload.old.id);
+    const subscription = realtimeService.subscribeToTopicMessages(topicId, {
+      onInsert: (data) => {
+        const { messages } = get();
+        if (!messages.find(m => m.id === data.id)) {
+          set(state => {
+            // Guardamos el "sent" y otras props
+            const newMsgs = [...state.messages, { ...data, status: 'sent' as const }];
             return {
               messages: newMsgs,
               messagesByTopic: { ...state.messagesByTopic, [topicId]: newMsgs }
             };
           });
         }
-      })
-      .subscribe();
+      },
+      onUpdate: (payload) => {
+        set((state) => {
+          const newMsgs = state.messages.map((m) => m.id === payload.id ? { ...m, ...payload } : m);
+          return {
+            messages: newMsgs,
+            messagesByTopic: { ...state.messagesByTopic, [topicId]: newMsgs }
+          };
+        });
+      },
+      onDelete: (id) => {
+        set((state) => {
+          const newMsgs = state.messages.filter((m) => m.id !== id);
+          return {
+            messages: newMsgs,
+            messagesByTopic: { ...state.messagesByTopic, [topicId]: newMsgs }
+          };
+        });
+      }
+    });
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => subscription.unsubscribe();
   },
 
   subscribeToPresence: (groupId: string) => {
-    const channel = supabase.channel(`presence:${groupId}`, {
-      config: { presence: { key: 'user_id' } },
+    let unsubs: () => void = () => {};
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      const trackUser = user ? { userId: user.id } : undefined;
+      const sub = realtimeService.subscribeToPresence(
+        groupId,
+        (userIds) => set({ onlineUsers: userIds }),
+        trackUser
+      );
+      unsubs = sub.unsubscribe;
     });
 
-    channel
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        const online = Object.keys(state);
-        set({ onlineUsers: online });
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            await channel.track({ user_id: user.id, online_at: new Date().toISOString() });
-          }
-        }
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => unsubs();
   },
 
   addMessage: (message: Message) => {
@@ -477,35 +526,32 @@ export const useChatStore = create<ChatState>()(
   },
 
   subscribeToReactions: (topicId: string) => {
-    // Subscribe to reaction changes for messages in this topic
-    const channel = supabase
-      .channel(`reactions:${topicId}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'message_reactions',
-      }, async (payload) => {
-        const msgId = (payload.new as any)?.message_id || (payload.old as any)?.message_id;
-        if (msgId) {
-          // Check if this message is in our current list
-          const { messages } = get();
-          if (messages.find(m => m.id === msgId)) {
-            get().fetchReactions([msgId]);
-          }
+    const subscription = realtimeService.subscribeToTopicReactions(topicId, {
+      onReactionChange: (msgId) => {
+        const { messages } = get();
+        if (messages.find(m => m.id === msgId)) {
+          get().fetchReactions([msgId]);
         }
-      })
-      .subscribe();
+      }
+    });
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => subscription.unsubscribe();
   },
     }),
     {
       name: 'chat-latino-messages-storage',
+      version: 1,
       // Solo persistimos el caché de mensajes. Dejamos currentTopicId y messages limpios
-      // para que cada vez que se inicie la sesión comience de cero
-      partialize: (state) => ({ messagesByTopic: state.messagesByTopic }),
+      // para que cada vez que se inicie la sesión comience de cero.
+      // TRUNCAMOS el historial para no superar cuota localStorage: guardamos máx 50 mensajes x topic.
+      partialize: (state) => {
+        const truncatedByTopic: Record<string, Message[]> = {};
+        for (const [topicId, msgs] of Object.entries(state.messagesByTopic)) {
+          // Tomar los últimos 50 mensajes (que son los más recientes y visibles)
+          truncatedByTopic[topicId] = msgs.slice(-50);
+        }
+        return { messagesByTopic: truncatedByTopic };
+      },
     }
   )
 );

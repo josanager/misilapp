@@ -82,6 +82,8 @@ export type Topic = {
   created_at: string;
 };
 
+export type MessageDeliveryStatus = 'pending' | 'sent' | 'error';
+
 export type Message = {
   id: string;
   topic_id: string;
@@ -96,4 +98,5 @@ export type Message = {
   is_edited?: boolean;
   created_at: string;
   profile?: Profile;
+  status?: MessageDeliveryStatus; // Client-side property
 };

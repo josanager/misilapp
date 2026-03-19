@@ -20,7 +20,9 @@ interface ChatViewProps {
   onShowSidebar: () => void;
 }
 
-function MessageBubble({ children, onClick }: { children: React.ReactNode, onClick: (e: any) => void }) {
+import { memo } from 'react';
+
+const MessageBubble = memo(({ children, onClick }: { children: React.ReactNode, onClick: (e: any) => void }) => {
   return (
     <div 
       className="message-bubble" 
@@ -30,7 +32,7 @@ function MessageBubble({ children, onClick }: { children: React.ReactNode, onCli
       {children}
     </div>
   );
-}
+});
 
 export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggleGroupPanel, onShowSidebar }: ChatViewProps) {
   const { 
@@ -151,13 +153,19 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
     e.stopPropagation();
     if (optionsMenu) {
       const msgToEdit = messages.find(m => m.id === optionsMenu.messageId);
-      if (msgToEdit) {
+      // Solo permitimos editar si no está pendiente/error (o al menos no ha fallado críticamente)
+      if (msgToEdit && msgToEdit.status !== 'error') {
         setEditingMessageId(msgToEdit.id);
         setEditingContent(msgToEdit.content || msgToEdit.file_name || '');
         setReplyTo(null);
       }
       setOptionsMenu(null);
     }
+  };
+
+  const handleRetry = async (e: React.MouseEvent, msgId: string) => {
+    e.stopPropagation();
+    await useChatStore.getState().retryMessage(msgId);
   };
 
   const cancelEditing = () => {
@@ -458,6 +466,16 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
                         <div className="message-time">
                           {formatTime(msg.created_at)}
                           {msg.is_edited && <span style={{fontSize: '0.85em', opacity: 0.7, marginLeft: '4px'}}>(editado)</span>}
+                          {isOwn && msg.status === 'pending' && <span style={{fontSize: '0.85em', opacity: 0.7, marginLeft: '4px'}}>🕒</span>}
+                          {isOwn && msg.status === 'error' && (
+                             <span
+                               style={{fontSize: '0.85em', color: '#ff4b4b', marginLeft: '4px', cursor: 'pointer', fontWeight: 'bold'}}
+                               onClick={(e) => handleRetry(e, msg.id)}
+                               title="Reintentar"
+                             >
+                               ❌ Reintentar
+                             </span>
+                          )}
                         </div>
                       </MessageBubble>
                       
