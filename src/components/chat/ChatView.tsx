@@ -3,11 +3,12 @@ import { useChatStore } from '../../stores/chatStore';
 import { useGroupStore } from '../../stores/groupStore';
 import { useAuthStore } from '../../stores/authStore';
 import { MessageInput } from './MessageInput';
-import { Plus, Hash, SmilePlus, Edit2, Trash2, X, ArrowLeft } from 'lucide-react';
+import { Plus, Hash, SmilePlus, Edit2, Trash2, X, ArrowLeft, Heart } from 'lucide-react';
 import { CreateTopicModal } from '../topics/CreateTopicModal';
 import { EmojiPicker, ReactionDisplay } from './EmojiPicker';
 import { VideoPlayer } from './VideoPlayer';
 import { ImageViewer } from './ImageViewer';
+import { SupportModal } from './SupportModal';
 import { getUserColor } from '../../lib/avatar';
 import type { Group, Topic, Message } from '../../types';
 
@@ -57,6 +58,7 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
     isOwn: boolean;
   } | null>(null);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+  const [showSupportModal, setShowSupportModal] = useState(false);
 
   const dragCounter = useRef(0);
 
@@ -282,7 +284,26 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
           </div>
         </div>
         <div className="chat-header-actions">
-          {/* Group info button removed, header click opens panel instead */}
+          <button
+            className="btn-icon"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#ef4444',
+              padding: '6px 12px',
+              borderRadius: '20px',
+              fontSize: '13px',
+              fontWeight: 600,
+              border: '1px solid rgba(239, 68, 68, 0.2)'
+            }}
+            onClick={() => setShowSupportModal(true)}
+            title="Apoyar el proyecto"
+          >
+            <Heart size={16} fill="#ef4444" />
+            <span className="hide-on-mobile">Apoyar</span>
+          </button>
         </div>
       </header>
 
@@ -605,6 +626,10 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
           src={selectedImageUrl} 
           onClose={() => setSelectedImageUrl(null)} 
         />
+      )}
+
+      {showSupportModal && (
+        <SupportModal onClose={() => setShowSupportModal(false)} />
       )}
     </div>
   );
