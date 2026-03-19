@@ -3,7 +3,7 @@ import { useChatStore } from '../../stores/chatStore';
 import { useGroupStore } from '../../stores/groupStore';
 import { useAuthStore } from '../../stores/authStore';
 import { MessageInput } from './MessageInput';
-import { Users, Plus, Hash, SmilePlus, Edit2, Trash2, X, ArrowLeft } from 'lucide-react';
+import { Plus, Hash, SmilePlus, Edit2, Trash2, X, ArrowLeft } from 'lucide-react';
 import { CreateTopicModal } from '../topics/CreateTopicModal';
 import { EmojiPicker, ReactionDisplay } from './EmojiPicker';
 import { VideoPlayer } from './VideoPlayer';
@@ -264,21 +264,25 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
             >
               <ArrowLeft size={24} />
             </button>
-            <div className="group-avatar" style={{ border: '2px solid var(--border)', width: 40, height: 40, background: getUserColor(group.id) }}>
-              {getInitials(group.name)}
-            </div>
-            <div style={{ minWidth: 0 }}>
-              <h3 style={{ margin: 0 }}>{group.name}</h3>
-              <p style={{ margin: 0, opacity: 0.7, fontSize: 12 }}>
-                {members.length} miembros • {currentTopic?.name || 'Sin tema'}
-              </p>
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}
+              onClick={onToggleGroupPanel}
+              title="Información del grupo"
+            >
+              <div className="group-avatar" style={{ border: '2px solid var(--border)', width: 40, height: 40, background: getUserColor(group.id) }}>
+                {getInitials(group.name)}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <h3 style={{ margin: 0 }}>{group.name}</h3>
+                <p style={{ margin: 0, opacity: 0.7, fontSize: 12 }}>
+                  {members.length} miembros • {currentTopic?.name || 'Sin tema'}
+                </p>
+              </div>
             </div>
           </div>
         </div>
         <div className="chat-header-actions">
-          <button className="btn-icon" onClick={onToggleGroupPanel} title="Información del grupo">
-            <Users size={20} />
-          </button>
+          {/* Group info button removed, header click opens panel instead */}
         </div>
       </header>
 
