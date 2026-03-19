@@ -1,103 +1,114 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 type Bindings = {
   BUCKET: R2Bucket;
-  S3_ENDPOINT: string;
-  S3_ACCESS_KEY_ID: string;
-  S3_SECRET_ACCESS_KEY: string;
+  R2_PUBLIC_DOMAIN: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
 
 app.use('*', cors({
   origin: '*', // En producción debería limitarse al dominio de Pages
-  allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
 }));
 
-app.get('/', (c) => c.text('Chat Latino R2 Worker API is running!'));
+// Authorization middleware
+app.use('*', async (c, next) => {
+  if (c.req.method === 'OPTIONS' || (c.req.method === 'GET' && new URL(c.req.url).pathname === '/')) {
+    return next();
+  }
 
-app.post('/generate-upload-url', async (c) => {
-  // Simple auth check via Authorization header
   const authHeader = c.req.header('Authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return c.json({ error: 'Missing or invalid Authorization header' }, 401);
   }
 
-  // TODO: Verify JWT with Supabase using edge-compatible verify logic
-  // For now, we trust the token presence. In a strict setup, verify it.
+  // En un setup estricto, verificaríamos el token de Supabase aquí.
+  await next();
+});
 
+app.get('/', (c) => c.text('Chat Latino R2 Worker API is running!'));
+
+app.post('/upload/create', async (c) => {
   try {
-    const body = await c.req.json();
-    const { fileName, contentType } = body;
+    const { filename, contentType } = await c.req.json();
 
-    if (!fileName || !contentType) {
-      return c.json({ error: 'Missing fileName or contentType' }, 400);
+    if (!filename || !contentType) {
+      return c.json({ error: 'Missing filename or contentType' }, 400);
     }
 
-    const s3 = new S3Client({
-      region: 'auto',
-      endpoint: c.env.S3_ENDPOINT,
-      credentials: {
-        accessKeyId: c.env.S3_ACCESS_KEY_ID,
-        secretAccessKey: c.env.S3_SECRET_ACCESS_KEY,
-      },
+    const multipartUpload = await c.env.BUCKET.createMultipartUpload(filename, {
+      httpMetadata: { contentType },
     });
 
-    const command = new PutObjectCommand({
-      Bucket: 'chat-latino', // Debe coincidir con el nombre de tu bucket
-      Key: fileName,
-      ContentType: contentType,
-    });
-
-    const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
-    
-    // The public URL where this file will be accessible.
-    // For R2, this is the custom domain or the workers.dev domain connected to the bucket.
-    // We'll return just the uploadUrl for now, and the client will know the public R2 domain.
-    return c.json({ uploadUrl: url, key: fileName });
+    return c.json({ uploadId: multipartUpload.uploadId, key: multipartUpload.key });
   } catch (error) {
-    console.error('Error generating pre-signed URL:', error);
+    console.error('Error creating multipart upload:', error);
     return c.json({ error: 'Internal Server Error' }, 500);
   }
 });
 
-app.delete('/delete-file', async (c) => {
-  const authHeader = c.req.header('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return c.json({ error: 'Missing or invalid Authorization header' }, 401);
-  }
-
+app.put('/upload/part', async (c) => {
   try {
-    const body = await c.req.json();
-    const { fileName } = body;
+    const url = new URL(c.req.url);
+    const uploadId = url.searchParams.get('uploadId');
+    const key = url.searchParams.get('key');
+    const partNumberStr = url.searchParams.get('partNumber');
 
-    if (!fileName) {
-      return c.json({ error: 'Missing fileName' }, 400);
+    if (!uploadId || !key || !partNumberStr) {
+      return c.json({ error: 'Missing query parameters' }, 400);
     }
 
-    const s3 = new S3Client({
-      region: 'auto',
-      endpoint: c.env.S3_ENDPOINT,
-      credentials: {
-        accessKeyId: c.env.S3_ACCESS_KEY_ID,
-        secretAccessKey: c.env.S3_SECRET_ACCESS_KEY,
-      },
-    });
-
-    const command = new DeleteObjectCommand({
-      Bucket: 'chat-latino',
-      Key: fileName,
-    });
-
-    await s3.send(command);
+    const partNumber = parseInt(partNumberStr, 10);
+    const multipartUpload = c.env.BUCKET.resumeMultipartUpload(key, uploadId);
     
-    return c.json({ success: true, key: fileName });
+    // c.req.raw.body is a ReadableStream which can be passed directly
+    const uploadedPart = await multipartUpload.uploadPart(partNumber, c.req.raw.body);
+
+    return c.json({ etag: uploadedPart.etag, partNumber: uploadedPart.partNumber });
   } catch (error) {
-    console.error('Error deleting file:', error);
+    console.error('Error uploading part:', error);
+    return c.json({ error: 'Internal Server Error' }, 500);
+  }
+});
+
+app.post('/upload/complete', async (c) => {
+  try {
+    const { uploadId, key, parts } = await c.req.json();
+
+    if (!uploadId || !key || !parts || !Array.isArray(parts)) {
+      return c.json({ error: 'Missing required fields' }, 400);
+    }
+
+    const multipartUpload = c.env.BUCKET.resumeMultipartUpload(key, uploadId);
+    await multipartUpload.complete(parts);
+
+    const r2Domain = c.env.R2_PUBLIC_DOMAIN || 'https://pub-f850fd1c1eb6463dbba2a7c8c94f6267.r2.dev';
+    const publicUrl = `${r2Domain}/${key}`;
+
+    return c.json({ url: publicUrl, key });
+  } catch (error) {
+    console.error('Error completing upload:', error);
+    return c.json({ error: 'Internal Server Error' }, 500);
+  }
+});
+
+app.delete('/upload/abort', async (c) => {
+  try {
+    const { uploadId, key } = await c.req.json();
+
+    if (!uploadId || !key) {
+      return c.json({ error: 'Missing uploadId or key' }, 400);
+    }
+
+    const multipartUpload = c.env.BUCKET.resumeMultipartUpload(key, uploadId);
+    await multipartUpload.abort();
+
+    return c.json({ success: true });
+  } catch (error) {
+    console.error('Error aborting upload:', error);
     return c.json({ error: 'Internal Server Error' }, 500);
   }
 });
