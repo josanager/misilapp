@@ -36,9 +36,8 @@ export function SupportModal({ onClose }: SupportModalProps) {
 
         <div className="support-modal-body">
           <div className="support-qr-container">
-            {/* Placeholder for actual QR code */}
             <div className="support-qr-placeholder">
-               <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=SupportUs" alt="QR de apoyo" className="support-qr-image" />
+               <img src="/IMG_1312.jpeg" alt="QR de apoyo" className="support-qr-image" style={{ width: '100%', height: 'auto', borderRadius: '12px', display: 'block' }} />
             </div>
           </div>
 

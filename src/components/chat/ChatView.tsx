@@ -285,7 +285,7 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
         </div>
         <div className="chat-header-actions">
           <button
-            className="btn-icon"
+            className="btn-icon support-btn-animated"
             style={{
               display: 'flex',
               alignItems: 'center',
