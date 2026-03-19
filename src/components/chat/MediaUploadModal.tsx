@@ -115,7 +115,7 @@ export function MediaUploadModal({ files, topicId, onClose }: MediaUploadModalPr
           };
 
           // Modify uploadSingleFile to accept onProgress callback
-          await uploadSingleFileWithProgress(file, captions[i], i, fileType, onProgress, mediaGroupId);
+          await uploadWithMultipart(file, captions[i], i, fileType, onProgress, mediaGroupId);
           fileProgressMap.set(i, file.size); // Ensure it's marked as 100% done
         } catch (err) {
           if (err instanceof Error && err.message === 'Cancelled') return;
@@ -134,7 +134,7 @@ export function MediaUploadModal({ files, topicId, onClose }: MediaUploadModalPr
     }
   };
 
-  const uploadSingleFileWithProgress = (
+  const uploadWithMultipart = async (
     file: File, 
     caption: string, 
     index: number,
@@ -142,66 +142,111 @@ export function MediaUploadModal({ files, topicId, onClose }: MediaUploadModalPr
     onProgress: (loaded: number) => void,
     mediaGroupId?: string
   ): Promise<void> => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const ext = file.name.split('.').pop();
-        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-        const workerUrl = import.meta.env.VITE_UPLOAD_WORKER_URL || 'http://localhost:8787';
-        const { data: { session } } = await supabase.auth.getSession();
+    const ext = file.name.split('.').pop();
+    const filename = `${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+    const workerUrl = import.meta.env.VITE_UPLOAD_WORKER_URL || 'http://localhost:8787';
+    const { data: { session } } = await supabase.auth.getSession();
+    const authHeader = session ? `Bearer ${session.access_token}` : '';
 
-        const presignRes = await fetch(`${workerUrl}/generate-upload-url`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': session ? `Bearer ${session.access_token}` : '',
-          },
-          body: JSON.stringify({ fileName, contentType: file.type }),
-        });
+    let uploadId: string | null = null;
+    let key: string | null = null;
 
-        if (!presignRes.ok) throw new Error(`Worker error: ${presignRes.status}`);
-        const { uploadUrl, key } = await presignRes.json();
+    try {
+      // 1. Create multipart upload
+      const createRes = await fetch(`${workerUrl}/upload/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader,
+        },
+        body: JSON.stringify({ filename, contentType: file.type }),
+      });
 
+      if (!createRes.ok) throw new Error(`Create upload failed: ${createRes.status}`);
+      const createData = await createRes.json();
+      uploadId = createData.uploadId;
+      key = createData.key;
+
+      if (!uploadId || !key) throw new Error('Missing uploadId or key from create response');
+
+      if (isCancelledRef.current || skippedIndexesRef.current.has(index)) {
+        throw new Error('Cancelled');
+      }
+
+      // 2. Upload parts
+      const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
+      const totalParts = Math.ceil(file.size / CHUNK_SIZE);
+      const parts = [];
+      let uploadedBytes = 0;
+
+      for (let partNumber = 1; partNumber <= totalParts; partNumber++) {
         if (isCancelledRef.current || skippedIndexesRef.current.has(index)) {
-          resolve();
-          return;
+          throw new Error('Cancelled');
         }
 
-        const xhr = new XMLHttpRequest();
-        if (index === previewIndex) activeXhrRef.current = xhr;
+        const start = (partNumber - 1) * CHUNK_SIZE;
+        const end = Math.min(start + CHUNK_SIZE, file.size);
+        const chunk = file.slice(start, end);
 
-        xhr.open('PUT', uploadUrl);
-        xhr.setRequestHeader('Content-Type', file.type);
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) onProgress(e.loaded);
-        };
-        xhr.onload = async () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              if (isCancelledRef.current || skippedIndexesRef.current.has(index)) {
-                resolve();
-                return;
-              }
-              const r2Domain = import.meta.env.VITE_R2_PUBLIC_DOMAIN || 'https://pub-f850fd1c1eb6463dbba2a7c8c94f6267.r2.dev';
-              const publicUrl = `${r2Domain}/${key}`;
-              console.log('✅ Uploaded to R2:', publicUrl);
+        const partRes = await fetch(`${workerUrl}/upload/part?uploadId=${uploadId}&key=${key}&partNumber=${partNumber}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': authHeader,
+          },
+          body: chunk, // Send the Blob directly
+        });
 
-              const messageContent = caption.trim() || file.name;
-              await sendMessage(topicId, messageContent, fileType, publicUrl, file.name, file.size, mediaGroupId);
-              resolve();
-            } catch (err) {
-              reject(err);
-            }
-          } else {
-            reject(new Error(`Status ${xhr.status}`));
-          }
-        };
-        xhr.onerror = () => reject(new Error('Network error'));
-        xhr.onabort = () => reject(new Error('Cancelled'));
-        xhr.send(file);
-      } catch (err) {
-        reject(err);
+        if (!partRes.ok) throw new Error(`Upload part ${partNumber} failed: ${partRes.status}`);
+        const partData = await partRes.json();
+
+        parts.push({
+          partNumber: partData.partNumber,
+          etag: partData.etag,
+        });
+
+        uploadedBytes += chunk.size;
+        onProgress(uploadedBytes);
       }
-    });
+
+      if (isCancelledRef.current || skippedIndexesRef.current.has(index)) {
+        throw new Error('Cancelled');
+      }
+
+      // 3. Complete multipart upload
+      const completeRes = await fetch(`${workerUrl}/upload/complete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader,
+        },
+        body: JSON.stringify({ uploadId, key, parts }),
+      });
+
+      if (!completeRes.ok) throw new Error(`Complete upload failed: ${completeRes.status}`);
+      const completeData = await completeRes.json();
+
+      const publicUrl = completeData.url;
+      console.log('✅ Uploaded to R2:', publicUrl);
+
+      const messageContent = caption.trim() || file.name;
+      await sendMessage(topicId, messageContent, fileType, publicUrl, file.name, file.size, mediaGroupId);
+
+    } catch (err) {
+      if (err instanceof Error && err.message === 'Cancelled') {
+        // Abort multipart upload if it was started
+        if (uploadId && key) {
+          fetch(`${workerUrl}/upload/abort`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': authHeader,
+            },
+            body: JSON.stringify({ uploadId, key }),
+          }).catch(e => console.error('Failed to abort upload:', e));
+        }
+      }
+      throw err;
+    }
   };
 
   const isVideo = currentFile?.type.startsWith('video/');
