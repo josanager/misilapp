@@ -3,11 +3,12 @@ import { useChatStore } from '../../stores/chatStore';
 import { useGroupStore } from '../../stores/groupStore';
 import { useAuthStore } from '../../stores/authStore';
 import { MessageInput } from './MessageInput';
-import { Users, Plus, Hash, SmilePlus, Edit2, Trash2, X, ArrowLeft } from 'lucide-react';
+import { Plus, Hash, SmilePlus, Edit2, Trash2, X, ArrowLeft, Heart } from 'lucide-react';
 import { CreateTopicModal } from '../topics/CreateTopicModal';
 import { EmojiPicker, ReactionDisplay } from './EmojiPicker';
 import { VideoPlayer } from './VideoPlayer';
 import { ImageViewer } from './ImageViewer';
+import { SupportModal } from './SupportModal';
 import { getUserColor } from '../../lib/avatar';
 import type { Group, Topic, Message } from '../../types';
 
@@ -57,6 +58,7 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
     isOwn: boolean;
   } | null>(null);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+  const [showSupportModal, setShowSupportModal] = useState(false);
 
   const dragCounter = useRef(0);
 
@@ -264,20 +266,43 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
             >
               <ArrowLeft size={24} />
             </button>
-            <div className="group-avatar" style={{ border: '2px solid var(--border)', width: 40, height: 40, background: getUserColor(group.id) }}>
-              {getInitials(group.name)}
-            </div>
-            <div style={{ minWidth: 0 }}>
-              <h3 style={{ margin: 0 }}>{group.name}</h3>
-              <p style={{ margin: 0, opacity: 0.7, fontSize: 12 }}>
-                {members.length} miembros • {currentTopic?.name || 'Sin tema'}
-              </p>
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}
+              onClick={onToggleGroupPanel}
+              title="Información del grupo"
+            >
+              <div className="group-avatar" style={{ border: '2px solid var(--border)', width: 40, height: 40, background: getUserColor(group.id) }}>
+                {getInitials(group.name)}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <h3 style={{ margin: 0 }}>{group.name}</h3>
+                <p style={{ margin: 0, opacity: 0.7, fontSize: 12 }}>
+                  {members.length} miembros • {currentTopic?.name || 'Sin tema'}
+                </p>
+              </div>
             </div>
           </div>
         </div>
         <div className="chat-header-actions">
-          <button className="btn-icon" onClick={onToggleGroupPanel} title="Información del grupo">
-            <Users size={20} />
+          <button
+            className="btn-icon"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#ef4444',
+              padding: '6px 12px',
+              borderRadius: '20px',
+              fontSize: '13px',
+              fontWeight: 600,
+              border: '1px solid rgba(239, 68, 68, 0.2)'
+            }}
+            onClick={() => setShowSupportModal(true)}
+            title="Apoyar el proyecto"
+          >
+            <Heart size={16} fill="#ef4444" />
+            <span className="hide-on-mobile">Apoyar</span>
           </button>
         </div>
       </header>
@@ -601,6 +626,10 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
           src={selectedImageUrl} 
           onClose={() => setSelectedImageUrl(null)} 
         />
+      )}
+
+      {showSupportModal && (
+        <SupportModal onClose={() => setShowSupportModal(false)} />
       )}
     </div>
   );
