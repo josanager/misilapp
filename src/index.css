@@ -2501,6 +2501,24 @@ html, body, #root {
   100% { transform: scale(1); }
 }
 
+@keyframes jumpVibrate {
+  0%   { transform: translateY(0); }
+  10%  { transform: translateY(-8px); }
+  20%  { transform: translateY(0); }
+  30%  { transform: translateY(-4px); }
+  40%  { transform: translateY(0); }
+  50%  { transform: translateY(0) rotate(0deg); }
+  55%  { transform: translateY(0) rotate(5deg); }
+  60%  { transform: translateY(0) rotate(-5deg); }
+  65%  { transform: translateY(0) rotate(5deg); }
+  70%  { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(0); }
+}
+
+.support-btn-animated {
+  animation: jumpVibrate 3s infinite ease-in-out;
+}
+
 .support-modal-header h2 {
   margin: 0;
   font-size: 24px;
