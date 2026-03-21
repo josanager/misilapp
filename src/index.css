@@ -7,7 +7,7 @@
   --bg-tertiary: #1c2733;
   --bg-hover: #242f3d;
   --bg-active: #2b5278;
-  --bg-message-own: #2b5278;
+  --bg-message-own: #991A1A;
   --bg-message-other: #182533;
   --bg-input: #242f3d;
   --bg-modal: #1c2733;
@@ -20,9 +20,13 @@
   --text-link: #6ab2f2;
   --text-inverse: #0e1621;
 
-  --accent: #6ab2f2;
-  --accent-hover: #5a9fd4;
-  --accent-gradient: linear-gradient(135deg, #6ab2f2, #8b5cf6);
+  --accent: #FF3737;
+  --accent-hover: #FF5555;
+  --accent-dark: #CC2222;
+  --accent-darker: #991A1A;
+  --accent-light: #FF6B6B;
+  --accent-glow: rgba(255, 55, 55, 0.15);
+  --accent-gradient: linear-gradient(135deg, #FF3737, #CC2222);
   --accent-green: #4caf50;
   --accent-red: #ef5350;
   --accent-orange: #ff9800;
@@ -124,7 +128,7 @@ html, body, #root {
   width: 600px;
   height: 600px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(106, 178, 242, 0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
   top: -200px;
   right: -200px;
 }
@@ -135,7 +139,7 @@ html, body, #root {
   width: 400px;
   height: 400px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(204, 34, 34, 0.06) 0%, transparent 70%);
   bottom: -100px;
   left: -100px;
 }
@@ -171,8 +175,8 @@ html, body, #root {
 }
 
 @keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(106, 178, 242, 0.4); }
-  50% { box-shadow: 0 0 0 8px rgba(106, 178, 242, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 55, 55, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(255, 55, 55, 0); }
 }
 
 @keyframes fadeInScale {
@@ -237,7 +241,7 @@ html, body, #root {
 
 .form-input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(106, 178, 242, 0.15);
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
 .form-input::placeholder {
@@ -311,13 +315,13 @@ html, body, #root {
 }
 
 .btn-secondary {
-  background: var(--bg-input);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
 }
 .btn-secondary:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-light);
+  background: var(--accent-glow);
+  border-color: var(--accent-hover);
 }
 
 .btn-ghost {
@@ -325,7 +329,7 @@ html, body, #root {
   color: var(--accent);
 }
 .btn-ghost:hover {
-  background: rgba(106, 178, 242, 0.1);
+  background: var(--accent-glow);
 }
 
 .btn-danger {
@@ -811,7 +815,7 @@ html, body, #root {
 }
 
 .message-reply {
-  background: rgba(106, 178, 242, 0.1);
+  background: var(--accent-glow);
   border-left: 2px solid var(--accent);
   padding: var(--space-xs) var(--space-sm);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
@@ -932,7 +936,7 @@ html, body, #root {
   align-items: center;
   gap: var(--space-sm);
   padding: var(--space-sm) var(--space-md);
-  background: rgba(106, 178, 242, 0.08);
+  background: var(--accent-glow);
   border-left: 3px solid var(--accent);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   margin-bottom: var(--space-sm);
@@ -972,7 +976,7 @@ html, body, #root {
 }
 .message-input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(106, 178, 242, 0.1);
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
 .message-input::-webkit-scrollbar {
@@ -995,7 +999,7 @@ html, body, #root {
 }
 .send-btn:hover {
   transform: scale(1.08);
-  box-shadow: 0 2px 12px rgba(106, 178, 242, 0.4);
+  box-shadow: 0 2px 12px rgba(255, 55, 55, 0.4);
 }
 .send-btn:active {
   transform: scale(0.95);
@@ -1258,7 +1262,7 @@ html, body, #root {
   font-weight: 600;
 }
 .role-badge.admin {
-  background: rgba(106, 178, 242, 0.15);
+  background: var(--accent-glow);
   color: var(--accent);
 }
 .role-badge.moderator {
@@ -1485,7 +1489,7 @@ html, body, #root {
 .drop-zone {
   position: absolute;
   inset: 0;
-  background: rgba(106, 178, 242, 0.1);
+  background: var(--accent-glow);
   border: 2px dashed var(--accent);
   border-radius: var(--radius-lg);
   display: flex;
@@ -1628,8 +1632,8 @@ html, body, #root {
 }
 
 .reaction-pill.reacted {
-  background: rgba(106, 178, 242, 0.15);
-  border-color: rgba(106, 178, 242, 0.3);
+  background: var(--accent-glow);
+  border-color: rgba(255, 55, 55, 0.3);
   color: var(--accent);
 }
 .message.own .reaction-pill.reacted {
@@ -1819,7 +1823,7 @@ html, body, #root {
 .drag-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(106, 178, 242, 0.1);
+  background: var(--accent-glow);
   border: 2px dashed var(--accent);
   border-radius: 12px;
   display: flex;
@@ -2084,7 +2088,7 @@ html, body, #root {
   top: 0;
   left: 0;
   height: 100%;
-  background: var(--accent, #6AB2F2);
+  background: var(--accent, #FF3737);
   border-radius: 2px;
   will-change: width;
 }
@@ -2156,7 +2160,7 @@ html, body, #root {
   background: rgba(255,255,255,0.1);
 }
 .custom-video-speed-btn.active {
-  color: var(--accent, #6AB2F2);
+  color: var(--accent, #FF3737);
   background: rgba(255,255,255,0.15);
 }
 
@@ -2194,7 +2198,7 @@ html, body, #root {
   background: rgba(255,255,255,0.1);
 }
 .custom-video-speed-option.active {
-  color: var(--accent, #6AB2F2);
+  color: var(--accent, #FF3737);
   background: rgba(255,255,255,0.05);
 }
 
@@ -2324,7 +2328,7 @@ html, body, #root {
 }
 
 .dropdown-item:hover {
-  background: rgba(106, 178, 242, 0.15);
+  background: var(--accent-glow);
 }
 
 .dropdown-item.text-danger:hover {

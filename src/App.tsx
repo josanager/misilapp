@@ -1,11 +1,14 @@
 import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
 import { LoginPage } from './components/auth/LoginPage';
 import { MainLayout } from './components/layout/MainLayout';
+import { LandingPage } from './components/landing/LandingPage';
+import { DownloaderPage } from './components/downloader/DownloaderPage';
 import { BrandLogo } from './components/common/BrandLogo';
 import './index.css';
 
-function App() {
+function AppRoutes() {
   const { user, loading, initialize } = useAuthStore();
 
   useEffect(() => {
@@ -25,7 +28,23 @@ function App() {
     );
   }
 
-  return user ? <MainLayout /> : <LoginPage />;
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/chat" element={user ? <MainLayout /> : <Navigate to="/login" replace />} />
+      <Route path="/login" element={user ? <Navigate to="/chat" replace /> : <LoginPage />} />
+      <Route path="/downloader" element={<DownloaderPage />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
+  );
 }
 
 export default App;

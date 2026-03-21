@@ -381,7 +381,7 @@ export const useGroupStore = create<GroupState>()(
   clearError: () => set({ error: null }),
     }),
     {
-      name: 'chat-latino-groups-storage',
+      name: 'misil-groups-storage',
       // Only persist the `groups` list to cache it for instant loading.
       // Other states like currentGroup or topics are transient.
       partialize: (state) => ({ groups: state.groups }),
