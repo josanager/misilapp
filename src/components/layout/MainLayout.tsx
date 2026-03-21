@@ -86,6 +86,25 @@ export function MainLayout() {
     }
   }, [storeTopics, currentTopicId, setCurrentTopic]);
 
+  // Handle heartbeat for presence
+  useEffect(() => {
+    if (!user) return;
+
+    // Initial heartbeat
+    supabase
+      .from('user_presence')
+      .upsert({ user_id: user.id, status: 'online', last_seen: new Date().toISOString() })
+      .then();
+
+    const interval = setInterval(() => {
+      supabase
+        .from('user_presence')
+        .upsert({ user_id: user.id, status: 'online', last_seen: new Date().toISOString() })
+        .then();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [user]);
 
   if (!user) return null;
 

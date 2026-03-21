@@ -86,6 +86,56 @@
   flex: 1;
 }
 
+.online-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 55, 55, 0.1);
+  border: 1px solid rgba(255, 55, 55, 0.2);
+  padding: 8px 16px;
+  border-radius: 100px;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 24px;
+}
+
+.pulsing-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--accent);
+  border-radius: 50%;
+  position: relative;
+}
+
+.pulsing-dot::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 50%;
+  background-color: var(--accent);
+  opacity: 0.4;
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+}
+
 .hero-title {
   font-size: clamp(40px, 5vw, 64px);
   font-weight: 800;
@@ -194,6 +244,122 @@
 .section {
   padding: 100px 5%;
   position: relative;
+  min-height: auto;
+}
+
+/* Stats */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.stat-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+/* Testimonials */
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.testimonial-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+}
+
+.testimonial-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.testimonial-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+}
+
+.testimonial-name {
+  font-weight: 700;
+}
+
+.testimonial-role {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.testimonial-text {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  font-style: italic;
+}
+
+/* Comparison Table */
+.comparison-container {
+  overflow-x: auto;
+  margin-top: 48px;
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+
+.comparison-table th, .comparison-table td {
+  padding: 24px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.comparison-table th:first-child, .comparison-table td:first-child {
+  text-align: left;
+}
+
+.comparison-table th {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.comparison-table .feature-col {
+  width: 40%;
+}
+
+.comparison-table .misil-col {
+  background: rgba(255, 55, 55, 0.05);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.comparison-table td {
+  color: var(--text-secondary);
 }
 
 .section-title {
@@ -442,13 +608,78 @@
 }
 
 @media (max-width: 768px) {
+  .landing-navbar {
+    flex-direction: column;
+    justify-content: center;
+    height: auto;
+    padding: 16px;
+    gap: 16px;
+  }
+
   .landing-nav-links {
     display: none;
+  }
+
+  .hero-section {
+    padding: 140px 5% 40px;
+    min-height: auto;
+  }
+
+  .hero-title {
+    font-size: 2.2rem;
+  }
+
+  .hero-subtitle {
+    font-size: 0.95rem;
+  }
+
+  .hero-actions .btn {
+    font-size: 0.9rem !important;
+    padding: 12px 24px !important;
+    width: 100%;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .section {
+    padding: 60px 5%;
+    min-height: auto;
+  }
+
+  .section-title {
+    font-size: 2rem;
+    margin-bottom: 40px;
   }
 
   .landing-footer {
     flex-direction: column;
     gap: 24px;
     text-align: center;
+  }
+
+  .footer-links {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .features-grid, .competitors-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cta-section {
+    padding: 80px 5%;
+  }
+
+  .cta-title {
+    font-size: 2rem;
+  }
+
+  .cta-button {
+    width: 100%;
+    font-size: 1.1rem;
+    padding: 16px 24px;
   }
 }

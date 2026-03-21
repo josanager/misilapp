@@ -2,6 +2,7 @@ import { useState, FormEvent } from 'react';
 import { useAuthStore } from '../../stores/authStore';
 import { Eye, EyeOff } from 'lucide-react';
 import { BrandLogo } from '../common/BrandLogo';
+import { requestNotificationPermission, subscribeUserToPush } from '../../services/notifications/webPush';
 
 export function LoginPage() {
   const [username, setUsername] = useState('');
@@ -11,12 +12,30 @@ export function LoginPage() {
   const [displayName, setDisplayName] = useState('');
   const { login, register, loading, error, clearError } = useAuthStore();
 
+  const handlePushSubscription = async (userId: string) => {
+    const granted = await requestNotificationPermission();
+    if (granted) {
+      await subscribeUserToPush(userId);
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    let success = false;
     if (isRegister) {
-      await register(username, password, displayName || username);
+      success = await register(username, password, displayName || username);
     } else {
-      await login(username, password);
+      success = await login(username, password);
+    }
+
+    if (success) {
+      // Small timeout to ensure state is set
+      setTimeout(() => {
+        const userId = useAuthStore.getState().user?.id;
+        if (userId) {
+          handlePushSubscription(userId);
+        }
+      }, 1000);
     }
   };
 
