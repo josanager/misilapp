@@ -1,17 +1,16 @@
 import { Link } from 'react-router-dom';
-import { Shield } from 'lucide-react'; // Alternative logo icon
 
 export const Navbar = () => {
   return (
     <nav className="landing-navbar">
       <Link to="/" className="landing-brand">
-        <Shield size={32} color="var(--accent)" fill="var(--accent-glow)" />
+        <img src="/favicon.svg" alt="Misil logo" style={{ width: 28, height: 28 }} />
         <span className="landing-brand-text">MISIL</span>
       </Link>
 
       <div className="landing-nav-links">
-        <a href="#features" className="landing-nav-link">Características</a>
-        <a href="#compare" className="landing-nav-link">¿Por qué Misil?</a>
+        <Link to="#features" className="landing-nav-link">Características</Link>
+        <Link to="#compare" className="landing-nav-link">¿Por qué Misil?</Link>
         <Link to="/downloader" className="landing-nav-link">Misil Downloader</Link>
       </div>
 

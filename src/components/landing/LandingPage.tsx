@@ -1,22 +1,9 @@
-import { useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Shield, Lock, Users, ImageIcon, Zap, EyeOff, XCircle, CheckCircle } from 'lucide-react';
-import { useAuthStore } from '../../stores/authStore';
 import { Navbar } from './Navbar';
 import './LandingPage.css';
 
 export const LandingPage = () => {
-  const { user } = useAuthStore();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (user) {
-      navigate('/chat', { replace: true });
-    }
-  }, [user, navigate]);
-
-  if (user) return null; // Let the useEffect redirect
-
   return (
     <div className="landing-page">
       <Navbar />
@@ -36,9 +23,9 @@ export const LandingPage = () => {
             <Link to="/login" className="btn btn-primary" style={{ background: 'var(--accent)', padding: '16px 32px', fontSize: '18px', borderRadius: '100px' }}>
               Empezar gratis
             </Link>
-            <a href="#how-it-works" className="btn btn-secondary" style={{ padding: '16px 32px', fontSize: '18px', borderRadius: '100px' }}>
+            <Link to="#how-it-works" className="btn btn-secondary" style={{ padding: '16px 32px', fontSize: '18px', borderRadius: '100px' }}>
               Ver cómo funciona
-            </a>
+            </Link>
           </div>
         </div>
         <div className="hero-visual">
@@ -205,13 +192,13 @@ export const LandingPage = () => {
       {/* Footer */}
       <footer className="landing-footer">
         <div className="landing-brand">
-          <Shield size={24} color="var(--accent)" />
+          <img src="/favicon.svg" alt="Misil logo" style={{ width: 24, height: 24 }} />
           <span className="landing-brand-text" style={{ fontSize: 20 }}>MISIL</span>
         </div>
 
         <div className="footer-links">
-          <a href="#" className="footer-link">Términos</a>
-          <a href="#" className="footer-link">Privacidad</a>
+          <Link to="#" className="footer-link">Términos</Link>
+          <Link to="#" className="footer-link">Privacidad</Link>
           <Link to="/downloader" className="footer-link">Misil Downloader</Link>
         </div>
 

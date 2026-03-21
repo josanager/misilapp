@@ -30,7 +30,7 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
+      <Route path="/" element={user ? <Navigate to="/chat" replace /> : <LandingPage />} />
       <Route path="/chat" element={user ? <MainLayout /> : <Navigate to="/login" replace />} />
       <Route path="/login" element={user ? <Navigate to="/chat" replace /> : <LoginPage />} />
       <Route path="/downloader" element={<DownloaderPage />} />
