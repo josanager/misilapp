@@ -9,8 +9,6 @@ export const Navbar = () => {
       </Link>
 
       <div className="landing-nav-links">
-        <Link to="#features" className="landing-nav-link">Características</Link>
-        <Link to="#compare" className="landing-nav-link">¿Por qué Misil?</Link>
         <Link to="/downloader" className="landing-nav-link">Misil Downloader</Link>
       </div>
 
