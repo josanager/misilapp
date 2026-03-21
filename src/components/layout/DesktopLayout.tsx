@@ -79,6 +79,7 @@ export function DesktopLayout() {
         />
       )}
 
+      {/* Navbar constrained to sidebar width on desktop */}
       <FloatingNavbar currentTab={mainTab} onChangeTab={setMainTab} />
     </div>
   );

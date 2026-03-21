@@ -2643,6 +2643,16 @@ html, body {
   padding: 0 16px;
 }
 
+/* Desktop override: Center within the left sidebar column */
+@media (min-width: 769px) {
+  .floating-navbar-container {
+    left: 0;
+    width: var(--sidebar-width);
+    right: auto;
+    bottom: 30px;
+  }
+}
+
 .floating-navbar {
   display: flex;
   align-items: center;
@@ -2694,7 +2704,7 @@ html, body {
 }
 
 /* Padding adjustments for Floating Navbar */
-.main-area, .sidebar {
+.sidebar {
   padding-bottom: 90px !important;
 }
 

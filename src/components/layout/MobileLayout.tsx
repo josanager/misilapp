@@ -96,7 +96,10 @@ export function MobileLayout() {
         />
       )}
 
-      <FloatingNavbar currentTab={mainTab} onChangeTab={handleChangeTab} />
+      {/* Hide navbar on mobile when inside a chat view */}
+      {!(mainTab === 'chat' && !showSidebar) && (
+        <FloatingNavbar currentTab={mainTab} onChangeTab={handleChangeTab} />
+      )}
     </div>
   );
 }

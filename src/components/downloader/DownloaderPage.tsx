@@ -21,6 +21,40 @@ interface AnalyzeResult {
   formats: Format[];
 }
 
+const getPlatformFromUrl = (url: string) => {
+  if (!url) return null;
+  const lurl = url.toLowerCase();
+  if (lurl.includes('music.youtube.com')) return 'youtubemusic';
+  if (lurl.includes('youtube.com') || lurl.includes('youtu.be')) return 'youtube';
+  if (lurl.includes('deezer.com') || lurl.includes('deezer.page.link')) return 'deezer';
+  return null;
+};
+
+const PlatformLogo = ({ platform }: { platform: string | null }) => {
+  if (platform === 'youtube') {
+    return (
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="#FF0000">
+        <path d="M21.582,6.186c-0.23-0.86-0.908-1.538-1.768-1.768C18.254,4,12,4,12,4S5.746,4,4.186,4.418 c-0.86,0.23-1.538,0.908-1.768,1.768C2,7.746,2,12,2,12s0,4.254,0.418,5.814c0.23,0.86,0.908,1.538,1.768,1.768 C5.746,20,12,20,12,20s6.254,0,7.814-0.418c0.861-0.23,1.538-0.908,1.768-1.768C22,16.254,22,12,22,12S22,7.746,21.582,6.186z M9.996,15.5v-7l6.504,3.5L9.996,15.5z"/>
+      </svg>
+    );
+  }
+  if (platform === 'youtubemusic') {
+    return (
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="#FF0000">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+      </svg>
+    );
+  }
+  if (platform === 'deezer') {
+    return (
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="#FEAA2D">
+        <path d="M12 10.334v2.778h-2.91v-2.778H12zm-3.863 0v2.778H5.228v-2.778h2.91zm7.726 0v2.778h-2.91v-2.778h2.91zm3.863 0v2.778h-2.91v-2.778h2.91zm-11.59 3.555v2.778H5.228v-2.778h2.91zm3.864 0v2.778h-2.91v-2.778h2.91zm3.863 0v2.778h-2.91v-2.778h2.91zm3.863 0v2.778h-2.91v-2.778h2.91zM12 6.778v2.778h-2.91V6.778H12zm3.863 0v2.778h-2.91V6.778h2.91zm-7.726-3.555v2.778H5.228V3.223h2.91z"/>
+      </svg>
+    );
+  }
+  return null;
+};
+
 export const DownloaderPage = () => {
   const { user } = useAuthStore();
   const [url, setUrl] = useState('');
@@ -29,6 +63,8 @@ export const DownloaderPage = () => {
   const [result, setResult] = useState<AnalyzeResult | null>(null);
   const [selectedFormat, setSelectedFormat] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+
+  const detectedPlatform = getPlatformFromUrl(url);
 
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,6 +156,15 @@ export const DownloaderPage = () => {
 
   return (
     <div className="downloader-page">
+      <div className="animated-background">
+        <div className="wave wave1"></div>
+        <div className="wave wave2"></div>
+        <div className="wave wave3"></div>
+        {[...Array(20)].map((_, i) => (
+          <div key={i} className={`background-particle p${i}`}></div>
+        ))}
+      </div>
+      
       <header className="downloader-header">
         <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', textDecoration: 'none', marginBottom: '32px' }}>
           <ArrowLeft size={20} /> Volver a Misil
@@ -184,15 +229,23 @@ export const DownloaderPage = () => {
         ) : (
           <div className="downloader-app">
             <form onSubmit={handleAnalyze} className="input-group">
-              <input
-                type="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="Pega el enlace de YouTube o Deezer aquí..."
-                className="url-input"
-                required
-                disabled={analyzing || downloading}
-              />
+              <div className="input-wrapper">
+                {detectedPlatform && (
+                  <div className="input-platform-logo">
+                    <PlatformLogo platform={detectedPlatform} />
+                  </div>
+                )}
+                <input
+                  type="url"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="Pega el enlace de YouTube o Deezer aquí..."
+                  className={`url-input ${detectedPlatform ? 'has-logo' : ''}`}
+                  required
+                  disabled={analyzing || downloading}
+                />
+              </div>
+
               <button
                 type="submit"
                 className="btn btn-primary btn-analyze"

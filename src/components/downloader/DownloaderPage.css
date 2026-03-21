@@ -134,11 +134,11 @@
 .downloader-app {
   width: 100%;
   max-width: 800px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  padding: 40px;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.2);
+  /* Make the container transparent and float to show the animated background */
+  background: transparent;
+  padding: 40px 0;
+  position: relative;
+  z-index: 2;
 }
 
 .input-group {
@@ -147,21 +147,111 @@
   margin-bottom: 32px;
 }
 
-.url-input {
+.input-wrapper {
+  position: relative;
   flex: 1;
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+}
+
+.input-platform-logo {
+  position: absolute;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+
+.url-input {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.6); /* Slightly transparent dark */
+  border: 2px solid var(--accent); /* Permanent accent color border */
   border-radius: 12px;
   padding: 16px 20px;
   color: var(--text-primary);
   font-size: 16px;
-  transition: border-color 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.2); /* Subtle glow */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.url-input.has-logo {
+  padding-left: 52px; /* Make space for the logo */
 }
 
 .url-input:focus {
   outline: none;
-  border-color: var(--accent);
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.4); /* Stronger glow on focus */
 }
+
+/* Animated Background Elements */
+.animated-background {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 100%, rgba(239, 68, 68, 0.05) 0%, transparent 60%);
+}
+
+.wave {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.05) 0%, transparent 60%);
+  border-radius: 50%;
+  animation: pulse-wave 4s infinite linear;
+}
+
+.wave2 { width: 800px; height: 800px; animation-delay: -1.33s; }
+.wave3 { width: 1000px; height: 1000px; animation-delay: -2.66s; }
+
+@keyframes pulse-wave {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+  50% { opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
+
+.background-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--accent);
+  border-radius: 50%;
+  opacity: 0;
+  filter: blur(1px);
+}
+
+.background-particle:nth-child(even) { animation: float-up 8s infinite linear; }
+.background-particle:nth-child(odd) { animation: float-up 12s infinite linear reverse; width: 6px; height: 6px; }
+
+.p0 { left: 10%; top: 90%; animation-delay: 0s; }
+.p1 { left: 25%; top: 85%; animation-delay: 2s; }
+.p2 { left: 45%; top: 95%; animation-delay: 4s; }
+.p3 { left: 60%; top: 80%; animation-delay: 1s; }
+.p4 { left: 80%; top: 85%; animation-delay: 3s; }
+.p5 { left: 95%; top: 75%; animation-delay: 5s; }
+.p6 { left: 15%; top: 95%; animation-delay: 6s; }
+.p7 { left: 35%; top: 80%; animation-delay: 1.5s; }
+.p8 { left: 55%; top: 85%; animation-delay: 3.5s; }
+.p9 { left: 75%; top: 95%; animation-delay: 0.5s; }
+.p10 { left: 85%; top: 80%; animation-delay: 4.5s; }
+.p11 { left: 5%; top: 85%; animation-delay: 2.5s; }
+.p12 { left: 50%; top: 75%; animation-delay: 5.5s; }
+
+@keyframes float-up {
+  0% { transform: translateY(0) scale(0.5); opacity: 0; }
+  20% { opacity: 0.6; }
+  80% { opacity: 0.6; }
+  100% { transform: translateY(-600px) scale(1.5); opacity: 0; }
+}
+
 
 .btn-analyze {
   padding: 0 32px;
