@@ -77,6 +77,12 @@ export const useAuthStore = create<AuthState>()(
         .select('*')
         .eq('id', data.user.id)
         .single();
+
+      // Update presence
+      await supabase
+        .from('user_presence')
+        .upsert({ user_id: data.user.id, status: 'online', last_seen: new Date().toISOString() });
+
       set({ user: profile, session: data.session, loading: false });
       return true;
     } catch {
@@ -125,6 +131,12 @@ export const useAuthStore = create<AuthState>()(
           .select('*')
           .eq('id', data.user.id)
           .single();
+
+        // Update presence
+        await supabase
+          .from('user_presence')
+          .upsert({ user_id: data.user.id, status: 'online', last_seen: new Date().toISOString() });
+
         set({ user: profile, session: data.session, loading: false });
       }
       return true;
