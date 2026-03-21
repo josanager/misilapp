@@ -51,6 +51,17 @@ export const LandingPage = () => {
   const [targetUsers, setTargetUsers] = useState(50000);
   const [targetMessages, setTargetMessages] = useState(10000000);
 
+  // Ensure scroll is enabled on landing page and disabled when leaving
+  useEffect(() => {
+    document.body.style.overflow = 'auto';
+    document.documentElement.style.overflow = 'auto';
+
+    return () => {
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+    };
+  }, []);
+
   useEffect(() => {
     const fetchCount = async () => {
       const count = await getOnlineUsersCount();

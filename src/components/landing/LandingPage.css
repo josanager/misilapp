@@ -3,7 +3,7 @@
   color: var(--text-primary);
   min-height: 100vh;
   font-family: var(--font-family);
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Navbar */
@@ -68,7 +68,6 @@
   display: flex;
   align-items: center;
   position: relative;
-  overflow: hidden;
 }
 
 .hero-bg {
@@ -865,7 +864,3 @@
   }
 }
 
-html, body, #root {
-  height: auto !important;
-  min-height: 100vh;
-}
