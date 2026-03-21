@@ -3,8 +3,9 @@ import { useChatStore } from '../../stores/chatStore';
 import { useGroupStore } from '../../stores/groupStore';
 import { useAuthStore } from '../../stores/authStore';
 import { MessageInput } from './MessageInput';
-import { Plus, Hash, SmilePlus, Edit2, Trash2, X, ArrowLeft, Heart } from 'lucide-react';
+import { Plus, Hash, SmilePlus, Edit2, Trash2, X, ArrowLeft, Heart, Download } from 'lucide-react';
 import { CreateTopicModal } from '../topics/CreateTopicModal';
+import { Link } from 'react-router-dom';
 import { EmojiPicker, ReactionDisplay } from './EmojiPicker';
 import { VideoPlayer } from './VideoPlayer';
 import { ImageViewer } from './ImageViewer';
@@ -283,7 +284,28 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
             </div>
           </div>
         </div>
-        <div className="chat-header-actions">
+        <div className="chat-header-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <Link
+            to="/downloader"
+            className="btn-icon"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'var(--surface-dark)',
+              color: 'var(--text-primary)',
+              padding: '6px 12px',
+              borderRadius: '20px',
+              fontSize: '13px',
+              fontWeight: 600,
+              border: '1px solid var(--border)',
+              textDecoration: 'none'
+            }}
+            title="Misil Downloader"
+          >
+            <Download size={16} />
+            <span className="hide-on-mobile">Descargar</span>
+          </Link>
           <button
             className="btn-icon support-btn-animated"
             style={{

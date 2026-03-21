@@ -1,9 +1,11 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import downloaderApp from './downloader';
 
 type Bindings = {
   BUCKET: R2Bucket;
   R2_PUBLIC_DOMAIN: string;
+  SUPABASE_URL: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -112,5 +114,7 @@ app.delete('/upload/abort', async (c) => {
     return c.json({ error: 'Internal Server Error' }, 500);
   }
 });
+
+app.route('/api/downloader', downloaderApp as any);
 
 export default app;
