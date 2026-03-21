@@ -17,7 +17,6 @@ export function FloatingNavbar({ currentTab, onChangeTab }: FloatingNavbarProps)
           title="Chats"
         >
           <MessageSquare size={24} />
-          <span className="nav-label">Chats</span>
         </button>
         
         <button 
@@ -26,7 +25,6 @@ export function FloatingNavbar({ currentTab, onChangeTab }: FloatingNavbarProps)
           title="Perfil"
         >
           <User size={24} />
-          <span className="nav-label">Perfil</span>
         </button>
         
         <button 
@@ -35,7 +33,6 @@ export function FloatingNavbar({ currentTab, onChangeTab }: FloatingNavbarProps)
           title="Configuración"
         >
           <Settings size={24} />
-          <span className="nav-label">Configuración</span>
         </button>
       </nav>
     </div>
