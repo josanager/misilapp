@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useAuthStore } from '../../stores/authStore';
-import { MessageCircle, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
+import { BrandLogo } from '../common/BrandLogo';
 
 export function LoginPage() {
   const [username, setUsername] = useState('');
@@ -28,10 +29,10 @@ export function LoginPage() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-logo">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 8 }}>
-            <MessageCircle size={40} color="#6ab2f2" />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 12 }}>
+            <BrandLogo size={60} />
           </div>
-          <h1>Chat Latino</h1>
+          <h1>Misil</h1>
           <p>{isRegister ? 'Crea tu cuenta privada' : 'Inicia sesión en tu cuenta'}</p>
         </div>
 

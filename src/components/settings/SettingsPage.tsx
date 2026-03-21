@@ -140,7 +140,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
             </div>
 
             <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)', fontSize: 12 }}>
-              Chat Latino v1.0.0<br />
+              Misil v1.0.0<br />
               Privacidad primero 🔒
             </div>
           </>

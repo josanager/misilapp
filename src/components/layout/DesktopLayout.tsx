@@ -68,7 +68,7 @@ export function DesktopLayout() {
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
               </div>
-              <h3>Chat Latino</h3>
+              <h3>Misil</h3>
               <p>Selecciona un grupo para empezar a chatear o crea uno nuevo</p>
             </div>
           </div>

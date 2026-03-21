@@ -2628,3 +2628,26 @@ html, body, #root {
   90% { opacity: 0.5; }
   100% { transform: translateY(-100px) translateX(50px) rotate(360deg); opacity: 0; }
 }
+
+/* Brand Logo Animations */
+.pulse-animation {
+  animation: logo-pulse 2s infinite ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes logo-pulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+}

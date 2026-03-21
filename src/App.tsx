@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useAuthStore } from './stores/authStore';
 import { LoginPage } from './components/auth/LoginPage';
 import { MainLayout } from './components/layout/MainLayout';
+import { BrandLogo } from './components/common/BrandLogo';
 import './index.css';
 
 function App() {
@@ -14,9 +15,11 @@ function App() {
   if (loading) {
     return (
       <div className="auth-page">
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-          <div className="spinner" style={{ width: 40, height: 40 }} />
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Cargando Chat Latino...</p>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
+          <div className="pulse-animation">
+            <BrandLogo size={80} />
+          </div>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 16, fontWeight: 500, letterSpacing: '0.05em' }}>Cargando Misil...</p>
         </div>
       </div>
     );

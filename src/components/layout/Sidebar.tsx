@@ -4,6 +4,7 @@ import { Settings, Search, Plus, LogOut, UserPlus, Check } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { CreateGroupModal } from '../groups/CreateGroupModal';
 import { getUserColor } from '../../lib/avatar';
+import { BrandLogo } from '../common/BrandLogo';
 import type { Profile, Group } from '../../types';
 
 interface SidebarProps {
@@ -49,7 +50,10 @@ export function Sidebar({ groups, currentGroup, user, onSelectGroup, onOpenSetti
     <>
       <aside className={`sidebar ${!visible ? 'hidden' : ''}`}>
         <div className="sidebar-header">
-          <h2>Chat Latino</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <BrandLogo size={24} />
+            <h2>Misil</h2>
+          </div>
           <div style={{ flex: 1 }} />
           <button className="btn-icon" onClick={(e) => { e.stopPropagation(); setShowCreateModal(true); }} title="Crear grupo">
             <Plus size={22} />
