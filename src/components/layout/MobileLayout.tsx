@@ -48,9 +48,10 @@ export function MobileLayout() {
 
   const handleChangeTab = (tab: MainTab) => {
     setMainTab(tab);
-    if (tab === 'chat' && !currentGroup) {
+    if (tab === 'chat') {
       setShowSidebar(true);
-    } else if (tab !== 'chat') {
+      setCurrentGroup(null);
+    } else {
       setShowSidebar(false);
     }
   };
