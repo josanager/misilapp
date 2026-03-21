@@ -150,7 +150,21 @@
   font-size: clamp(18px, 2vw, 20px);
   color: var(--text-secondary);
   line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.hero-online-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(37, 211, 102, 0.1);
+  color: #25D366;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 500;
   margin-bottom: 40px;
+  border: 1px solid rgba(37, 211, 102, 0.2);
 }
 
 .hero-actions {
@@ -609,15 +623,36 @@
 
 @media (max-width: 768px) {
   .landing-navbar {
+    flex-direction: row;
+    justify-content: space-between;
+    height: 72px;
+    padding: 0 5%;
+  }
+
+  .landing-nav-actions {
+    display: none;
+  }
+
+  .landing-navbar.menu-open .landing-nav-actions {
+    display: flex;
     flex-direction: column;
-    justify-content: center;
-    height: auto;
-    padding: 16px;
+    position: absolute;
+    top: 72px;
+    left: 0;
+    right: 0;
+    background: var(--bg-primary);
+    padding: 24px;
+    border-bottom: 1px solid var(--border);
     gap: 16px;
   }
 
-  .landing-nav-links {
-    display: none;
+  .landing-navbar.menu-open .landing-nav-actions .btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .mobile-menu-toggle {
+    display: block !important;
   }
 
   .hero-section {
@@ -771,4 +806,66 @@
   .comparison-container {
     overflow-x: auto;
   }
+}
+
+/* Additional CSS for updated sections */
+
+.competitor-banner {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 60px 0 40px;
+  color: var(--text-primary);
+  background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.1), transparent);
+  padding: 24px;
+  border-radius: 12px;
+}
+
+.competitor-weakness-title {
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+}
+
+.cta-subtitle {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+}
+
+@media (max-width: 768px) {
+  .competitor-banner {
+    font-size: 1.2rem;
+    padding: 16px;
+  }
+}
+
+/* Additional CSS specifically for responsive adjustments */
+
+@media (max-width: 768px) {
+  .competitors-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .competitor-card {
+    min-height: 200px;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .testimonials-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .steps-container {
+    flex-direction: column;
+  }
+}
+
+html, body, #root {
+  height: auto !important;
+  min-height: 100vh;
 }
