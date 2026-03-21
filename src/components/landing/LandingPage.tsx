@@ -1,17 +1,55 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, Lock, Users, Zap, Upload, MessageSquare, Ban, DollarSign, CloudOff, Cloud, Share2, Search } from 'lucide-react';
+import { ShieldCheck, Lock, Users, Zap, Upload, MessageSquare, Ban, Cloud, Search, Send, BellOff } from 'lucide-react';
 import { Navbar } from './Navbar';
 import './LandingPage.css';
 import { getOnlineUsersCount } from '../../services/stats/userCount';
+import { getTotalUsersCount, getTotalMessagesCount } from '../../services/statsService';
 import { motion } from 'framer-motion';
+
+
+// Animated Counter component
+const AnimatedCounter = ({ value }: { value: number }) => {
+  const [count, setCount] = useState(0);
+  const nodeRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let startTimestamp: number | null = null;
+    const duration = 2000;
+
+    // Intersection observer to start animation
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          const step = (timestamp: number) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const easeProgress = 1 - Math.pow(1 - progress, 4);
+            setCount(Math.floor(easeProgress * value));
+            if (progress < 1) {
+              window.requestAnimationFrame(step);
+            }
+          };
+          window.requestAnimationFrame(step);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (nodeRef.current) observer.observe(nodeRef.current);
+    return () => observer.disconnect();
+  }, [value]);
+
+  return <span ref={nodeRef}>{new Intl.NumberFormat('en-US').format(count)}</span>;
+};
 
 export const LandingPage = () => {
   const [onlineCount, setOnlineCount] = useState<number | null>(null);
 
   // Animated counters
-  const [totalUsers, setTotalUsers] = useState(0);
-  const [totalMessages, setTotalMessages] = useState(0);
+  const [targetUsers, setTargetUsers] = useState(50000);
+  const [targetMessages, setTargetMessages] = useState(10000000);
 
   useEffect(() => {
     const fetchCount = async () => {
@@ -24,27 +62,15 @@ export const LandingPage = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Fetch real targets for stats
   useEffect(() => {
-    // Animate stats
-    let startTimestamp: number | null = null;
-    const duration = 2000; // 2 seconds
-
-    const step = (timestamp: number) => {
-      if (!startTimestamp) startTimestamp = timestamp;
-      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-
-      // Easing function: easeOutQuart
-      const easeProgress = 1 - Math.pow(1 - progress, 4);
-
-      setTotalUsers(Math.floor(easeProgress * 54320)); // Final value 54,320
-      setTotalMessages(Math.floor(easeProgress * 12450890)); // Final value 12,450,890
-
-      if (progress < 1) {
-        window.requestAnimationFrame(step);
-      }
+    const fetchStats = async () => {
+      const users = await getTotalUsersCount();
+      const messages = await getTotalMessagesCount();
+      setTargetUsers(users);
+      setTargetMessages(messages);
     };
-
-    window.requestAnimationFrame(step);
+    fetchStats();
   }, []);
 
   const formatNumber = (num: number) => {
@@ -82,6 +108,10 @@ export const LandingPage = () => {
             <p className="hero-subtitle">
               Misil es la plataforma donde tú decides qué compartir. Sin moderación arbitraria, sin borrado de contenido, sin restricciones de grupos. Tu privacidad, tus reglas.
             </p>
+            <div className="hero-online-badge">
+              <span className="pulsing-dot"></span>
+              {onlineCount !== null ? formatNumber(onlineCount) : '...'} usuarios online ahora
+            </div>
           </motion.div>
         </div>
         <motion.div
@@ -123,7 +153,7 @@ export const LandingPage = () => {
           variants={staggerContainer}
         >
           <motion.div className="stat-card" variants={fadeInUp}>
-            <div className="stat-number">{formatNumber(totalUsers)}+</div>
+            <div className="stat-number"><AnimatedCounter value={targetUsers} />+</div>
             <div className="stat-label">Usuarios Registrados</div>
           </motion.div>
           <motion.div className="stat-card" variants={fadeInUp}>
@@ -134,7 +164,7 @@ export const LandingPage = () => {
             <div className="stat-label">Online Ahora</div>
           </motion.div>
           <motion.div className="stat-card" variants={fadeInUp}>
-            <div className="stat-number">{formatNumber(totalMessages)}+</div>
+            <div className="stat-number"><AnimatedCounter value={targetMessages} />+</div>
             <div className="stat-label">Mensajes Enviados</div>
           </motion.div>
         </motion.div>
@@ -142,15 +172,16 @@ export const LandingPage = () => {
 
       {/* Compare Section - ¿Cansado de esto? */}
       <section id="compare" className="section" style={{ background: 'var(--bg-tertiary)' }}>
-        <motion.h2
-          className="section-title"
+        <motion.div
+          className="section-header"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
           variants={fadeInUp}
         >
-          ¿Cansado de esto?
-        </motion.h2>
+          <h2 className="section-title">¿Cansado de que te controlen?</h2>
+          <p className="section-subtitle">Las apps que usas tienen un problema gordo:</p>
+        </motion.div>
 
         <motion.div
           className="competitors-grid"
@@ -161,42 +192,51 @@ export const LandingPage = () => {
         >
           <motion.div className="competitor-card" variants={fadeInUp}>
             <div className="competitor-header">
-              <div className="competitor-logo-box" style={{ background: '#25D366' }}>
-                <MessageSquare size={32} />
+              <div className="competitor-logo-box" style={{ background: '#ef4444' }}>
+                <MessageSquare size={32} color="white" />
               </div>
               <div className="competitor-name">WhatsApp</div>
             </div>
             <div className="competitor-weakness">
-               <DollarSign size={40} className="competitor-icon-large" />
-               <p>Comparte todos tus datos con Meta para publicidad dirigida. Tus mensajes, aunque cifrados, generan metadata que alimenta el algoritmo de anuncios de Facebook e Instagram. En 2025 añadieron publicidad en Estados y Canales.</p>
+               <h4 className="competitor-weakness-title">Tus datos son el producto</h4>
+               <p>Meta usa tu metadata para publicidad. En 2025 añadieron anuncios. Tu privacidad, monetizada.</p>
             </div>
           </motion.div>
 
           <motion.div className="competitor-card" variants={fadeInUp}>
             <div className="competitor-header">
-              <div className="competitor-logo-box" style={{ background: '#0088cc' }}>
-                <Share2 size={32} />
+              <div className="competitor-logo-box" style={{ background: '#3b82f6' }}>
+                <Send size={32} color="white" />
               </div>
               <div className="competitor-name">Telegram</div>
             </div>
             <div className="competitor-weakness">
-               <Ban size={40} className="competitor-icon-large" />
-               <p>Elimina canales y grupos sin previo aviso. En febrero 2026 bloqueó 253,974 canales en un solo día. Tu grupo puede desaparecer mañana sin explicación. Han cerrado más de 7 millones de comunidades en 2026.</p>
+               <h4 className="competitor-weakness-title">Tu grupo puede desaparecer mañana</h4>
+               <p>En febrero 2026 bloquearon 253,974 canales en UN solo día. Sin aviso. Sin explicación.</p>
             </div>
           </motion.div>
 
           <motion.div className="competitor-card" variants={fadeInUp}>
             <div className="competitor-header">
-              <div className="competitor-logo-box" style={{ background: '#3A76F0' }}>
-                 <Lock size={32} />
+              <div className="competitor-logo-box" style={{ background: '#22c55e' }}>
+                 <Lock size={32} color="white" />
               </div>
               <div className="competitor-name">Signal</div>
             </div>
             <div className="competitor-weakness">
-               <CloudOff size={40} className="competitor-icon-large" />
-               <p>Sin copias de seguridad en la nube. Si pierdes tu teléfono = pierdes TODO tu historial de mensajes para siempre. Las copias de iCloud/Google no incluyen mensajes de Signal. Solo backup local.</p>
+               <h4 className="competitor-weakness-title">Pierdes el teléfono = pierdes todo</h4>
+               <p>Sin backup en la nube. Si rompes tu teléfono, adiós a todo tu historial para siempre.</p>
             </div>
           </motion.div>
+        </motion.div>
+        <motion.div
+          className="competitor-banner"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={fadeInUp}
+        >
+          MISIL → Sin censura. Sin tracking. Sin límites. TÚ mandas.
         </motion.div>
 
         <motion.div
@@ -206,47 +246,57 @@ export const LandingPage = () => {
           viewport={{ once: true }}
           variants={fadeInUp}
         >
-          <table className="comparison-table">
-            <thead>
-              <tr>
-                <th className="feature-col">Característica</th>
-                <th className="misil-col">Misil</th>
-                <th>WhatsApp</th>
-                <th>Telegram</th>
-                <th>Signal</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="feature-col">Cero Censura</td>
-                <td className="misil-col">✅ Sí</td>
-                <td>❌ Moderado</td>
-                <td>❌ Borra sin avisar</td>
-                <td>✅ Sí</td>
-              </tr>
-              <tr>
-                <td className="feature-col">Datos a terceros</td>
-                <td className="misil-col">✅ No</td>
-                <td>❌ Sí (Meta Ads)</td>
-                <td>⚠️ Metadata</td>
-                <td>✅ No</td>
-              </tr>
-              <tr>
-                <td className="feature-col">Backup en nube</td>
-                <td className="misil-col">✅ Sí</td>
-                <td>✅ Sí</td>
-                <td>✅ Sí</td>
-                <td>❌ Solo local</td>
-              </tr>
-              <tr>
-                <td className="feature-col">Archivos grandes</td>
-                <td className="misil-col">500MB</td>
-                <td>100MB</td>
-                <td>2GB</td>
-                <td>100MB</td>
-              </tr>
-            </tbody>
-          </table>
+          <h3 className="section-title" style={{marginTop: "60px"}}>La comparación que no quieren que veas</h3>
+          <div className="table-responsive">
+            <table className="comparison-table">
+              <thead>
+                <tr>
+                  <th className="feature-col">Característica</th>
+                  <th className="misil-col">Misil</th>
+                  <th>WhatsApp</th>
+                  <th>Telegram</th>
+                  <th>Signal</th>
+                </tr>
+              </thead>
+              <tbody>
+                <motion.tr variants={fadeInUp}>
+                  <td className="feature-col">Cero Censura</td>
+                  <td className="misil-col">✅</td>
+                  <td>❌</td>
+                  <td>❌</td>
+                  <td>✅</td>
+                </motion.tr>
+                <motion.tr variants={fadeInUp}>
+                  <td className="feature-col">Datos a terceros</td>
+                  <td className="misil-col">✅ No</td>
+                  <td>❌ Meta Ads</td>
+                  <td>⚠️ Metadata</td>
+                  <td>✅ No</td>
+                </motion.tr>
+                <motion.tr variants={fadeInUp}>
+                  <td className="feature-col">Backup en nube</td>
+                  <td className="misil-col">✅</td>
+                  <td>✅</td>
+                  <td>✅</td>
+                  <td>❌ Solo local</td>
+                </motion.tr>
+                <motion.tr variants={fadeInUp}>
+                  <td className="feature-col">Archivos</td>
+                  <td className="misil-col">500MB</td>
+                  <td>100MB</td>
+                  <td>2GB</td>
+                  <td>100MB</td>
+                </motion.tr>
+                <motion.tr variants={fadeInUp}>
+                  <td className="feature-col">Publicidad</td>
+                  <td className="misil-col">✅ Nunca</td>
+                  <td>❌ Desde 2025</td>
+                  <td>⚠️ Canales</td>
+                  <td>✅ No</td>
+                </motion.tr>
+              </tbody>
+            </table>
+          </div>
         </motion.div>
       </section>
 
@@ -259,62 +309,62 @@ export const LandingPage = () => {
           viewport={{ once: true }}
           variants={fadeInUp}
         >
-          Construido para la libertad
+          Todo lo que necesitas. Sin lo que odias.
         </motion.h2>
 
         <motion.div
           className="features-grid"
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={{ once: true, amount: 0.1 }}
           variants={staggerContainer}
         >
           <motion.div className="feature-card" variants={fadeInUp}>
             <div className="feature-icon-wrapper">
               <Ban size={48} />
             </div>
-            <h3 className="feature-title">Sin censura</h3>
-            <p className="feature-desc">Sube lo que quieras. Nadie revisa, nadie borra. Tus conversaciones están a salvo de la moderación. Por ejemplo, comparte documentos políticos o investigaciones sin temor a bloqueos.</p>
+            <h3 className="feature-title">Sin Censura</h3>
+            <p className="feature-desc">Sube lo que quieras. Nadie revisa, nadie borra.</p>
           </motion.div>
 
           <motion.div className="feature-card" variants={fadeInUp}>
             <div className="feature-icon-wrapper">
               <Lock size={48} />
             </div>
-            <h3 className="feature-title">Cifrado de mensajes</h3>
-            <p className="feature-desc">Tus conversaciones son tuyas con TweetNaCl E2E. Seguridad de grado militar por defecto. Ni siquiera nosotros podemos leer lo que envías a tus contactos.</p>
+            <h3 className="feature-title">Cifrado E2E</h3>
+            <p className="feature-desc">TweetNaCl encripta tus mensajes. Solo tú y tu destinatario.</p>
           </motion.div>
 
           <motion.div className="feature-card" variants={fadeInUp}>
             <div className="feature-icon-wrapper">
               <Users size={48} />
             </div>
-            <h3 className="feature-title">Grupos masivos</h3>
-            <p className="feature-desc">Organiza comunidades enormes sin límites artificiales. Mantén el orden con canales de anuncios y topics específicos para diferentes discusiones.</p>
+            <h3 className="feature-title">Grupos Libres</h3>
+            <p className="feature-desc">Crea grupos con topics. Sin riesgo de que los borren.</p>
           </motion.div>
 
           <motion.div className="feature-card" variants={fadeInUp}>
             <div className="feature-icon-wrapper">
               <Upload size={48} />
             </div>
-            <h3 className="feature-title">Archivos de 500MB</h3>
-            <p className="feature-desc">Imágenes, vídeos 4K, archivos pesados de diseño o código. Sube archivos de hasta 500MB de forma rápida y sin compresión que arruine la calidad.</p>
+            <h3 className="feature-title">Archivos 500MB</h3>
+            <p className="feature-desc">Videos, imágenes, archivos pesados sin restricciones.</p>
           </motion.div>
 
           <motion.div className="feature-card" variants={fadeInUp}>
             <div className="feature-icon-wrapper">
               <Zap size={48} />
             </div>
-            <h3 className="feature-title">Velocidad real</h3>
-            <p className="feature-desc">Tiempo real con Supabase Realtime. Sin retrasos molestos, tus mensajes y estados de lectura se sincronizan al instante en todos tus dispositivos.</p>
+            <h3 className="feature-title">Tiempo Real</h3>
+            <p className="feature-desc">Supabase Realtime. Mensajes instantáneos sin delay.</p>
           </motion.div>
 
           <motion.div className="feature-card" variants={fadeInUp}>
             <div className="feature-icon-wrapper">
-              <ShieldCheck size={48} />
+              <BellOff size={48} />
             </div>
-            <h3 className="feature-title">100% Privado</h3>
-            <p className="feature-desc">Sin anuncios invasivos, sin trackers, sin vender tus datos. Tu número de teléfono no es público y tu metadata está protegida por diseño.</p>
+            <h3 className="feature-title">Sin Anuncios</h3>
+            <p className="feature-desc">Cero publicidad. Cero tracking. Cero venta de datos.</p>
           </motion.div>
         </motion.div>
       </section>
@@ -328,14 +378,14 @@ export const LandingPage = () => {
           viewport={{ once: true }}
           variants={fadeInUp}
         >
-          Cómo funciona
+          Empieza en 30 segundos
         </motion.h2>
 
         <motion.div
           className="steps-container"
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={{ once: true, amount: 0.1 }}
           variants={staggerContainer}
         >
           <motion.div className="step-card" variants={fadeInUp}>
@@ -343,8 +393,8 @@ export const LandingPage = () => {
                <div className="step-number">1</div>
                <div className="step-icon-box"><ShieldCheck size={40}/></div>
             </div>
-            <h3 className="step-title">Creación Segura</h3>
-            <p className="step-desc">Crea tu cuenta en segundos sin vincularla a tu identidad real. Generamos claves criptográficas únicas solo para ti.</p>
+            <h3 className="step-title">Regístrate</h3>
+            <p className="step-desc">Crea tu cuenta gratis. Sin verificación de teléfono obligatoria.</p>
           </motion.div>
 
           <motion.div className="step-card" variants={fadeInUp}>
@@ -352,8 +402,8 @@ export const LandingPage = () => {
                <div className="step-number">2</div>
                <div className="step-icon-box"><Search size={40}/></div>
             </div>
-            <h3 className="step-title">Descubre y Conecta</h3>
-            <p className="step-desc">Encuentra grupos públicos interesantes o invita a tus amigos por enlace seguro a tus propios espacios privados.</p>
+            <h3 className="step-title">Únete o crea un grupo</h3>
+            <p className="step-desc">Encuentra comunidades o crea la tuya con múltiples topics.</p>
           </motion.div>
 
           <motion.div className="step-card" variants={fadeInUp}>
@@ -361,8 +411,8 @@ export const LandingPage = () => {
                <div className="step-number">3</div>
                <div className="step-icon-box"><Cloud size={40}/></div>
             </div>
-            <h3 className="step-title">Comparte Libremente</h3>
-            <p className="step-desc">Envía mensajes, fotos y archivos pesados sin censura ni límites de velocidad. Todo respaldado automáticamente en la nube.</p>
+            <h3 className="step-title">Comparte sin miedo</h3>
+            <p className="step-desc">Sube archivos, envía mensajes. Nadie te juzga. Nadie te censura.</p>
           </motion.div>
         </motion.div>
       </section>
@@ -376,13 +426,13 @@ export const LandingPage = () => {
           viewport={{ once: true }}
           variants={fadeInUp}
         >
-          Lo que dicen los usuarios
+          Lo que dicen los que ya se pasaron a Misil
         </motion.h2>
         <motion.div
           className="testimonials-grid"
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={{ once: true, amount: 0.1 }}
           variants={staggerContainer}
         >
           <motion.div className="testimonial-card" variants={fadeInUp}>
@@ -407,23 +457,23 @@ export const LandingPage = () => {
           </motion.div>
           <motion.div className="testimonial-card" variants={fadeInUp}>
             <div className="testimonial-header">
-              <div className="testimonial-avatar-initial" style={{ background: '#4ade80' }}>DR</div>
+              <div className="testimonial-avatar-initial" style={{ background: '#4ade80' }}>CR</div>
               <div>
-                <div className="testimonial-name">Diego R.</div>
-                <div className="testimonial-role">Desarrollador Web</div>
+                <div className="testimonial-name">Carlos R.</div>
+                <div className="testimonial-role">Gamer</div>
               </div>
             </div>
-            <p className="testimonial-text">"Poder enviar archivos de 500MB es un cambio total para mi flujo de trabajo. Ya no dependo de servicios de terceros para pasar builds y assets grandes a mis clientes. Todo desde la misma app de chat."</p>
+            <p className="testimonial-text">"Comparto capturas y clips sin que me censuren. Telegram me tenía harto."</p>
           </motion.div>
           <motion.div className="testimonial-card" variants={fadeInUp}>
             <div className="testimonial-header">
-              <div className="testimonial-avatar-initial" style={{ background: '#facc15' }}>SC</div>
+              <div className="testimonial-avatar-initial" style={{ background: '#facc15' }}>LS</div>
               <div>
-                <div className="testimonial-name">Sofía C.</div>
-                <div className="testimonial-role">Periodista Independiente</div>
+                <div className="testimonial-name">Laura S.</div>
+                <div className="testimonial-role">Periodista</div>
               </div>
             </div>
-            <p className="testimonial-text">"Buscaba una alternativa a WhatsApp después de lo que hicieron con las políticas de datos de Meta. Signal me gustaba pero al cambiar de móvil perdí mensajes vitales por no tener backup en la nube. Misil resuelve ambos problemas a la perfección."</p>
+            <p className="testimonial-text">"Comunicarme con fuentes sin miedo a que Meta lea mis conversaciones. Misil es indispensable."</p>
           </motion.div>
         </motion.div>
       </section>
@@ -437,6 +487,7 @@ export const LandingPage = () => {
            variants={fadeInUp}
         >
           <h2 className="cta-title">Únete a Misil.<br />La red que no te juzga.</h2>
+          <p className="cta-subtitle">Gratis para siempre. Sin tarjeta de crédito.</p>
           <Link to="/login" className="btn btn-primary cta-button">
             Crear cuenta gratis
           </Link>
