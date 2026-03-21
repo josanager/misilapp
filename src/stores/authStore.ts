@@ -63,7 +63,7 @@ export const useAuthStore = create<AuthState>()(
   login: async (username: string, password: string) => {
     set({ error: null, loading: true });
     try {
-      const email = `${username.toLowerCase()}@chatlatino.app`;
+      const email = `${username.toLowerCase()}@misil.app`;
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -100,7 +100,7 @@ export const useAuthStore = create<AuthState>()(
         return false;
       }
 
-      const email = `${username.toLowerCase()}@chatlatino.app`;
+      const email = `${username.toLowerCase()}@misil.app`;
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -175,7 +175,7 @@ export const useAuthStore = create<AuthState>()(
   clearError: () => set({ error: null }),
     }),
     {
-      name: 'chat-latino-auth-storage',
+      name: 'misil-auth-storage',
       partialize: (state) => ({ user: state.user }),
     }
   )

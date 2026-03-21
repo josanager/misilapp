@@ -244,12 +244,12 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
     {draggingFiles && (
       <div style={{
         position: 'fixed', inset: 0, background: 'rgba(106,178,242,0.12)',
-        border: '3px dashed #6AB2F2', borderRadius: 16, zIndex: 999,
+        border: '3px dashed #FF3737', borderRadius: 16, zIndex: 999,
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         justifyContent: 'center', gap: 16, pointerEvents: 'none'
       }}>
         <div style={{ fontSize: 52 }}>📎</div>
-        <p style={{ color: '#6AB2F2', fontWeight: 700, fontSize: 20 }}>Suelta aquí para adjuntar</p>
+        <p style={{ color: '#FF3737', fontWeight: 700, fontSize: 20 }}>Suelta aquí para adjuntar</p>
         <p style={{ color: 'rgba(106,178,242,0.7)', fontSize: 14 }}>Puedes soltar varios archivos a la vez</p>
       </div>
     )}

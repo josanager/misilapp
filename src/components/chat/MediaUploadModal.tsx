@@ -327,12 +327,12 @@ export function MediaUploadModal({ files, topicId, onClose }: MediaUploadModalPr
                   {isThumbImage && <img src={thumbUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 6, opacity: skippedIndexesRef.current.has(idx) ? 0.4 : 1 }} />}
                   {isThumbVideo && (
                     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111', borderRadius: 6, opacity: skippedIndexesRef.current.has(idx) ? 0.4 : 1 }}>
-                      <FileVideo size={22} color="#6AB2F2" />
+                      <FileVideo size={22} color="#FF3737" />
                     </div>
                   )}
                   {!isThumbImage && !isThumbVideo && (
                     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111', borderRadius: 6, opacity: skippedIndexesRef.current.has(idx) ? 0.4 : 1 }}>
-                      <FileIcon size={22} color="#a78bfa" />
+                      <FileIcon size={22} color="#CC2222" />
                     </div>
                   )}
                   
@@ -382,7 +382,7 @@ export function MediaUploadModal({ files, topicId, onClose }: MediaUploadModalPr
             <div className="media-upload-progress-bar">
               <div
                 className="media-upload-progress-fill"
-                style={{ width: `${overallProgress}%`, background: 'linear-gradient(90deg, #6AB2F2, #a78bfa)' }}
+                style={{ width: `${overallProgress}%`, background: 'linear-gradient(90deg, #FF3737, #CC2222)' }}
               />
             </div>
           </div>

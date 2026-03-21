@@ -539,7 +539,7 @@ export const useChatStore = create<ChatState>()(
   },
     }),
     {
-      name: 'chat-latino-messages-storage',
+      name: 'misil-messages-storage',
       version: 1,
       // Solo persistimos el caché de mensajes. Dejamos currentTopicId y messages limpios
       // para que cada vez que se inicie la sesión comience de cero.
