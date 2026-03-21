@@ -3,7 +3,7 @@
   color: var(--text-primary);
   min-height: 100vh;
   font-family: var(--font-family);
-  overflow-x: clip;
+  
 }
 
 /* Navbar */
