@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, Lock, Users, Zap, EyeOff, Upload, MessageSquare, Ban, DollarSign, CloudOff, Cloud, HardDrive, Share2, Search } from 'lucide-react';
+import { ShieldCheck, Lock, Users, Zap, Upload, MessageSquare, Ban, DollarSign, CloudOff, Cloud, Share2, Search } from 'lucide-react';
 import { Navbar } from './Navbar';
 import './LandingPage.css';
 import { getOnlineUsersCount } from '../../services/stats/userCount';
