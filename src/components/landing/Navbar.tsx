@@ -12,10 +12,10 @@ export const Navbar = () => {
         <span className="landing-brand-text">MISIL</span>
       </Link>
 
-      <div className="landing-nav-actions">
+      <div className={`landing-nav-actions ${menuOpen ? 'mobile-visible' : ''}`}>
+        <Link to="/downloader" className="landing-nav-link" style={{ fontWeight: 'bold' }} onClick={() => setMenuOpen(false)}>Misil Downloader</Link>
         <Link to="/login" className="btn btn-secondary" onClick={() => setMenuOpen(false)}>Iniciar sesión</Link>
         <Link to="/login" className="btn btn-primary" style={{ background: 'var(--accent)', color: 'white' }} onClick={() => setMenuOpen(false)}>Registrarse</Link>
-        <Link to="/downloader" className="landing-nav-link" style={{ marginLeft: '12px', fontWeight: 'bold' }} onClick={() => setMenuOpen(false)}>Misil Downloader</Link>
       </div>
 
       <button className="mobile-menu-toggle" style={{ display: 'none', background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }} onClick={() => setMenuOpen(!menuOpen)}>
