@@ -67,6 +67,9 @@ app.put('/upload/part', async (c) => {
     const multipartUpload = c.env.BUCKET.resumeMultipartUpload(key, uploadId);
     
     // c.req.raw.body is a ReadableStream which can be passed directly
+    if (!c.req.raw.body) {
+      return c.json({ error: 'Missing request body' }, 400);
+    }
     const uploadedPart = await multipartUpload.uploadPart(partNumber, c.req.raw.body);
 
     return c.json({ etag: uploadedPart.etag, partNumber: uploadedPart.partNumber });

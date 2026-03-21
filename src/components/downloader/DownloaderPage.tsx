@@ -42,9 +42,7 @@ export const DownloaderPage = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No estás autenticado');
 
-      const apiUrl = import.meta.env.VITE_UPLOAD_WORKER_URL
-        ? import.meta.env.VITE_UPLOAD_WORKER_URL.replace('/upload', '/api/downloader/analyze')
-        : 'https://chatlatino-r2-worker.josanager15.workers.dev/api/downloader/analyze';
+      const apiUrl = `${import.meta.env.VITE_WORKER_URL || 'https://chat-latino-backend.josanager15.workers.dev'}/api/downloader/analyze`;
 
       const res = await fetch(apiUrl, {
         method: 'POST',
@@ -83,9 +81,7 @@ export const DownloaderPage = () => {
       const format = result.formats.find(f => f.id === selectedFormat);
       if (!format) throw new Error('Formato no válido');
 
-      const apiUrl = import.meta.env.VITE_UPLOAD_WORKER_URL
-        ? import.meta.env.VITE_UPLOAD_WORKER_URL.replace('/upload', '/api/downloader/download')
-        : 'https://chatlatino-r2-worker.josanager15.workers.dev/api/downloader/download';
+      const apiUrl = `${import.meta.env.VITE_WORKER_URL || 'https://chat-latino-backend.josanager15.workers.dev'}/api/downloader/download`;
 
       const res = await fetch(apiUrl, {
         method: 'POST',
