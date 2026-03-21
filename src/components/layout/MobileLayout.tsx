@@ -5,25 +5,25 @@ import { useChatStore } from '../../stores/chatStore';
 import { Sidebar } from './Sidebar';
 import { ChatView } from '../chat/ChatView';
 import { SettingsPage } from '../settings/SettingsPage';
+import { ProfilePage } from '../settings/ProfilePage';
 import { GroupPanel } from '../groups/GroupPanel';
+import { FloatingNavbar, MainTab } from './FloatingNavbar';
 import type { Group, Topic } from '../../types';
-
-type View = 'chat' | 'settings';
 
 export function MobileLayout() {
   const { user } = useAuthStore();
   const { groups, currentGroup, topics, fetchGroup, fetchTopics, setCurrentGroup } = useGroupStore();
   const { setCurrentTopic, currentTopicId } = useChatStore();
-  const [view, setView] = useState<View>('chat');
+  const [mainTab, setMainTab] = useState<MainTab>('chat');
   const [showGroupPanel, setShowGroupPanel] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(true); // En móvil es excluyente
+  const [showSidebar, setShowSidebar] = useState(true);
 
   // Handle browser back button on mobile
   useEffect(() => {
     const handlePopState = () => {
       setShowSidebar(true);
       setCurrentGroup(null);
-      setView('chat');
+      setMainTab('chat');
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
@@ -32,9 +32,8 @@ export function MobileLayout() {
   const handleSelectGroup = useCallback((group: Group) => {
     setCurrentGroup(group);
     setCurrentTopic(null);
-    setView('chat');
+    setMainTab('chat');
 
-    // Ocultar sidebar y guardar historial para atrás
     setShowSidebar(false);
     window.history.pushState({ view: 'chat', groupId: group.id }, '');
 
@@ -44,33 +43,37 @@ export function MobileLayout() {
 
   const handleSelectTopic = useCallback((topic: Topic) => {
     setCurrentTopic(topic.id);
-    setShowGroupPanel(false); // Por si venía del panel de grupo
+    setShowGroupPanel(false); 
   }, [setCurrentTopic]);
+
+  const handleChangeTab = (tab: MainTab) => {
+    setMainTab(tab);
+    if (tab === 'chat' && !currentGroup) {
+      setShowSidebar(true);
+    } else if (tab !== 'chat') {
+      setShowSidebar(false);
+    }
+  };
 
   if (!user) return null;
 
   return (
     <div className="app-layout">
-      {showSidebar ? (
+      {mainTab === 'chat' && showSidebar ? (
         <Sidebar
           groups={groups}
           currentGroup={currentGroup}
-          user={user}
           onSelectGroup={handleSelectGroup}
-          onOpenSettings={() => {
-            setView('settings');
-            setCurrentGroup(null);
-            setShowSidebar(false);
-            window.history.pushState({ view: 'settings' }, '');
-          }}
           visible={true}
           onToggle={() => {}}
         />
       ) : (
         <div className="main-area" style={{ animation: 'slideInBounce 0.25s ease' }}>
-          {view === 'settings' ? (
+          {mainTab === 'profile' ? (
+            <ProfilePage />
+          ) : mainTab === 'settings' ? (
             <SettingsPage onBack={() => {
-              setView('chat');
+              setMainTab('chat');
               setShowSidebar(true);
             }} />
           ) : currentGroup ? (
@@ -86,12 +89,14 @@ export function MobileLayout() {
         </div>
       )}
 
-      {showGroupPanel && currentGroup && (
+      {showGroupPanel && currentGroup && mainTab === 'chat' && (
         <GroupPanel
           group={currentGroup}
           onClose={() => setShowGroupPanel(false)}
         />
       )}
+
+      <FloatingNavbar currentTab={mainTab} onChangeTab={handleChangeTab} />
     </div>
   );
 }

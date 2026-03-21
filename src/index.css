@@ -2630,6 +2630,93 @@ html, body {
 .particle:nth-child(11) { left: 15%; top: 85%; animation-duration: 10s; animation-delay: 1.8s; width: 6px; height: 6px; }
 .particle:nth-child(12) { left: 55%; top: 15%; animation-duration: 12s; animation-delay: 3.5s; }
 
+/* Floating Navbar */
+.floating-navbar-container {
+  position: fixed;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1000;
+  padding: 0 16px;
+}
+
+.floating-navbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 8px 16px;
+  border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+}
+
+.nav-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 56px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 16px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.nav-tab:hover {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-tab.active {
+  color: var(--accent);
+}
+
+.nav-tab.active::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.nav-tab svg {
+  margin-bottom: 4px;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.nav-tab:active svg {
+  transform: scale(0.9);
+}
+
+.nav-tab.active svg {
+  transform: translateY(-2px);
+}
+
+.nav-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+/* Padding adjustments for Floating Navbar */
+.main-area, .sidebar {
+  padding-bottom: 90px !important;
+}
+
+
 @keyframes floatParticle {
   0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
   10% { opacity: 0.5; }

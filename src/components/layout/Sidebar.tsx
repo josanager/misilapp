@@ -1,24 +1,20 @@
 import { useState } from 'react';
 import { useGroupStore } from '../../stores/groupStore';
-import { Settings, Search, Plus, LogOut, UserPlus, Check } from 'lucide-react';
-import { useAuthStore } from '../../stores/authStore';
+import { Search, Plus, UserPlus, Check } from 'lucide-react';
 import { CreateGroupModal } from '../groups/CreateGroupModal';
 import { getUserColor } from '../../lib/avatar';
 import { BrandLogo } from '../common/BrandLogo';
-import type { Profile, Group } from '../../types';
+import type { Group } from '../../types';
 
 interface SidebarProps {
   groups: Group[];
   currentGroup: Group | null;
-  user: Profile;
   onSelectGroup: (group: Group) => void;
-  onOpenSettings: () => void;
   visible: boolean;
   onToggle: () => void;
 }
 
-export function Sidebar({ groups, currentGroup, user, onSelectGroup, onOpenSettings, visible }: SidebarProps) {
-  const { logout } = useAuthStore();
+export function Sidebar({ groups, currentGroup, onSelectGroup, visible }: SidebarProps) {
   const { searchResults, searchGroups, joinGroup } = useGroupStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [filter, setFilter] = useState('');
@@ -131,21 +127,7 @@ export function Sidebar({ groups, currentGroup, user, onSelectGroup, onOpenSetti
           </ul>
         </div>
 
-        <div className="user-profile-bar" onClick={onOpenSettings}>
-          <div className="group-avatar" style={{ background: getUserColor(user.id) }}>
-            {getInitials(user.display_name || user.username)}
-          </div>
-          <div className="group-info" style={{ flex: 1 }}>
-            <div className="group-name">{user.display_name || user.username}</div>
-            <div className="group-preview hide-on-mobile">@{user.username}</div>
-          </div>
-          <button className="btn-icon" onClick={(e) => { e.stopPropagation(); onOpenSettings(); }} title="Configuración">
-            <Settings size={18} />
-          </button>
-          <button className="btn-icon" onClick={(e) => { e.stopPropagation(); logout(); }} title="Cerrar sesión">
-            <LogOut size={18} />
-          </button>
-        </div>
+
       </aside>
 
       {showCreateModal && (

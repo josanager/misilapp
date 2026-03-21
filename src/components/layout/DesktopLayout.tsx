@@ -5,22 +5,22 @@ import { useChatStore } from '../../stores/chatStore';
 import { Sidebar } from './Sidebar';
 import { ChatView } from '../chat/ChatView';
 import { SettingsPage } from '../settings/SettingsPage';
+import { ProfilePage } from '../settings/ProfilePage';
 import { GroupPanel } from '../groups/GroupPanel';
+import { FloatingNavbar, MainTab } from './FloatingNavbar';
 import type { Group, Topic } from '../../types';
-
-type View = 'chat' | 'settings';
 
 export function DesktopLayout() {
   const { user } = useAuthStore();
   const { groups, currentGroup, topics, fetchGroup, fetchTopics, setCurrentGroup } = useGroupStore();
   const { setCurrentTopic, currentTopicId } = useChatStore();
-  const [view, setView] = useState<View>('chat');
+  const [mainTab, setMainTab] = useState<MainTab>('chat');
   const [showGroupPanel, setShowGroupPanel] = useState(false);
 
   const handleSelectGroup = useCallback((group: Group) => {
     setCurrentGroup(group);
-    setCurrentTopic(null); // Se auto-seleccionará el primero al cargar los topics en MainLayout
-    setView('chat');
+    setCurrentTopic(null);
+    setMainTab('chat');
 
     fetchGroup(group.id);
     fetchTopics(group.id);
@@ -34,23 +34,20 @@ export function DesktopLayout() {
 
   return (
     <div className="app-layout">
-      {/* Sidebar siempre visible en Desktop */}
+      {/* Sidebar visible only when mainTab is chat */}
       <Sidebar
         groups={groups}
         currentGroup={currentGroup}
-        user={user}
         onSelectGroup={handleSelectGroup}
-        onOpenSettings={() => {
-          setView('settings');
-          setCurrentGroup(null);
-        }}
-        visible={true}
+        visible={mainTab === 'chat'}
         onToggle={() => {}}
       />
 
       <div className="main-area">
-        {view === 'settings' ? (
-          <SettingsPage onBack={() => setView('chat')} />
+        {mainTab === 'profile' ? (
+          <ProfilePage />
+        ) : mainTab === 'settings' ? (
+          <SettingsPage onBack={() => setMainTab('chat')} />
         ) : currentGroup ? (
           <ChatView
             group={currentGroup}
@@ -75,12 +72,14 @@ export function DesktopLayout() {
         )}
       </div>
 
-      {showGroupPanel && currentGroup && (
+      {showGroupPanel && currentGroup && mainTab === 'chat' && (
         <GroupPanel
           group={currentGroup}
           onClose={() => setShowGroupPanel(false)}
         />
       )}
+
+      <FloatingNavbar currentTab={mainTab} onChangeTab={setMainTab} />
     </div>
   );
 }
