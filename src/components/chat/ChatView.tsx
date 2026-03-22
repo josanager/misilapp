@@ -3,12 +3,16 @@ import { useChatStore } from '../../stores/chatStore';
 import { useGroupStore } from '../../stores/groupStore';
 import { useAuthStore } from '../../stores/authStore';
 import { MessageInput } from './MessageInput';
-import { Plus, Hash, SmilePlus, Edit2, Trash2, X, ArrowLeft, Heart } from 'lucide-react';
+import { Hash, SmilePlus, Edit2, Trash2, X, ArrowLeft, Heart } from 'lucide-react';
 import { CreateTopicModal } from '../topics/CreateTopicModal';
 import { EmojiPicker, ReactionDisplay } from './EmojiPicker';
 import { VideoPlayer } from './VideoPlayer';
 import { ImageViewer } from './ImageViewer';
 import { SupportModal } from './SupportModal';
+import { GroupTabBar, type GroupTab } from './GroupTabBar';
+import { MediaGallery } from './MediaGallery';
+import { MediaViewer } from './MediaViewer';
+import { TopicList } from './TopicList';
 import { getUserColor } from '../../lib/avatar';
 import type { Group, Topic, Message } from '../../types';
 
@@ -23,10 +27,10 @@ interface ChatViewProps {
 
 import { memo } from 'react';
 
-const MessageBubble = memo(({ children, onClick }: { children: React.ReactNode, onClick: (e: any) => void }) => {
+const MessageBubble = memo(({ children, onClick, className }: { children: React.ReactNode, onClick: (e: any) => void, className?: string }) => {
   return (
     <div 
-      className="message-bubble" 
+      className={`message-bubble ${className || ''}`} 
       onClick={onClick}
       style={{ cursor: 'pointer' }}
     >
@@ -59,6 +63,9 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
   } | null>(null);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [showSupportModal, setShowSupportModal] = useState(false);
+  const [activeGroupTab, setActiveGroupTab] = useState<GroupTab>('multimedia');
+  const [selectedMedia, setSelectedMedia] = useState<any>(null);
+  const [topicChatMode, setTopicChatMode] = useState(false); // When user enters a topic from TopicList
 
   const dragCounter = useRef(0);
 
@@ -308,26 +315,44 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
         </div>
       </header>
 
-      {/* Topic tabs */}
-      {topics.length > 0 && (
-        <div className="topic-tabs">
-          {topics.map(topic => (
-            <button
-              key={topic.id}
-              className={`topic-tab ${topic.id === currentTopicId ? 'active' : ''}`}
-              onClick={() => onSelectTopic(topic)}
-            >
-              <Hash size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
-              {topic.name}
-            </button>
-          ))}
-          <button className="topic-tab-add" onClick={(e) => { e.stopPropagation(); setShowCreateTopic(true); }}>
-            <Plus size={14} /> Tema
-          </button>
-        </div>
-      )}
+      {/* Group Tab Bar (replaces old topic tabs) */}
+      <GroupTabBar
+        activeTab={activeGroupTab}
+        onChangeTab={(tab) => {
+          setActiveGroupTab(tab);
+          if (tab === 'chat') {
+            // Auto-select the General topic
+            const generalTopic = topics.find(t => t.name === 'General') || topics[0];
+            if (generalTopic) onSelectTopic(generalTopic);
+            setTopicChatMode(false);
+          } else if (tab === 'temas') {
+            setTopicChatMode(false);
+          }
+        }}
+      />
 
-      {/* Messages */}
+      {/* Content based on active tab */}
+      {activeGroupTab === 'multimedia' ? (
+        <div className="messages-area" style={{ padding: '0 var(--space-sm)' }}>
+          <MediaGallery
+            groupId={group.id}
+            onSelectMedia={(media) => setSelectedMedia(media)}
+          />
+        </div>
+      ) : activeGroupTab === 'temas' && !topicChatMode ? (
+        <div className="messages-area" style={{ padding: 'var(--space-md)' }}>
+          <TopicList
+            groupId={group.id}
+            topics={topics.filter(t => t.name !== 'General')}
+            onSelectTopic={(topic) => {
+              onSelectTopic(topic);
+              setTopicChatMode(true);
+            }}
+          />
+        </div>
+      ) : (
+      /* Chat view (default for 'chat' tab and when inside a topic from 'temas') */
+      <>
       <div className="messages-area">
         {loading ? (
           <div className="loader"><div className="spinner" /></div>
@@ -379,6 +404,7 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
                     <div className="message-wrapper">
                       <MessageBubble 
                         onClick={(e) => handleMessageClick(e, msg, isOwn)}
+                        className={(msg.type !== 'text' && msg.type !== 'file') || isGroup ? 'media-bubble' : ''}
                       >
                         {!isOwn && !isChain && <div className="message-sender">{senderName}</div>}
                         {repliedMsg && (
@@ -389,7 +415,7 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
 
                         {isGroup ? (
                           <div className={`media-group-grid count-${mediaGroup.length > 5 ? '6' : mediaGroup.length}`}>
-                            {mediaGroup.slice(0, 6).map((m, idx) => (
+                            {mediaGroup.map((m) => (
                               <div key={m.id} className="grid-item">
                                 {m.type === 'image' && m.file_url && (
                                   <img 
@@ -405,15 +431,6 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
                                 )}
                                 {m.type === 'video' && m.file_url && (
                                   <VideoPlayer src={m.file_url} previewMode={true} />
-                                )}
-                                {mediaGroup.length > 6 && idx === 5 && (
-                                  <div style={{
-                                    position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    color: 'white', fontWeight: 700, fontSize: 20, pointerEvents: 'none'
-                                  }}>
-                                    +{mediaGroup.length - 6}
-                                  </div>
                                 )}
                               </div>
                             ))}
@@ -603,6 +620,8 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
           onSendMessage={handleSend}
         />
       )}
+      </> /* End of chat/topic chat content */
+      )}
 
       {showCreateTopic && (
         <CreateTopicModal
@@ -626,6 +645,13 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
         <ImageViewer 
           src={selectedImageUrl} 
           onClose={() => setSelectedImageUrl(null)} 
+        />
+      )}
+
+      {selectedMedia && (
+        <MediaViewer
+          media={selectedMedia}
+          onClose={() => setSelectedMedia(null)}
         />
       )}
 

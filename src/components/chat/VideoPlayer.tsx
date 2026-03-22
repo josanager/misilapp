@@ -221,14 +221,7 @@ export function VideoPlayer({ src, className = '', style = {}, previewMode = fal
         </div>
       )}
 
-      {/* Center expand icon when IN preview mode and NOT fullscreen */}
-      {previewMode && !isFullscreen && (
-        <div className="custom-video-center-expand" onClick={toggleFullscreen}>
-          <div className="expand-btn-bg">
-            <Maximize size={28} color="white" />
-          </div>
-        </div>
-      )}
+
 
       {/* Controls overlay (Hide entirely in preview mode unless fullscreen) */}
       {(!previewMode || isFullscreen) && (

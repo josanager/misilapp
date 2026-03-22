@@ -8,6 +8,7 @@ import { SettingsPage } from '../settings/SettingsPage';
 import { ProfilePage } from '../settings/ProfilePage';
 import { GroupPanel } from '../groups/GroupPanel';
 import { FloatingNavbar, MainTab } from './FloatingNavbar';
+import { BrandLogo } from '../common/BrandLogo';
 import type { Group, Topic } from '../../types';
 
 export function DesktopLayout() {
@@ -60,12 +61,7 @@ export function DesktopLayout() {
         ) : (
           <div className="empty-state hide-on-mobile">
             <div className="empty-state-content">
-              <div className="empty-state-icon">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-              </div>
-              <h3>Misil</h3>
+              <BrandLogo size={120} color="var(--text-muted)" style={{ marginBottom: 'var(--space-lg)', opacity: 0.6 }} />
               <p>Selecciona un grupo para empezar a chatear o crea uno nuevo</p>
             </div>
           </div>

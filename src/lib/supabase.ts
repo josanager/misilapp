@@ -95,8 +95,17 @@ export type Message = {
   file_size: number | null;
   replied_to: string | null;
   media_group_id: string | null;
+  view_count?: number;
   is_edited?: boolean;
   created_at: string;
   profile?: Profile;
   status?: MessageDeliveryStatus; // Client-side property
+};
+
+export type MediaRating = {
+  id: string;
+  message_id: string;
+  user_id: string;
+  rating: number;
+  created_at: string;
 };

@@ -2,6 +2,14 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase, type Group, type GroupMember, type JoinRequest, type Topic } from '../lib/supabase';
 
+export type MediaFilter = 'recent' | 'top_rated' | 'most_viewed';
+
+export type MediaRatingInfo = {
+  avg: number;
+  count: number;
+  userRating?: number;
+};
+
 interface GroupState {
   groups: Group[];
   currentGroup: Group | null;
@@ -10,6 +18,8 @@ interface GroupState {
   joinRequests: JoinRequest[];
   searchResults: Group[];
   groupMedia: any[];
+  mediaRatings: Record<string, MediaRatingInfo>;
+  mediaFilter: MediaFilter;
   loading: boolean;
   error: string | null;
   fetchMyGroups: () => Promise<void>;
@@ -28,6 +38,10 @@ interface GroupState {
   deleteGroup: (groupId: string) => Promise<boolean>;
   fetchGroupMedia: (groupId: string) => Promise<void>;
   updateGroupSettings: (groupId: string, settings: Partial<Group>) => Promise<boolean>;
+  setMediaFilter: (filter: MediaFilter) => void;
+  rateMedia: (messageId: string, rating: number) => Promise<void>;
+  fetchMediaRatings: (messageIds: string[]) => Promise<void>;
+  incrementViewCount: (messageId: string) => Promise<void>;
 }
 
 export const useGroupStore = create<GroupState>()(
@@ -40,6 +54,8 @@ export const useGroupStore = create<GroupState>()(
   joinRequests: [],
   searchResults: [],
   groupMedia: [],
+  mediaRatings: {},
+  mediaFilter: 'recent' as MediaFilter,
   loading: false,
   error: null,
 
@@ -379,6 +395,103 @@ export const useGroupStore = create<GroupState>()(
 
   setCurrentGroup: (group) => set({ currentGroup: group }),
   clearError: () => set({ error: null }),
+
+  setMediaFilter: (filter) => set({ mediaFilter: filter }),
+
+  rateMedia: async (messageId: string, rating: number) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Upsert: insert or update rating
+      const { error } = await supabase
+        .from('media_ratings')
+        .upsert(
+          { message_id: messageId, user_id: user.id, rating },
+          { onConflict: 'message_id,user_id' }
+        );
+
+      if (error) {
+        console.error('Error rating media:', error);
+        return;
+      }
+
+      // Refresh ratings for this message
+      await get().fetchMediaRatings([messageId]);
+    } catch (e) {
+      console.error('Exception rating media:', e);
+    }
+  },
+
+  fetchMediaRatings: async (messageIds: string[]) => {
+    if (messageIds.length === 0) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const { data } = await supabase
+        .from('media_ratings')
+        .select('*')
+        .in('message_id', messageIds);
+
+      if (data) {
+        const grouped: Record<string, MediaRatingInfo> = { ...get().mediaRatings };
+
+        // Initialize all requested IDs
+        messageIds.forEach(id => {
+          grouped[id] = { avg: 0, count: 0, userRating: undefined };
+        });
+
+        // Group ratings by message_id
+        const byMessage: Record<string, number[]> = {};
+        data.forEach(r => {
+          if (!byMessage[r.message_id]) byMessage[r.message_id] = [];
+          byMessage[r.message_id].push(r.rating);
+          // Track user's own rating
+          if (user && r.user_id === user.id) {
+            grouped[r.message_id] = { ...grouped[r.message_id], userRating: r.rating };
+          }
+        });
+
+        // Calculate averages
+        Object.entries(byMessage).forEach(([msgId, ratings]) => {
+          const avg = ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
+          grouped[msgId] = { ...grouped[msgId], avg: Math.round(avg * 10) / 10, count: ratings.length };
+        });
+
+        set({ mediaRatings: grouped });
+      }
+    } catch (e) {
+      console.error('Error fetching media ratings:', e);
+    }
+  },
+
+  incrementViewCount: async (messageId: string) => {
+    try {
+      // Use RPC or raw update to increment. Since Supabase doesn't support
+      // atomic increment easily, we'll fetch + update.
+      const { data: msg } = await supabase
+        .from('messages')
+        .select('view_count')
+        .eq('id', messageId)
+        .single();
+
+      if (msg) {
+        await supabase
+          .from('messages')
+          .update({ view_count: (msg.view_count || 0) + 1 })
+          .eq('id', messageId);
+
+        // Update local groupMedia
+        set(state => ({
+          groupMedia: state.groupMedia.map(m =>
+            m.id === messageId ? { ...m, view_count: (m.view_count || 0) + 1 } : m
+          )
+        }));
+      }
+    } catch (e) {
+      console.error('Error incrementing view count:', e);
+    }
+  },
     }),
     {
       name: 'misil-groups-storage',
