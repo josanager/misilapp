@@ -1,0 +1,103 @@
+<UserControl x:Class="MISILNative.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="800"
+             Background="{StaticResource BrushBgPrimary}">
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="60" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1" Padding="24,0">
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="Dashboard" FontSize="16" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" />
+                <TextBlock x:Name="TxtDashboardSubtitle" Text="Nodo local activo" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,1,0,0" />
+            </StackPanel>
+        </Border>
+
+        <!-- Main Body -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="28">
+            <Grid MaxWidth="720" HorizontalAlignment="Left">
+                
+                <!-- ACTIVE DASHBOARD -->
+                <StackPanel x:Name="PanelActive" Visibility="Visible">
+                    <!-- Title Banner -->
+                    <Grid Margin="0,0,0,24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Width="44" Height="44" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="10" Margin="0,0,16,0">
+                            <TextBlock Text="💽" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Este PC está aportando almacenamiento" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" />
+                            <TextBlock Text="La cuota limita cuánto puede ocupar MISIL; el espacio se consume únicamente cuando llegan archivos." FontSize="13" Foreground="{StaticResource BrushTextSecondary}" Margin="0,3,0,0" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Metrics Card -->
+                    <Border Style="{StaticResource MISILCard}" Margin="0,0,0,20">
+                        <StackPanel>
+                            <!-- Row 1: Quota -->
+                            <Grid Margin="0,4">
+                                <TextBlock Text="Cuota compartida" FontSize="14" FontWeight="Medium" Foreground="{StaticResource BrushTextSecondary}" VerticalAlignment="Center" />
+                                <TextBlock x:Name="TxtSharedQuota" Text="0 B" FontSize="16" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                            </Grid>
+                            <Rectangle Height="1" Fill="{StaticResource BrushBorder}" Margin="0,8" />
+
+                            <!-- Row 2: Used -->
+                            <Grid Margin="0,4">
+                                <TextBlock Text="Utilizado por MISIL" FontSize="14" FontWeight="Medium" Foreground="{StaticResource BrushTextSecondary}" VerticalAlignment="Center" />
+                                <TextBlock x:Name="TxtUsedStorage" Text="0 B" FontSize="16" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                            </Grid>
+                            <Rectangle Height="1" Fill="{StaticResource BrushBorder}" Margin="0,8" />
+
+                            <!-- Row 3: Available -->
+                            <Grid Margin="0,4">
+                                <TextBlock Text="Disponible en la cuota" FontSize="14" FontWeight="Medium" Foreground="{StaticResource BrushTextSecondary}" VerticalAlignment="Center" />
+                                <TextBlock x:Name="TxtAvailableQuota" Text="0 B" FontSize="16" FontWeight="Bold" Foreground="{StaticResource BrushAccent}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Directory Card -->
+                    <Border Style="{StaticResource MISILCard}" Margin="0,0,0,24">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                                <TextBlock Text="Directorio del nodo en Windows" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" />
+                                <TextBlock x:Name="TxtStorageDirectory" Text="C:\Users\...\AppData\Local\MISIL\Storage\Blobs" FontSize="11" FontFamily="Consolas" Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="Abrir en Explorador" Style="{StaticResource MISILSecondaryButton}" Height="34" Padding="14,0" FontSize="12" Click="OnOpenFolderClick" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Security Note -->
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="🛡️" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBlock Text="La clave maestra se conserva protegida mediante Windows DPAPI y no se escribe en la carpeta pública." FontSize="12" Foreground="{StaticResource BrushTextMuted}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- INACTIVE DASHBOARD -->
+                <StackPanel x:Name="PanelInactive" Visibility="Collapsed" Width="480" HorizontalAlignment="Left" Margin="0,40,0,0">
+                    <TextBlock Text="💽" FontSize="44" Margin="0,0,0,16" Foreground="{StaticResource BrushTextMuted}" />
+                    <TextBlock Text="El Dashboard necesita un nodo activo" FontSize="24" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,0,10" />
+                    <TextBlock Text="No estás compartiendo almacenamiento en este momento. Activa una cuota para ver la capacidad, uso y estado del nodo descentralizado." FontSize="14" Foreground="{StaticResource BrushTextSecondary}" TextWrapping="Wrap" Margin="0,0,0,24" LineHeight="20" />
+                    <Button Content="Compartir almacenamiento" Style="{StaticResource MISILPrimaryButton}" Width="240" HorizontalAlignment="Left" Click="OnShareStorageClick" />
+                </StackPanel>
+
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

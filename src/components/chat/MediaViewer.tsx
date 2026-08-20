@@ -3,9 +3,10 @@ import { X, Star, Eye, Clock } from 'lucide-react';
 import { useGroupStore } from '../../stores/groupStore';
 import { getUserColor } from '../../lib/avatar';
 import { VideoPlayer } from './VideoPlayer';
+import type { Message } from '../../types';
 
 interface MediaViewerProps {
-  media: any;
+  media: Message;
   onClose: () => void;
 }
 

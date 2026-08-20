@@ -1,0 +1,202 @@
+<UserControl x:Class="MISILNative.Views.OnboardingView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="800"
+             Background="{StaticResource BrushBgPrimary}">
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="60" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1" Padding="24,0">
+            <Grid>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="32" Height="32" Background="{StaticResource BrushAccent}" CornerRadius="8">
+                        <TextBlock Text="M" FontWeight="Bold" FontSize="18" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="MISIL" FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="12,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+                <TextBlock x:Name="StepIndicatorText" Text="Inicio" FontSize="13" Foreground="{StaticResource BrushTextMuted}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+            </Grid>
+        </Border>
+
+        <!-- Steps Content Area -->
+        <Grid Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Width="560" Margin="0,20">
+            
+            <!-- STEP 0: Welcome -->
+            <StackPanel x:Name="PanelWelcome" Visibility="Visible">
+                <Border Width="64" Height="64" Background="{StaticResource BrushAccent}" CornerRadius="14" HorizontalAlignment="Left" Margin="0,0,0,20">
+                    <TextBlock Text="M" FontWeight="Bold" FontSize="36" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <TextBlock Text="Bienvenido a MISIL" FontSize="30" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,0,10" />
+                <TextBlock Text="Esta versión crea un nodo privado en tu equipo Windows. No necesitas una cuenta y tus preferencias permanecen en este PC." FontSize="15" Foreground="{StaticResource BrushTextSecondary}" TextWrapping="Wrap" Margin="0,0,0,24" LineHeight="22" />
+
+                <!-- Facts Card -->
+                <Border Style="{StaticResource MISILCard}" Margin="0,0,0,28">
+                    <StackPanel>
+                        <Grid Margin="0,4">
+                            <StackPanel Margin="0,4">
+                                <TextBlock Text="Sin inicio de sesión" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" />
+                                <TextBlock Text="Entrarás directamente a tu espacio local." FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Grid>
+                        <Rectangle Height="1" Fill="{StaticResource BrushBorder}" Margin="0,8" />
+                        <Grid Margin="0,4">
+                            <StackPanel Margin="0,4">
+                                <TextBlock Text="Clave protegida por Windows DPAPI" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" />
+                                <TextBlock Text="La Data Protection API conserva de forma aislada tu clave de almacenamiento." FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Grid>
+                        <Rectangle Height="1" Fill="{StaticResource BrushBorder}" Margin="0,8" />
+                        <Grid Margin="0,4">
+                            <StackPanel Margin="0,4">
+                                <TextBlock Text="Tú eliges la cuota" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" />
+                                <TextBlock Text="Compartir espacio es opcional, seguro y reversible." FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Button Content="Continuar" Style="{StaticResource MISILPrimaryButton}" Width="200" HorizontalAlignment="Left" Click="OnWelcomeContinueClick" />
+            </StackPanel>
+
+            <!-- STEP 1: Storage Choice -->
+            <StackPanel x:Name="PanelChoice" Visibility="Collapsed">
+                <Button Content="← Atrás" Background="Transparent" Foreground="{StaticResource BrushTextSecondary}" BorderThickness="0" HorizontalAlignment="Left" Margin="0,0,0,16" Cursor="Hand" Click="OnBackToWelcomeClick" />
+                <TextBlock Text="¿Quieres compartir almacenamiento?" FontSize="27" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,0,10" />
+                <TextBlock Text="MISIL usará esa cuota como límite. No reservará todo el espacio de inmediato; solo crecerá conforme se escriban archivos." FontSize="15" Foreground="{StaticResource BrushTextSecondary}" TextWrapping="Wrap" Margin="0,0,0,24" LineHeight="22" />
+
+                <!-- Choice 1: Yes -->
+                <Border x:Name="BtnChoiceShare" Style="{StaticResource MISILCard}" Margin="0,0,0,14" Cursor="Hand" MouseLeftButtonUp="OnChoiceShareClick">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Sí, compartir almacenamiento" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" />
+                            <TextBlock Text="Activa el nodo local y el Dashboard de capacidad y donación." FontSize="13" Foreground="{StaticResource BrushTextSecondary}" Margin="0,4,0,0" />
+                        </StackPanel>
+                        <TextBlock Grid.Column="1" Text="→" FontSize="18" Foreground="{StaticResource BrushAccent}" VerticalAlignment="Center" />
+                    </Grid>
+                </Border>
+
+                <!-- Choice 2: No -->
+                <Border x:Name="BtnChoiceSkip" Style="{StaticResource MISILCard}" Margin="0,0,0,24" Cursor="Hand" MouseLeftButtonUp="OnChoiceSkipClick">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Ahora no" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" />
+                            <TextBlock Text="Podrás entrar a MISIL y activarlo en cualquier momento desde Ajustes." FontSize="13" Foreground="{StaticResource BrushTextSecondary}" Margin="0,4,0,0" />
+                        </StackPanel>
+                        <TextBlock Grid.Column="1" Text="→" FontSize="18" Foreground="{StaticResource BrushTextMuted}" VerticalAlignment="Center" />
+                    </Grid>
+                </Border>
+            </StackPanel>
+
+            <!-- STEP 2: Storage Amount Selection -->
+            <StackPanel x:Name="PanelAmount" Visibility="Collapsed">
+                <Button Content="← Atrás" Background="Transparent" Foreground="{StaticResource BrushTextSecondary}" BorderThickness="0" HorizontalAlignment="Left" Margin="0,0,0,16" Cursor="Hand" Click="OnBackToChoiceClick" />
+                <TextBlock Text="Elige cuánto espacio aportar" FontSize="27" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,0,10" />
+                <TextBlock x:Name="TxtDiskAvailable" Text="Disponible para compartir en Windows: calculando... MISIL conserva 5 GB como margen de seguridad." FontSize="14" Foreground="{StaticResource BrushTextSecondary}" TextWrapping="Wrap" Margin="0,0,0,20" />
+
+                <!-- Presets Grid -->
+                <UniformGrid Columns="2" Rows="2" Margin="0,0,0,16">
+                    <Border x:Name="Preset10" Style="{StaticResource MISILCard}" Margin="0,0,6,8" Cursor="Hand" MouseLeftButtonUp="OnPresetClick" Tag="10">
+                        <StackPanel>
+                            <TextBlock Text="10 GB" FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" />
+                            <TextBlock Text="Mínimo recomendado" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <Border x:Name="Preset50" Style="{StaticResource MISILCard}" Margin="6,0,0,8" Cursor="Hand" MouseLeftButtonUp="OnPresetClick" Tag="50">
+                        <StackPanel>
+                            <TextBlock Text="50 GB" FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" />
+                            <TextBlock Text="Espacio estándar" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <Border x:Name="Preset100" Style="{StaticResource MISILCard}" Margin="0,8,6,0" Cursor="Hand" MouseLeftButtonUp="OnPresetClick" Tag="100">
+                        <StackPanel>
+                            <TextBlock Text="100 GB" FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" />
+                            <TextBlock Text="Nodo avanzado" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <Border x:Name="Preset500" Style="{StaticResource MISILCard}" Margin="6,8,0,0" Cursor="Hand" MouseLeftButtonUp="OnPresetClick" Tag="500">
+                        <StackPanel>
+                            <TextBlock Text="500 GB" FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" />
+                            <TextBlock Text="Alta capacidad" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+                </UniformGrid>
+
+                <!-- Custom Amount -->
+                <TextBlock Text="O introduce una cantidad personalizada (GB)" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" Margin="0,10,0,6" />
+                <Grid Margin="0,0,0,24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="TxtCustomQuota" Style="{StaticResource MISILTextBox}" Grid.Column="0" TextChanged="OnCustomQuotaChanged" />
+                    <TextBlock Text="GB" Grid.Column="1" FontSize="14" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                </Grid>
+
+                <TextBlock x:Name="TxtAmountError" Text="" FontSize="12" Foreground="{StaticResource BrushDanger}" Margin="0,-16,0,16" Visibility="Collapsed" />
+
+                <Button x:Name="BtnPrepareAmount" Content="Preparar 10 GB" Style="{StaticResource MISILPrimaryButton}" Width="220" HorizontalAlignment="Left" Click="OnAmountContinueClick" />
+            </StackPanel>
+
+            <!-- STEP 3: Security / DPAPI Disclosure -->
+            <StackPanel x:Name="PanelSecurity" Visibility="Collapsed">
+                <Button Content="← Atrás" Background="Transparent" Foreground="{StaticResource BrushTextSecondary}" BorderThickness="0" HorizontalAlignment="Left" Margin="0,0,0,16" Cursor="Hand" Click="OnBackToAmountClick" />
+                
+                <Border Width="48" Height="48" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="12" HorizontalAlignment="Left" Margin="0,0,0,16">
+                    <TextBlock Text="🛡️" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+
+                <TextBlock Text="Windows protegerá tu clave" FontSize="27" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,0,10" />
+                <TextBlock Text="Para cifrar los archivos del nodo, MISIL genera una clave maestra de 256 bits y la resguarda utilizando la Data Protection API (DPAPI) de tu usuario de Windows." FontSize="15" Foreground="{StaticResource BrushTextSecondary}" TextWrapping="Wrap" Margin="0,0,0,22" LineHeight="22" />
+
+                <Border Style="{StaticResource MISILCard}" Margin="0,0,0,26">
+                    <StackPanel>
+                        <Grid Margin="0,4">
+                            <StackPanel>
+                                <TextBlock Text="Solo la clave de MISIL" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" />
+                                <TextBlock Text="No accede a tus contraseñas personales, certificados ni otros datos del sistema." FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Grid>
+                        <Rectangle Height="1" Fill="{StaticResource BrushBorder}" Margin="0,8" />
+                        <Grid Margin="0,4">
+                            <StackPanel>
+                                <TextBlock Text="Cifrado nativo de Windows DPAPI" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" />
+                                <TextBlock Text="La clave solo puede ser descifrada por tu sesión de usuario en este equipo." FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Button Content="Continuar y autorizar" Style="{StaticResource MISILPrimaryButton}" Width="220" HorizontalAlignment="Left" Click="OnSecurityAuthorizeClick" />
+            </StackPanel>
+
+            <!-- STEP 4: Preparation Progress -->
+            <StackPanel x:Name="PanelPreparing" Visibility="Collapsed" HorizontalAlignment="Center" Width="480">
+                <Border Width="64" Height="64" Background="{StaticResource BrushAccent}" CornerRadius="14" HorizontalAlignment="Center" Margin="0,0,0,24">
+                    <TextBlock Text="M" FontWeight="Bold" FontSize="36" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <TextBlock x:Name="TxtProgressTitle" Text="Preparando MISIL..." FontSize="24" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" TextAlignment="Center" Margin="0,0,0,8" />
+                <TextBlock x:Name="TxtProgressDetail" Text="Comprobando este equipo Windows..." FontSize="14" Foreground="{StaticResource BrushTextSecondary}" TextAlignment="Center" Margin="0,0,0,24" />
+
+                <ProgressBar x:Name="ProgressIndicator" Height="6" Background="{StaticResource BrushBgSurface}" Foreground="{StaticResource BrushAccent}" BorderThickness="0" Margin="0,0,0,12" />
+                <TextBlock x:Name="TxtProgressPercent" Text="0 %" FontSize="13" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" TextAlignment="Center" />
+            </StackPanel>
+
+        </Grid>
+    </Grid>
+</UserControl>

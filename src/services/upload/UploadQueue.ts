@@ -50,9 +50,9 @@ export class UploadQueueManager {
       });
       task.status = 'success';
       task.fileUrl = url;
-    } catch (err: any) {
+    } catch (err: unknown) {
       task.status = 'error';
-      task.error = err.message || 'Error uploading file';
+      task.error = err instanceof Error ? err.message : 'Error uploading file';
     }
   }
 

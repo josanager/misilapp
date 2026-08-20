@@ -1,0 +1,62 @@
+<Window x:Class="MISILNative.Views.RelaySetupDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Conexión con MISIL Web"
+        Height="480" Width="520"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{StaticResource BrushBgPrimary}">
+    
+    <Grid Margin="24">
+        <!-- CONNECTED VIEW -->
+        <StackPanel x:Name="PanelConnected" Visibility="Collapsed">
+            <TextBlock Text="MISIL Web Conectado" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,0,6" />
+            <TextBlock Text="Sincroniza mensajes de texto mediante sobres cifrados temporales." FontSize="12" Foreground="{StaticResource BrushTextMuted}" Margin="0,0,0,18" />
+
+            <TextBlock Text="Código privado del espacio" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,0,6" />
+            <Border Style="{StaticResource MISILCard}" Margin="0,0,0,16">
+                <TextBox x:Name="TxtAccessCode" Background="Transparent" Foreground="{StaticResource BrushTextPrimary}" BorderThickness="0" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" IsReadOnly="True" />
+            </Border>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                <Button x:Name="BtnCopyCode" Content="Copiar código" Style="{StaticResource MISILSecondaryButton}" Width="120" Margin="0,0,10,0" Click="OnCopyCodeClick" />
+                <Button Content="Desconectar" Style="{StaticResource MISILSecondaryButton}" Foreground="{StaticResource BrushDanger}" Width="120" Margin="0,0,10,0" Click="OnDisconnectClick" />
+                <Button Content="Cerrar" Style="{StaticResource MISILPrimaryButton}" Width="90" Click="OnCloseClick" />
+            </StackPanel>
+        </StackPanel>
+
+        <!-- DISCONNECTED VIEW -->
+        <StackPanel x:Name="PanelDisconnected" Visibility="Visible">
+            <TextBlock Text="Conectar con MISIL Web" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,0,6" />
+            <TextBlock Text="Sincroniza únicamente mensajes de texto mediante sobres cifrados temporales." FontSize="12" Foreground="{StaticResource BrushTextMuted}" Margin="0,0,0,16" />
+
+            <!-- Mode Switch -->
+            <UniformGrid Columns="2" Margin="0,0,0,16">
+                <Button x:Name="BtnModeCreate" Content="Crear espacio nuevo" Style="{StaticResource MISILPrimaryButton}" Margin="0,0,4,0" Height="36" Click="OnModeCreateClick" />
+                <Button x:Name="BtnModeJoin" Content="Unirse con código" Style="{StaticResource MISILSecondaryButton}" Margin="4,0,0,0" Height="36" Click="OnModeJoinClick" />
+            </UniformGrid>
+
+            <!-- Name Input -->
+            <TextBlock Text="Nombre visible" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,0,6" />
+            <TextBox x:Name="TxtDisplayName" Style="{StaticResource MISILTextBox}" Text="Mi PC Windows" Margin="0,0,0,12" />
+
+            <!-- Relay URL -->
+            <TextBlock Text="Dirección del relay" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,0,6" />
+            <TextBox x:Name="TxtBaseUrl" Style="{StaticResource MISILTextBox}" Text="https://misil-web.pages.dev" Margin="0,0,0,12" />
+
+            <!-- Private Code Input (Join Mode only) -->
+            <StackPanel x:Name="PanelJoinCode" Visibility="Collapsed">
+                <TextBlock Text="Código privado de la sala" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,0,6" />
+                <TextBox x:Name="TxtJoinCode" Style="{StaticResource MISILTextBox}" Height="60" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,0,0,12" />
+            </StackPanel>
+
+            <TextBlock x:Name="TxtError" Text="" FontSize="11" Foreground="{StaticResource BrushDanger}" Margin="0,0,0,10" Visibility="Collapsed" />
+
+            <!-- Action Buttons -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                <Button Content="Cancelar" Style="{StaticResource MISILSecondaryButton}" Width="100" Margin="0,0,10,0" Click="OnCloseClick" />
+                <Button x:Name="BtnAction" Content="Crear espacio cifrado" Style="{StaticResource MISILPrimaryButton}" Width="180" Click="OnActionClick" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

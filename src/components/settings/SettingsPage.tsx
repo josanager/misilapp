@@ -1,15 +1,32 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from '../../stores/authStore';
-import { ArrowLeft, Bell, Shield, ChevronRight, Check, LogOut } from 'lucide-react';
+import { localApi } from '../../services/localApi';
+import type { StorageStatus } from '../../types';
+import { ArrowLeft, Bell, Shield, ChevronRight, Check, HardDrive, Database, RefreshCw } from 'lucide-react';
 
 interface SettingsPageProps {
   onBack: () => void;
 }
 
 export function SettingsPage({ onBack }: SettingsPageProps) {
-  const { user, logout, error } = useAuthStore();
+  const { user, error } = useAuthStore();
   const [view, setView] = useState<'main' | 'notifications'>('main');
   const [notifications, setNotifications] = useState(true);
+  const [storage, setStorage] = useState<StorageStatus | null>(null);
+
+  const loadStorage = () => localApi.storage().then(setStorage).catch(() => setStorage(null));
+
+  useEffect(() => {
+    void loadStorage();
+  }, []);
+
+  const formatBytes = (bytes: number) => {
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let value = bytes;
+    let unit = 0;
+    while (value >= 1024 && unit < units.length - 1) { value /= 1024; unit += 1; }
+    return `${value.toFixed(unit < 2 ? 0 : 2)} ${units[unit]}`;
+  };
 
   if (!user) return null;
 
@@ -27,7 +44,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
           <ArrowLeft size={20} />
         </button>
         <div className="chat-header-info" style={{ marginLeft: 12 }}>
-          <h3>{view === 'main' ? 'Configuración Web' : 'Notificaciones'}</h3>
+          <h3>{view === 'main' ? 'Configuración local' : 'Notificaciones'}</h3>
         </div>
       </div>
 
@@ -37,6 +54,30 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
         {view === 'main' && (
           <>
             <div className="settings-section">
+              <div className="settings-item">
+                <div className="settings-item-label">
+                  <HardDrive size={20} color="var(--accent)" />
+                  <div>
+                    <span>Almacenamiento del nodo</span>
+                    <small>{storage ? `${formatBytes(storage.usedBytes)} usados · ${formatBytes(storage.availableBytes)} disponibles` : 'Nodo local no disponible'}</small>
+                  </div>
+                </div>
+                <button className="btn-icon" onClick={() => void loadStorage()} title="Actualizar uso">
+                  <RefreshCw size={17} />
+                </button>
+              </div>
+
+              <div className="settings-item">
+                <div className="settings-item-label">
+                  <Database size={20} color="var(--text-secondary)" />
+                  <div>
+                    <span>Cuota reservada</span>
+                    <small>{storage ? formatBytes(storage.quotaBytes) : '10 GB'} · base de datos y archivos locales</small>
+                  </div>
+                </div>
+                <Check size={18} color="var(--accent-green)" />
+              </div>
+
               <div className="settings-item" onClick={() => setView('notifications')} style={{ cursor: 'pointer' }}>
                 <div className="settings-item-label">
                   <Bell size={20} color="var(--accent)" />
@@ -52,28 +93,17 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                 <div className="settings-item-label">
                   <Shield size={20} color="var(--accent-green)" />
                   <div>
-                    <span>Cifrado E2E</span>
-                    <small>Tus mensajes están protegidos</small>
+                    <span>Cifrado en este equipo</span>
+                    <small>AES-256-GCM por bloques; clave privada local</small>
                   </div>
                 </div>
                 <Check size={18} color="var(--accent-green)" />
               </div>
             </div>
 
-            <div className="settings-section">
-              <div className="settings-item" onClick={logout} style={{ cursor: 'pointer' }}>
-                <div className="settings-item-label">
-                  <LogOut size={20} color="var(--accent-red)" />
-                  <div>
-                    <span style={{ color: 'var(--accent-red)' }}>Cerrar sesión</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)', fontSize: 12 }}>
-              Misil v1.0.0<br />
-              Privacidad primero 🔒
+              MISIL Node v0.1 · perfil local único<br />
+              Sin cuentas ni servicios externos
             </div>
           </>
         )}

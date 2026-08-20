@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, DragEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useChatStore } from '../../stores/chatStore';
 import { useGroupStore } from '../../stores/groupStore';
 import { useAuthStore } from '../../stores/authStore';
@@ -27,7 +27,7 @@ interface ChatViewProps {
 
 import { memo } from 'react';
 
-const MessageBubble = memo(({ children, onClick, className }: { children: React.ReactNode, onClick: (e: any) => void, className?: string }) => {
+const MessageBubble = memo(({ children, onClick, className }: { children: React.ReactNode, onClick: React.MouseEventHandler<HTMLDivElement>, className?: string }) => {
   return (
     <div 
       className={`message-bubble ${className || ''}`} 
@@ -50,8 +50,6 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showCreateTopic, setShowCreateTopic] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState<{ msgId: string, x: number, y: number } | null>(null);
-  const [draggingFiles, setDraggingFiles] = useState(false);
-  const [pendingDropFiles, setPendingDropFiles] = useState<File[] | null>(null);
   
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string>('');
@@ -64,10 +62,8 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [activeGroupTab, setActiveGroupTab] = useState<GroupTab>('multimedia');
-  const [selectedMedia, setSelectedMedia] = useState<any>(null);
+  const [selectedMedia, setSelectedMedia] = useState<Message | null>(null);
   const [topicChatMode, setTopicChatMode] = useState(false); // When user enters a topic from TopicList
-
-  const dragCounter = useRef(0);
 
   useEffect(() => {
     fetchMembers(group.id);
@@ -122,30 +118,15 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
     }
   });
 
-  const handleMessageClick = (e: any, msg: Message, isOwn: boolean) => {
-    if (e.preventDefault) e.preventDefault();
-    if (e.stopPropagation) e.stopPropagation();
-    
-    let clientX = 0;
-    let clientY = 0;
-
-    if (e.touches && e.touches.length > 0) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else if (e.clientX !== undefined) {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    } else {
-      // Fallback to center of screen if coordinates missing
-      clientX = window.innerWidth / 2;
-      clientY = window.innerHeight / 2;
-    }
+  const handleMessageClick = (e: React.MouseEvent<HTMLElement>, msg: Message, isOwn: boolean) => {
+    e.preventDefault();
+    e.stopPropagation();
 
     setShowEmojiPicker(null);
     setOptionsMenu({
       messageId: msg.id,
-      x: clientX,
-      y: clientY,
+      x: e.clientX || window.innerWidth / 2,
+      y: e.clientY || window.innerHeight / 2,
       isOwn
     });
   };
@@ -191,33 +172,11 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
     
     if (!currentTopicId) return;
 
-    //@ts-ignore
     const success = await sendMessage(currentTopicId, content, type, fileUrl, fileName, fileSize, mediaGroupId);
     if (success) {
       if (replyTo) setReplyTo(null);
       // scroll is handled by useEffect on messages change
     }
-  };
-
-  // Full-window drag and drop handlers
-  const handleWindowDragEnter = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    dragCounter.current++;
-    if (e.dataTransfer.types.includes('Files')) setDraggingFiles(true);
-  };
-
-  const handleWindowDragLeave = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    dragCounter.current--;
-    if (dragCounter.current === 0) setDraggingFiles(false);
-  };
-
-  const handleWindowDrop = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    dragCounter.current = 0;
-    setDraggingFiles(false);
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) setPendingDropFiles(files);
   };
 
   const processReactions = (msgId: string) => {
@@ -240,26 +199,7 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
   };
 
   return (
-    <div
-      style={{ display: 'contents' }}
-      onDragEnter={handleWindowDragEnter}
-      onDragOver={(e) => e.preventDefault()}
-      onDragLeave={handleWindowDragLeave}
-      onDrop={handleWindowDrop}
-    >
-    {/* Full-window drag overlay */}
-    {draggingFiles && (
-      <div style={{
-        position: 'fixed', inset: 0, background: 'rgba(106,178,242,0.12)',
-        border: '3px dashed #FF3737', borderRadius: 16, zIndex: 999,
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        justifyContent: 'center', gap: 16, pointerEvents: 'none'
-      }}>
-        <div style={{ fontSize: 52 }}>📎</div>
-        <p style={{ color: '#FF3737', fontWeight: 700, fontSize: 20 }}>Suelta aquí para adjuntar</p>
-        <p style={{ color: 'rgba(106,178,242,0.7)', fontSize: 14 }}>Puedes soltar varios archivos a la vez</p>
-      </div>
-    )}
+    <div style={{ display: 'contents' }}>
       <header className="chat-header">
         <div className="chat-header-info">
            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -614,8 +554,6 @@ export function ChatView({ group, topics, currentTopicId, onSelectTopic, onToggl
           topicId={currentTopicId || ''}
           replyTo={replyTo}
           onCancelReply={() => setReplyTo(null)}
-          pendingFiles={pendingDropFiles}
-          onClearPendingFiles={() => setPendingDropFiles(null)}
           editingContent={editingContent}
           onSendMessage={handleSend}
         />

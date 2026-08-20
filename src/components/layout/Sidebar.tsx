@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { useGroupStore } from '../../stores/groupStore';
-import { Search, Plus, UserPlus, Check } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 import { CreateGroupModal } from '../groups/CreateGroupModal';
 import { getUserColor } from '../../lib/avatar';
 import { BrandLogo } from '../common/BrandLogo';
@@ -15,28 +14,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ groups, currentGroup, onSelectGroup, visible }: SidebarProps) {
-  const { searchResults, searchGroups, joinGroup } = useGroupStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [filter, setFilter] = useState('');
-  const [requestedIds, setRequestedIds] = useState<string[]>([]);
-
-  const handleSearchChange = (val: string) => {
-    setFilter(val);
-    if (val.length >= 2) {
-      searchGroups(val);
-    }
-  };
-
-  const handleJoinAction = async (e: React.MouseEvent, group: Group) => {
-    e.stopPropagation();
-    const result = await joinGroup(group.id);
-    if (result === 'requested') {
-      setRequestedIds([...requestedIds, group.id]);
-    } else if (result === 'joined') {
-      onSelectGroup(group);
-      setFilter('');
-    }
-  };
 
   const getInitials = (name: string) => {
     return name.slice(0, 2).toUpperCase();
@@ -62,7 +41,7 @@ export function Sidebar({ groups, currentGroup, onSelectGroup, visible }: Sideba
             className="search-input"
             placeholder=""
             value={filter}
-            onChange={(e) => handleSearchChange(e.target.value)}
+            onChange={(e) => setFilter(e.target.value)}
           />
         </div>
 
@@ -85,39 +64,7 @@ export function Sidebar({ groups, currentGroup, onSelectGroup, visible }: Sideba
               </li>
             ))}
 
-            {/* Global Search Results */}
-            {filter.length >= 2 && searchResults.length > 0 && (
-              <>
-                <div className="search-divider" style={{ padding: '12px 16px', fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Descubrir grupos
-                </div>
-                {searchResults.map(group => (
-                  <li key={group.id} className="group-item search-result">
-                    <div className="group-avatar" style={{ opacity: 0.7, background: getUserColor(group.id) }}>
-                      {getInitials(group.name)}
-                    </div>
-                    <div className="group-info">
-                      <div className="group-name">{group.name}</div>
-                      <div className="group-preview">{group.description || 'Sin descripción'}</div>
-                    </div>
-                    {requestedIds.includes(group.id) ? (
-                      <Check size={16} style={{ color: 'var(--accent-green)', marginRight: 12 }} />
-                    ) : (
-                      <button 
-                        className="btn-icon" 
-                        style={{ marginRight: 8, color: 'var(--accent)' }}
-                        onClick={(e) => handleJoinAction(e, group)}
-                        title="Unirme"
-                      >
-                        <UserPlus size={18} />
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </>
-            )}
-
-            {groups.filter(g => g.name.toLowerCase().includes(filter.toLowerCase())).length === 0 && searchResults.length === 0 && (
+            {groups.filter(g => g.name.toLowerCase().includes(filter.toLowerCase())).length === 0 && (
               <div className="empty-state" style={{ padding: '48px 24px' }}>
                 <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
                   {filter ? 'No se encontraron grupos' : 'No tienes grupos aún. ¡Crea uno!'}

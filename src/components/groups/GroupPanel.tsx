@@ -279,9 +279,9 @@ export function GroupPanel({ group, onClose }: GroupPanelProps) {
               });
               setIsSavingSettings(false);
               if (success) {
-                alert('Ajustes guardados correctamente (asegúrate de que estas columnas existan en tu tabla de Supabase).');
+                alert('Ajustes guardados en el nodo local.');
               } else {
-                alert('Error al guardar. Verifica que las nuevas columnas booleanas existan en la tabla groups.');
+                alert('No se pudieron guardar los ajustes locales.');
               }
             }}
           >
@@ -334,7 +334,7 @@ export function GroupPanel({ group, onClose }: GroupPanelProps) {
             <h4>Miembros ({members.length})</h4>
             <ul className="member-list">
               {members.map(member => {
-                const profile = (member as any).profile;
+                const profile = member.profile;
                 const name = profile?.display_name || profile?.username || 'Usuario';
                 return (
                   <li key={member.user_id} className="member-item">
@@ -367,9 +367,9 @@ export function GroupPanel({ group, onClose }: GroupPanelProps) {
             groupMedia.filter(m => m.type === 'image' || m.type === 'video').map(m => (
               <div key={m.id} style={{ aspectRatio: '1/1', background: 'var(--bg-secondary)', borderRadius: 8, overflow: 'hidden', cursor: 'pointer' }}>
                 {m.type === 'image' ? (
-                  <img src={m.file_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  <img src={m.file_url || undefined} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 ) : (
-                  <video src={m.file_url} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} muted playsInline />
+                  <video src={m.file_url || undefined} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} muted playsInline />
                 )}
               </div>
             ))
@@ -415,7 +415,7 @@ export function GroupPanel({ group, onClose }: GroupPanelProps) {
             </div>
           ) : (
             groupMedia.filter(m => m.type === 'file').map(m => (
-              <a key={m.id} href={m.file_url} target="_blank" rel="noopener noreferrer" className="member-item" style={{ textDecoration: 'none', color: 'inherit', alignItems: 'center' }}>
+              <a key={m.id} href={m.file_url || undefined} target="_blank" rel="noopener noreferrer" className="member-item" style={{ textDecoration: 'none', color: 'inherit', alignItems: 'center' }}>
                 <div style={{ width: 40, height: 40, borderRadius: 8, background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)' }}>
                   <FileText size={20} />
                 </div>

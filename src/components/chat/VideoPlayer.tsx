@@ -8,6 +8,20 @@ interface VideoPlayerProps {
   previewMode?: boolean;
 }
 
+type VendorDocument = Document & {
+  webkitFullscreenElement?: Element;
+  msFullscreenElement?: Element;
+  webkitExitFullscreen?: () => Promise<void> | void;
+  msExitFullscreen?: () => Promise<void> | void;
+};
+
+type VendorContainer = HTMLDivElement & {
+  webkitRequestFullscreen?: () => Promise<void>;
+  msRequestFullscreen?: () => Promise<void>;
+};
+
+type VendorVideo = HTMLVideoElement & { webkitEnterFullscreen?: () => void };
+
 // ─────────────────────────────────────────────────────────────
 // Utility: format seconds → "mm:ss"
 // ─────────────────────────────────────────────────────────────
@@ -76,8 +90,8 @@ export function VideoPlayer({ src, className = '', style = {}, previewMode = fal
     const onFSChange = () => {
       const isFull = !!(
         document.fullscreenElement ||
-        (document as any).webkitFullscreenElement ||
-        (document as any).msFullscreenElement
+        (document as VendorDocument).webkitFullscreenElement ||
+        (document as VendorDocument).msFullscreenElement
       );
       setIsFullscreen(isFull);
       if (!isFull && previewMode && v) {
@@ -128,7 +142,8 @@ export function VideoPlayer({ src, className = '', style = {}, previewMode = fal
     e?.stopPropagation();
     const v = videoRef.current;
     if (!v) return;
-    v.paused ? v.play() : v.pause();
+    if (v.paused) void v.play();
+    else v.pause();
     scheduleHide();
   }, [scheduleHide]);
 
@@ -149,26 +164,29 @@ export function VideoPlayer({ src, className = '', style = {}, previewMode = fal
     const v = videoRef.current;
     if (!c || !v) return;
 
-    const fsEl = document.fullscreenElement || (document as any).webkitFullscreenElement;
+    const vendorDocument = document as VendorDocument;
+    const vendorContainer = c as VendorContainer;
+    const vendorVideo = v as VendorVideo;
+    const fsEl = document.fullscreenElement || vendorDocument.webkitFullscreenElement;
 
     if (!fsEl) {
       // Enter fullscreen
       const req = c.requestFullscreen?.bind(c)
-               || (c as any).webkitRequestFullscreen?.bind(c)
-               || (c as any).msRequestFullscreen?.bind(c);
+               || vendorContainer.webkitRequestFullscreen?.bind(c)
+               || vendorContainer.msRequestFullscreen?.bind(c);
       if (req) {
         req().catch(() => {
           // iOS Safari fallback: fullscreen on <video> directly
-          if ((v as any).webkitEnterFullscreen) (v as any).webkitEnterFullscreen();
+          vendorVideo.webkitEnterFullscreen?.();
         });
-      } else if ((v as any).webkitEnterFullscreen) {
-        (v as any).webkitEnterFullscreen();
+      } else if (vendorVideo.webkitEnterFullscreen) {
+        vendorVideo.webkitEnterFullscreen();
       }
     } else {
       // Exit fullscreen
       const exit = document.exitFullscreen?.bind(document)
-                || (document as any).webkitExitFullscreen?.bind(document)
-                || (document as any).msExitFullscreen?.bind(document);
+                || vendorDocument.webkitExitFullscreen?.bind(document)
+                || vendorDocument.msExitFullscreen?.bind(document);
       if (exit) exit();
     }
   }, []);
@@ -301,7 +319,8 @@ export function VideoPlayer({ src, className = '', style = {}, previewMode = fal
         case ' ':
         case 'k':
           e.preventDefault();
-          v.paused ? v.play() : v.pause();
+          if (v.paused) void v.play();
+          else v.pause();
           break;
         case 'ArrowLeft':
           e.preventDefault();

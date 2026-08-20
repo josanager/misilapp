@@ -1,0 +1,3 @@
+# Copia este archivo como .dev.vars para que Wrangler no cargue las variables
+# privadas usadas por Vite desde el .env del proyecto.
+MISIL_RELAY_LOCAL=true

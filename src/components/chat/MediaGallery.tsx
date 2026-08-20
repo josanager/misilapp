@@ -1,11 +1,12 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useGroupStore, type MediaFilter } from '../../stores/groupStore';
 import { SlidersHorizontal, Star, Eye, Clock, Play } from 'lucide-react';
 import { getUserColor } from '../../lib/avatar';
+import type { Message } from '../../types';
 
 interface MediaGalleryProps {
   groupId: string;
-  onSelectMedia: (media: any) => void;
+  onSelectMedia: (media: Message) => void;
 }
 
 const FILTER_OPTIONS: { key: MediaFilter; label: string; icon: React.ReactNode }[] = [
@@ -31,18 +32,16 @@ export function MediaGallery({ groupId, onSelectMedia }: MediaGalleryProps) {
   useEffect(() => {
     if (groupMedia.length > 0) {
       const mediaIds = groupMedia
-        .filter((m: any) => m.type === 'image' || m.type === 'video')
-        .map((m: any) => m.id);
+        .filter((message) => message.type === 'image' || message.type === 'video')
+        .map((message) => message.id);
       if (mediaIds.length > 0) fetchMediaRatings(mediaIds);
     }
   }, [groupMedia, fetchMediaRatings]);
 
   // Filter only images and videos
-  const mediaOnly = groupMedia.filter((m: any) => m.type === 'image' || m.type === 'video');
-
-  // Apply sort based on current filter
-  const sortedMedia = useCallback(() => {
-    const items = [...mediaOnly];
+  // Conserva solo imágenes y vídeos y aplica el orden seleccionado.
+  const sortedMedia = useMemo(() => {
+    const items = groupMedia.filter((message) => message.type === 'image' || message.type === 'video');
     switch (mediaFilter) {
       case 'top_rated':
         return items.sort((a, b) => {
@@ -58,7 +57,7 @@ export function MediaGallery({ groupId, onSelectMedia }: MediaGalleryProps) {
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
     }
-  }, [mediaOnly, mediaFilter, mediaRatings])();
+  }, [groupMedia, mediaFilter, mediaRatings]);
 
   if (loading) {
     return (
@@ -92,7 +91,7 @@ export function MediaGallery({ groupId, onSelectMedia }: MediaGalleryProps) {
         </div>
       ) : (
         <div className="media-masonry">
-          {sortedMedia.map((item: any) => {
+          {sortedMedia.map((item) => {
             const uploaderName = item.profile?.display_name || item.profile?.username || 'U';
             const uploaderAvatar = item.profile?.avatar_url;
             const uploaderColor = getUserColor(item.user_id);

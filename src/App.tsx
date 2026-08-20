@@ -1,14 +1,14 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
-import { LoginPage } from './components/auth/LoginPage';
 import { MainLayout } from './components/layout/MainLayout';
-import { LandingPage } from './components/landing/LandingPage';
-import { DownloaderPage } from './components/downloader/DownloaderPage';
 import { BrandLogo } from './components/common/BrandLogo';
+import { PublicLandingPage } from './components/landing/PublicLandingPage';
+import { WebChatPage } from './components/web/WebChatPage';
 import './index.css';
+import './public.css';
 
-function AppRoutes() {
+function LocalNodeRoute() {
   const { user, loading, initialize } = useAuthStore();
 
   useEffect(() => {
@@ -28,14 +28,30 @@ function AppRoutes() {
     );
   }
 
+  return user ? <MainLayout /> : <NodeUnavailable />;
+}
+
+function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={user ? <Navigate to="/chat" replace /> : <LandingPage />} />
-      <Route path="/chat" element={user ? <MainLayout /> : <Navigate to="/login" replace />} />
-      <Route path="/login" element={user ? <Navigate to="/chat" replace /> : <LoginPage />} />
-      <Route path="/downloader" element={<DownloaderPage />} />
+      <Route path="/" element={<PublicLandingPage />} />
+      <Route path="/chat" element={<WebChatPage />} />
+      <Route path="/local" element={<LocalNodeRoute />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+  );
+}
+
+function NodeUnavailable() {
+  return (
+    <div className="auth-page">
+      <div className="auth-card">
+        <BrandLogo size={64} />
+        <h1>MISIL Node no responde</h1>
+        <p>Abre la aplicación nativa de MISIL para administrar los datos y archivos de este equipo.</p>
+        <button className="btn btn-primary btn-full" onClick={() => window.location.reload()}>Reintentar</button>
+      </div>
+    </div>
   );
 }
 

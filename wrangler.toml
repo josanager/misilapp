@@ -1,0 +1,9 @@
+name = "misil-web"
+pages_build_output_dir = "./dist"
+compatibility_date = "2026-03-01"
+
+[[d1_databases]]
+binding = "RELAY_DB"
+database_name = "misil-relay"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"

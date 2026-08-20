@@ -1,23 +1,23 @@
 ---
-name: Sistema de Diseño Misil (Chat Latino)
+name: Sistema de Diseño MISIL
 description: Reglas de diseño y estética visual obligatorias para el desarrollo frontend del proyecto.
 ---
 
 # Sistema de Diseño y Estética Visual
 
-Esta skill define las reglas obligatorias de diseño, la paleta de colores, la tipografía y los estilos de componentes que deben aplicarse a cualquier nuevo desarrollo o modificación en el frontend de la aplicación "Misil" (Chat Latino).
+Esta skill define las reglas obligatorias de diseño, la paleta de colores, la tipografía y los estilos de componentes que deben aplicarse a cualquier nuevo desarrollo o modificación en el frontend de la aplicación MISIL.
 
 ## 1. Paleta de Colores (Tema Oscuro)
 
 El proyecto actual tiene una paleta definida en CSS inspirada en Telegram, con acentos rojos. Deben respetarse estrictamente las siguientes directrices y usar estas variables CSS:
 
 ### Fondos (Backgrounds)
-- **Principal:** `#0e1621` (`--bg-primary`)
-- **Secundario:** `#17212b` (`--bg-secondary`)
-- **Terciario / Modales:** `#1c2733` (`--bg-tertiary`, `--bg-modal`)
-- **Hover:** `#242f3d` (`--bg-hover`)
-- **Activo:** `#2b5278` (`--bg-active`)
-- **Inputs:** `#242f3d` (`--bg-input`)
+- **Principal:** `#150000` (`--bg-primary`)
+- **Secundario:** `#1e0000` (`--bg-secondary`)
+- **Terciario / Modales:** `#260000` (`--bg-tertiary`, `--bg-modal`)
+- **Hover:** `#330000` (`--bg-hover`)
+- **Activo:** `#4d0000` (`--bg-active`)
+- **Inputs:** `#260000` (`--bg-input`)
 
 ### Textos
 - **Primario:** `#f5f5f5` (`--text-primary`)

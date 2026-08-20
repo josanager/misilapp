@@ -1,28 +1,20 @@
 import { useState, useRef, KeyboardEvent, useEffect } from 'react';
 import { useChatStore } from '../../stores/chatStore';
-import { Send, Paperclip, X } from 'lucide-react';
+import { HardDrive, Send, X } from 'lucide-react';
 import type { Message } from '../../types';
-import { MediaUploadModal } from './MediaUploadModal';
 
 interface MessageInputProps {
   topicId: string;
   replyTo: Message | null;
   onCancelReply: () => void;
-  pendingFiles?: File[] | null;
-  onClearPendingFiles?: () => void;
   editingContent?: string;
   onSendMessage: (content: string, type?: 'text' | 'image' | 'video' | 'file', fileUrl?: string, fileName?: string, fileSize?: number, mediaGroupId?: string) => void;
 }
 
-export function MessageInput({ topicId, replyTo, onCancelReply, pendingFiles, onClearPendingFiles, editingContent, onSendMessage }: MessageInputProps) {
+export function MessageInput({ replyTo, onCancelReply, editingContent, onSendMessage }: MessageInputProps) {
   const [content, setContent] = useState('');
-  const [localFiles, setLocalFiles] = useState<File[] | null>(null);
   const { sending } = useChatStore();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Files can come from local selection or parent (drag-and-drop from ChatView)
-  const activeFiles = pendingFiles || localFiles;
   
   // Update content when editingContent prop changes
   useEffect(() => {
@@ -60,23 +52,8 @@ export function MessageInput({ topicId, replyTo, onCancelReply, pendingFiles, on
     }
   };
 
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length > 0) setLocalFiles(files);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  const closeModal = () => {
-    setLocalFiles(null);
-    onClearPendingFiles?.();
-  };
-
   return (
-    <>
-      {activeFiles && activeFiles.length > 0 && (
-        <MediaUploadModal files={activeFiles} topicId={topicId} onClose={closeModal} />
-      )}
-      <div className="message-input-area">
+    <div className="message-input-area">
         {replyTo && (
           <div className="reply-preview">
             <span>↩ Respondiendo a <b>{replyTo.profile?.display_name || replyTo.profile?.username}</b>: {replyTo.content?.substring(0, 60)}</span>
@@ -84,17 +61,9 @@ export function MessageInput({ topicId, replyTo, onCancelReply, pendingFiles, on
           </div>
         )}
         <div className="message-input-row">
-          <button className="btn-icon" onClick={() => fileInputRef.current?.click()} title="Adjuntar archivo">
-            <Paperclip size={20} />
+          <button className="btn-icon web-file-disabled" type="button" disabled title="Los archivos sólo están disponibles en la aplicación nativa">
+            <HardDrive size={19} />
           </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            style={{ display: 'none' }}
-            onChange={handleFileInputChange}
-            accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
-          />
           <textarea
             ref={textareaRef}
             className="message-input"
@@ -119,7 +88,6 @@ export function MessageInput({ topicId, replyTo, onCancelReply, pendingFiles, on
             )}
           </button>
         </div>
-      </div>
-    </>
+    </div>
   );
 }

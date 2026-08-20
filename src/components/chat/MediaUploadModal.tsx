@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, FileVideo, FileIcon, ChevronLeft, ChevronRight, XOctagon } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
 import { useChatStore } from '../../stores/chatStore';
+import { localApi } from '../../services/localApi';
 import { VideoPlayer } from './VideoPlayer';
 
 interface MediaUploadModalProps {
@@ -21,7 +21,7 @@ export function MediaUploadModal({ files, topicId, onClose }: MediaUploadModalPr
   const [, setSkippedCount] = useState(0);
   
   const isCancelledRef = useRef(false);
-  const activeXhrRef = useRef<XMLHttpRequest | null>(null);
+  const activeUploadRef = useRef<AbortController | null>(null);
   const skippedIndexesRef = useRef<Set<number>>(new Set());
   const currentUploadIndexRef = useRef<number>(-1);
 
@@ -61,9 +61,9 @@ export function MediaUploadModal({ files, topicId, onClose }: MediaUploadModalPr
     skippedIndexesRef.current.add(idx);
     setSkippedCount(c => c + 1); // trigger re-render
     
-    // If it's the currently uploading file, abort its XHR immediately
+    // Si es el archivo activo, cancela su flujo local inmediatamente.
     if (idx === currentUploadIndexRef.current) {
-      if (activeXhrRef.current) activeXhrRef.current.abort();
+      activeUploadRef.current?.abort();
     }
   };
 
@@ -78,13 +78,6 @@ export function MediaUploadModal({ files, topicId, onClose }: MediaUploadModalPr
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleUploadAll = async (sendType: 'media' | 'file') => {
-    // Total size check
-    const MAX_SIZE = 50 * 1024 * 1024; // 50MB
-    if (totalSize > MAX_SIZE) {
-      setErrorMsg(`El tamaño total (${(totalSize/1024/1024).toFixed(1)}MB) supera el límite de 50MB.`);
-      return;
-    }
-
     setErrorMsg(null);
     setUploading(true);
     setUploadedBytes(0);
@@ -97,16 +90,16 @@ export function MediaUploadModal({ files, topicId, onClose }: MediaUploadModalPr
       
       const mediaGroupId = fileList.length > 1 ? crypto.randomUUID() : undefined;
       
-      // Track progress for each file individually to calculate overall progress correctly
       const fileProgressMap = new Map<number, number>();
-      
-      const uploadPromises = fileList.map(async (file, i) => {
-        if (isCancelledRef.current || skippedIndexesRef.current.has(i)) return;
+
+      // Las subidas son secuenciales para limitar memoria, disco temporal y carga de CPU.
+      for (let i = 0; i < fileList.length; i += 1) {
+        const file = fileList[i];
+        if (isCancelledRef.current) return;
+        if (skippedIndexesRef.current.has(i)) continue;
 
         const fileType = sendType === 'file' ? 'file' as const : getFileType(file);
-        
         try {
-          // Wrapped upload to track internal progress
           const onProgress = (loaded: number) => {
             fileProgressMap.set(i, loaded);
             const totalUploaded = Array.from(fileProgressMap.values()).reduce((sum, val) => sum + val, 0);
@@ -114,27 +107,27 @@ export function MediaUploadModal({ files, topicId, onClose }: MediaUploadModalPr
             setOverallProgress(Math.round((totalUploaded / totalSize) * 100));
           };
 
-          // Modify uploadSingleFile to accept onProgress callback
-          await uploadWithMultipart(file, captions[i], i, fileType, onProgress, mediaGroupId);
-          fileProgressMap.set(i, file.size); // Ensure it's marked as 100% done
+          await uploadToLocalNode(file, captions[i], i, fileType, onProgress, mediaGroupId);
+          fileProgressMap.set(i, file.size);
         } catch (err) {
-          if (err instanceof Error && err.message === 'Cancelled') return;
+          if (err instanceof DOMException && err.name === 'AbortError') {
+            if (isCancelledRef.current) return;
+            continue;
+          }
           throw err;
         }
-      });
-
-      await Promise.all(uploadPromises);
+      }
       onClose();
     } catch (err) {
       if (isCancelledRef.current) return;
       console.error('Upload failed:', err);
-      setErrorMsg(`Error al subir a R2: ${err instanceof Error ? err.message : 'Error desconocido'}.`);
+      setErrorMsg(`Error al guardar localmente: ${err instanceof Error ? err.message : 'Error desconocido'}.`);
     } finally {
       setUploading(false);
     }
   };
 
-  const uploadWithMultipart = async (
+  const uploadToLocalNode = async (
     file: File, 
     caption: string, 
     index: number,
@@ -142,110 +135,25 @@ export function MediaUploadModal({ files, topicId, onClose }: MediaUploadModalPr
     onProgress: (loaded: number) => void,
     mediaGroupId?: string
   ): Promise<void> => {
-    const ext = file.name.split('.').pop();
-    const filename = `${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-    const workerUrl = import.meta.env.VITE_UPLOAD_WORKER_URL || 'http://localhost:8787';
-    const { data: { session } } = await supabase.auth.getSession();
-    const authHeader = session ? `Bearer ${session.access_token}` : '';
-
-    let uploadId: string | null = null;
-    let key: string | null = null;
-
+    if (isCancelledRef.current || skippedIndexesRef.current.has(index)) return;
+    currentUploadIndexRef.current = index;
+    const controller = new AbortController();
+    activeUploadRef.current = controller;
+    const blob = await localApi.uploadBlob(file, onProgress, controller.signal);
     try {
-      // 1. Create multipart upload
-      const createRes = await fetch(`${workerUrl}/upload/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': authHeader,
-        },
-        body: JSON.stringify({ filename, contentType: file.type }),
-      });
-
-      if (!createRes.ok) throw new Error(`Create upload failed: ${createRes.status}`);
-      const createData = await createRes.json();
-      uploadId = createData.uploadId;
-      key = createData.key;
-
-      if (!uploadId || !key) throw new Error('Missing uploadId or key from create response');
-
       if (isCancelledRef.current || skippedIndexesRef.current.has(index)) {
-        throw new Error('Cancelled');
+        await localApi.deleteBlob(blob.id);
+        return;
       }
-
-      // 2. Upload parts
-      const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
-      const totalParts = Math.ceil(file.size / CHUNK_SIZE);
-      const parts = [];
-      let uploadedBytes = 0;
-
-      for (let partNumber = 1; partNumber <= totalParts; partNumber++) {
-        if (isCancelledRef.current || skippedIndexesRef.current.has(index)) {
-          throw new Error('Cancelled');
-        }
-
-        const start = (partNumber - 1) * CHUNK_SIZE;
-        const end = Math.min(start + CHUNK_SIZE, file.size);
-        const chunk = file.slice(start, end);
-
-        const partRes = await fetch(`${workerUrl}/upload/part?uploadId=${uploadId}&key=${key}&partNumber=${partNumber}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': authHeader,
-          },
-          body: chunk, // Send the Blob directly
-        });
-
-        if (!partRes.ok) throw new Error(`Upload part ${partNumber} failed: ${partRes.status}`);
-        const partData = await partRes.json();
-
-        parts.push({
-          partNumber: partData.partNumber,
-          etag: partData.etag,
-        });
-
-        uploadedBytes += chunk.size;
-        onProgress(uploadedBytes);
-      }
-
-      if (isCancelledRef.current || skippedIndexesRef.current.has(index)) {
-        throw new Error('Cancelled');
-      }
-
-      // 3. Complete multipart upload
-      const completeRes = await fetch(`${workerUrl}/upload/complete`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': authHeader,
-        },
-        body: JSON.stringify({ uploadId, key, parts }),
-      });
-
-      if (!completeRes.ok) throw new Error(`Complete upload failed: ${completeRes.status}`);
-      const completeData = await completeRes.json();
-
-      const publicUrl = completeData.url;
-      console.log('✅ Uploaded to R2:', publicUrl);
-
       const messageContent = caption.trim() || file.name;
-      await sendMessage(topicId, messageContent, fileType, publicUrl, file.name, file.size, mediaGroupId);
-
-    } catch (err) {
-      if (err instanceof Error && err.message === 'Cancelled') {
-        // Abort multipart upload if it was started
-        if (uploadId && key) {
-          fetch(`${workerUrl}/upload/abort`, {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': authHeader,
-            },
-            body: JSON.stringify({ uploadId, key }),
-          }).catch(e => console.error('Failed to abort upload:', e));
-        }
+      const sent = await sendMessage(topicId, messageContent, fileType, blob.url, file.name, file.size, mediaGroupId, blob.id);
+      if (!sent) {
+        await localApi.deleteBlob(blob.id);
+        throw new Error('El archivo se guardó, pero no pudo registrarse en la conversación.');
       }
-      throw err;
+    } finally {
+      activeUploadRef.current = null;
+      currentUploadIndexRef.current = -1;
     }
   };
 
@@ -255,7 +163,7 @@ export function MediaUploadModal({ files, topicId, onClose }: MediaUploadModalPr
 
   const handleCancelUpload = () => {
     isCancelledRef.current = true;
-    if (activeXhrRef.current) activeXhrRef.current.abort();
+    activeUploadRef.current?.abort();
     setUploading(false);
     onClose();
   };

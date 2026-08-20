@@ -11,6 +11,15 @@ node_modules
 dist
 dist-ssr
 *.local
+.misil-data/
+.wrangler/
+.dev.vars
+macos/MISILNative/.build/
+macos/MISILNative/dist/
+macos/MISILNative/Resources/AppIcon.icns
+windows/MISILNative/bin/
+windows/MISILNative/obj/
+windows/MISILNative/dist/
 
 # Editor directories and files
 .vscode/*

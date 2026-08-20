@@ -1,14 +1,9 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { supabase, type Group, type GroupMember, type JoinRequest, type Topic } from '../lib/supabase';
+import { localApi } from '../services/localApi';
+import type { Group, GroupMember, JoinRequest, Message, Topic } from '../types';
 
 export type MediaFilter = 'recent' | 'top_rated' | 'most_viewed';
-
-export type MediaRatingInfo = {
-  avg: number;
-  count: number;
-  userRating?: number;
-};
+export type MediaRatingInfo = { avg: number; count: number; userRating?: number };
 
 interface GroupState {
   groups: Group[];
@@ -17,7 +12,7 @@ interface GroupState {
   topics: Topic[];
   joinRequests: JoinRequest[];
   searchResults: Group[];
-  groupMedia: any[];
+  groupMedia: Message[];
   mediaRatings: Record<string, MediaRatingInfo>;
   mediaFilter: MediaFilter;
   loading: boolean;
@@ -44,9 +39,7 @@ interface GroupState {
   incrementViewCount: (messageId: string) => Promise<void>;
 }
 
-export const useGroupStore = create<GroupState>()(
-  persist(
-    (set, get) => ({
+export const useGroupStore = create<GroupState>((set, get) => ({
   groups: [],
   currentGroup: null,
   members: [],
@@ -55,449 +48,113 @@ export const useGroupStore = create<GroupState>()(
   searchResults: [],
   groupMedia: [],
   mediaRatings: {},
-  mediaFilter: 'recent' as MediaFilter,
+  mediaFilter: 'recent',
   loading: false,
   error: null,
 
   fetchMyGroups: async () => {
-    // We do NOT set loading to true here if we already have cached groups,
-    // to prevent the UI from flickering or showing spinners unnecessarily.
-    if (get().groups.length === 0) set({ loading: true });
-
+    set({ loading: get().groups.length === 0 });
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Use a single query with inner join to fetch the groups directly
-      const { data, error } = await supabase
-        .from('group_members')
-        .select('groups!inner(*)')
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        // Extract the groups array from the join result
-        const groups = data.map((item: any) => item.groups).sort((a: Group, b: Group) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-        set({ groups, loading: false });
-      } else {
-        set({ groups: [], loading: false });
-      }
-    } catch (err) {
-      console.error('Error fetching groups:', err);
-      set({ loading: false });
+      const groups = await localApi.groups();
+      set({ groups, loading: false, error: null });
+    } catch (error) {
+      set({ loading: false, error: error instanceof Error ? error.message : 'No se pudieron cargar los espacios locales.' });
     }
   },
 
-  fetchGroup: async (groupId: string) => {
-    const { data } = await supabase
-      .from('groups')
-      .select('*')
-      .eq('id', groupId)
-      .single();
-    if (data) set({ currentGroup: data });
+  fetchGroup: async (groupId) => {
+    try { set({ currentGroup: await localApi.group(groupId) }); } catch { /* group may have been removed */ }
   },
 
-  fetchMembers: async (groupId: string) => {
-    const { data } = await supabase
-      .from('group_members')
-      .select('*, profile:profiles(*)')
-      .eq('group_id', groupId);
-    set({ members: data || [] });
+  fetchMembers: async (groupId) => {
+    try { set({ members: await localApi.members(groupId) }); } catch { set({ members: [] }); }
   },
 
-  fetchTopics: async (groupId: string) => {
-    let { data, error } = await supabase
-      .from('topics')
-      .select('*')
-      .eq('group_id', groupId)
-      .order('position', { ascending: true });
-
-    if ((!data || data.length === 0) && !error) {
-      // If no topics exist, try to create a default "General" one
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        // Check if user is member/admin to have permission
-        const { data: member } = await supabase
-          .from('group_members')
-          .select('role')
-          .eq('group_id', groupId)
-          .eq('user_id', user.id)
-          .single();
-        
-        if (member) {
-          const { data: newTopic } = await supabase
-            .from('topics')
-            .insert({ group_id: groupId, name: 'General', description: 'Tema general', created_by: user.id, position: 0 })
-            .select()
-            .single();
-          if (newTopic) data = [newTopic];
-        }
-      }
-    }
-    set({ topics: data || [] });
+  fetchTopics: async (groupId) => {
+    try { set({ topics: await localApi.topics(groupId) }); } catch { set({ topics: [] }); }
   },
 
-  fetchJoinRequests: async (groupId: string) => {
-    const { data } = await supabase
-      .from('join_requests')
-      .select('*, profile:profiles(*)')
-      .eq('group_id', groupId)
-      .eq('status', 'pending');
-    set({ joinRequests: data || [] });
-  },
+  fetchJoinRequests: async () => set({ joinRequests: [] }),
 
-  createGroup: async (name: string, description: string, isPublic: boolean) => {
-    set({ error: null });
+  createGroup: async (name, description, isPublic) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-
-      const { data: group, error } = await supabase
-        .from('groups')
-        .insert({ name, description, is_public: isPublic, created_by: user.id })
-        .select()
-        .single();
-
-      if (error) {
-        set({ error: error.message });
-        return null;
-      }
-
-      // Add creator as admin
-      await supabase
-        .from('group_members')
-        .insert({ group_id: group.id, user_id: user.id, role: 'admin' });
-
-      // Create default "General" topic
-      await supabase
-        .from('topics')
-        .insert({ group_id: group.id, name: 'General', description: 'Tema general', created_by: user.id, position: 0 });
-
-      const { groups } = get();
-      set({ groups: [group, ...groups] });
+      const group = await localApi.createGroup(name, description, isPublic);
+      set({ groups: [group, ...get().groups], error: null });
       return group;
-    } catch {
-      set({ error: 'Error al crear grupo' });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'No se pudo crear el espacio local.' });
       return null;
     }
   },
 
-  searchGroups: async (query: string) => {
-    if (!query.trim() || query.length < 2) {
-      set({ searchResults: [] });
-      return;
-    }
-    const { data } = await supabase
-      .from('groups')
-      .select('*')
-      .eq('is_public', true)
-      .ilike('name', `%${query}%`)
-      .limit(10);
-    
-    // Filter out groups the user is already in
-    const { groups } = get();
-    const joinedIds = new Set(groups.map(g => g.id));
-    const filtered = (data || []).filter(g => !joinedIds.has(g.id));
-    
-    set({ searchResults: filtered });
-  },
+  searchGroups: async () => set({ searchResults: [] }),
+  requestJoin: async () => false,
+  joinGroup: async (groupId) => get().groups.some((group) => group.id === groupId) ? 'joined' : 'error',
+  handleJoinRequest: async () => false,
 
-  deleteGroup: async (groupId: string) => {
+  createTopic: async (groupId, name, description) => {
     try {
-      const { error } = await supabase.from('groups').delete().eq('id', groupId);
-      if (error) throw error;
-      
-      const { groups, currentGroup } = get();
-      set({ 
-        groups: groups.filter(g => g.id !== groupId),
-        currentGroup: currentGroup?.id === groupId ? null : currentGroup 
-      });
-      return true;
-    } catch (e) {
-      console.error('Error deleting group:', e);
-      return false;
-    }
-  },
-
-  updateGroupSettings: async (groupId: string, settings: Partial<Group>) => {
-    try {
-      const { data, error } = await supabase
-        .from('groups')
-        .update(settings)
-        .eq('id', groupId)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error updating group settings:', error);
-        return false;
-      }
-
-      if (data) {
-        const { groups, currentGroup } = get();
-        set({
-          groups: groups.map(g => g.id === groupId ? data : g),
-          currentGroup: currentGroup?.id === groupId ? data : currentGroup
-        });
-      }
-      return true;
-    } catch (e) {
-      console.error('Exception updating group settings:', e);
-      return false;
-    }
-  },
-
-  fetchGroupMedia: async (groupId: string) => {
-    try {
-      // First get all topics for the group
-      const { data: topics } = await supabase
-        .from('topics')
-        .select('id')
-        .eq('group_id', groupId);
-
-      if (!topics || topics.length === 0) {
-        set({ groupMedia: [] });
-        return;
-      }
-
-      const topicIds = topics.map(t => t.id);
-
-      // Fetch messages that are not plain text or text that contains http
-      const { data: mediaMessages } = await supabase
-        .from('messages')
-        .select('*, profile:profiles(*)')
-        .in('topic_id', topicIds)
-        .neq('type', 'text')
-        .order('created_at', { ascending: false });
-
-      // We also fetch text messages that might contain links
-      const { data: linkMessages } = await supabase
-        .from('messages')
-        .select('*, profile:profiles(*)')
-        .in('topic_id', topicIds)
-        .eq('type', 'text')
-        .ilike('content', '%http%')
-        .order('created_at', { ascending: false });
-
-      const allMedia = [...(mediaMessages || []), ...(linkMessages || [])]
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-      set({ groupMedia: allMedia });
-    } catch (e) {
-      console.error('Error fetching group media:', e);
-      set({ groupMedia: [] });
-    }
-  },
-
-  requestJoin: async (groupId: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
-
-      const { error } = await supabase
-        .from('join_requests')
-        .insert({ group_id: groupId, user_id: user.id, status: 'pending' });
-      return !error;
-    } catch {
-      return false;
-    }
-  },
-
-  joinGroup: async (groupId: string) => {
-    try {
-      const { groups } = get();
-      if (groups.some(g => g.id === groupId)) return 'joined';
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return 'error';
-
-      // Get group details
-      const { data: group } = await supabase
-        .from('groups')
-        .select('*')
-        .eq('id', groupId)
-        .single();
-
-      if (!group) return 'error';
-
-      if (group.is_public) {
-        const { error } = await supabase
-          .from('group_members')
-          .insert({ group_id: groupId, user_id: user.id, role: 'member' });
-        
-        if (!error || error.code === '23505') { // 23505 is unique violation (already a member)
-          await get().fetchMyGroups();
-          return 'joined';
-        }
-      } else {
-        const { error } = await supabase
-          .from('join_requests')
-          .insert({ group_id: groupId, user_id: user.id, status: 'pending' });
-        
-        if (!error) return 'requested';
-        if (error.code === '23505') return 'requested'; // Already requested
-      }
-      return 'error';
-    } catch {
-      return 'error';
-    }
-  },
-
-  handleJoinRequest: async (requestId: string, approve: boolean) => {
-    try {
-      const { data: request } = await supabase
-        .from('join_requests')
-        .update({ status: approve ? 'approved' : 'rejected' })
-        .eq('id', requestId)
-        .select()
-        .single();
-
-      if (request && approve) {
-        await supabase
-          .from('group_members')
-          .insert({ group_id: request.group_id, user_id: request.user_id, role: 'member' });
-      }
-
-      // Refresh requests
-      if (request) {
-        get().fetchJoinRequests(request.group_id);
-      }
-      return true;
-    } catch {
-      return false;
-    }
-  },
-
-  createTopic: async (groupId: string, name: string, description: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-
-      const { topics } = get();
-      const position = topics.length;
-
-      const { data, error } = await supabase
-        .from('topics')
-        .insert({ group_id: groupId, name, description, created_by: user.id, position })
-        .select()
-        .single();
-
-      if (error) return null;
-      set({ topics: [...topics, data] });
-      return data;
-    } catch {
-      return null;
-    }
+      const topic = await localApi.createTopic(groupId, name, description);
+      set({ topics: [...get().topics, topic] });
+      return topic;
+    } catch { return null; }
   },
 
   setCurrentGroup: (group) => set({ currentGroup: group }),
   clearError: () => set({ error: null }),
 
+  deleteGroup: async (groupId) => {
+    try {
+      await localApi.deleteGroup(groupId);
+      set((state) => ({
+        groups: state.groups.filter((group) => group.id !== groupId),
+        currentGroup: state.currentGroup?.id === groupId ? null : state.currentGroup,
+      }));
+      return true;
+    } catch { return false; }
+  },
+
+  fetchGroupMedia: async (groupId) => {
+    try { set({ groupMedia: await localApi.media(groupId) }); } catch { set({ groupMedia: [] }); }
+  },
+
+  updateGroupSettings: async (groupId, settings) => {
+    try {
+      const updated = await localApi.updateGroup(groupId, settings);
+      set((state) => ({
+        groups: state.groups.map((group) => group.id === groupId ? updated : group),
+        currentGroup: state.currentGroup?.id === groupId ? updated : state.currentGroup,
+      }));
+      return true;
+    } catch { return false; }
+  },
+
   setMediaFilter: (filter) => set({ mediaFilter: filter }),
 
-  rateMedia: async (messageId: string, rating: number) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Upsert: insert or update rating
-      const { error } = await supabase
-        .from('media_ratings')
-        .upsert(
-          { message_id: messageId, user_id: user.id, rating },
-          { onConflict: 'message_id,user_id' }
-        );
-
-      if (error) {
-        console.error('Error rating media:', error);
-        return;
-      }
-
-      // Refresh ratings for this message
-      await get().fetchMediaRatings([messageId]);
-    } catch (e) {
-      console.error('Exception rating media:', e);
-    }
+  rateMedia: async (messageId, rating) => {
+    await localApi.rate(messageId, rating);
+    await get().fetchMediaRatings([messageId]);
   },
 
-  fetchMediaRatings: async (messageIds: string[]) => {
-    if (messageIds.length === 0) return;
+  fetchMediaRatings: async (messageIds) => {
+    if (!messageIds.length) return;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      const { data } = await supabase
-        .from('media_ratings')
-        .select('*')
-        .in('message_id', messageIds);
-
-      if (data) {
-        const grouped: Record<string, MediaRatingInfo> = { ...get().mediaRatings };
-
-        // Initialize all requested IDs
-        messageIds.forEach(id => {
-          grouped[id] = { avg: 0, count: 0, userRating: undefined };
-        });
-
-        // Group ratings by message_id
-        const byMessage: Record<string, number[]> = {};
-        data.forEach(r => {
-          if (!byMessage[r.message_id]) byMessage[r.message_id] = [];
-          byMessage[r.message_id].push(r.rating);
-          // Track user's own rating
-          if (user && r.user_id === user.id) {
-            grouped[r.message_id] = { ...grouped[r.message_id], userRating: r.rating };
-          }
-        });
-
-        // Calculate averages
-        Object.entries(byMessage).forEach(([msgId, ratings]) => {
-          const avg = ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
-          grouped[msgId] = { ...grouped[msgId], avg: Math.round(avg * 10) / 10, count: ratings.length };
-        });
-
-        set({ mediaRatings: grouped });
-      }
-    } catch (e) {
-      console.error('Error fetching media ratings:', e);
-    }
+      const rows = await localApi.ratings(messageIds);
+      const ratings = { ...get().mediaRatings };
+      for (const id of messageIds) ratings[id] = { avg: 0, count: 0 };
+      for (const row of rows) ratings[row.message_id] = {
+        avg: Math.round(Number(row.avg) * 10) / 10,
+        count: Number(row.count),
+        userRating: row.user_rating,
+      };
+      set({ mediaRatings: ratings });
+    } catch { /* ratings are non-critical */ }
   },
 
-  incrementViewCount: async (messageId: string) => {
+  incrementViewCount: async (messageId) => {
     try {
-      // Use RPC or raw update to increment. Since Supabase doesn't support
-      // atomic increment easily, we'll fetch + update.
-      const { data: msg } = await supabase
-        .from('messages')
-        .select('view_count')
-        .eq('id', messageId)
-        .single();
-
-      if (msg) {
-        await supabase
-          .from('messages')
-          .update({ view_count: (msg.view_count || 0) + 1 })
-          .eq('id', messageId);
-
-        // Update local groupMedia
-        set(state => ({
-          groupMedia: state.groupMedia.map(m =>
-            m.id === messageId ? { ...m, view_count: (m.view_count || 0) + 1 } : m
-          )
-        }));
-      }
-    } catch (e) {
-      console.error('Error incrementing view count:', e);
-    }
+      await localApi.view(messageId);
+      set((state) => ({ groupMedia: state.groupMedia.map((message) => message.id === messageId ? { ...message, view_count: (message.view_count || 0) + 1 } : message) }));
+    } catch { /* views are non-critical */ }
   },
-    }),
-    {
-      name: 'misil-groups-storage',
-      // Only persist the `groups` list to cache it for instant loading.
-      // Other states like currentGroup or topics are transient.
-      partialize: (state) => ({ groups: state.groups }),
-    }
-  )
-);
+}));

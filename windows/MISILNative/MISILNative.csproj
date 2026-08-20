@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>MISIL</AssemblyName>
+    <RootNamespace>MISILNative</RootNamespace>
+    <Version>0.1.2</Version>
+    <Authors>MISIL Team</Authors>
+    <Company>MISIL</Company>
+    <Product>MISIL</Product>
+    <Description>Cliente y nodo local nativo de MISIL para Windows</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>
