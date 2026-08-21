@@ -41,7 +41,29 @@
                     </Grid>
                 </Border>
 
-                <!-- Section 2: Privacy -->
+                <!-- Section 2: Network -->
+                <TextBlock Text="Red" FontFamily="{StaticResource FontHeadline}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,0,10" />
+                <Border Style="{StaticResource MISILCard}" Margin="0,0,0,24">
+                    <StackPanel>
+                        <Grid Margin="0,4">
+                            <StackPanel>
+                                <TextBlock Text="Presencia en Internet" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" />
+                                <TextBlock x:Name="TxtNetworkSettingStatus" Text="Comprobando conexión" FontSize="12" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
+                            </StackPanel>
+                            <Ellipse x:Name="NetworkSettingDot" Width="9" Height="9" Fill="{StaticResource BrushTextMuted}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+                        <Rectangle Height="1" Fill="{StaticResource BrushBorder}" Margin="0,8" />
+                        <Grid Margin="0,4">
+                            <StackPanel>
+                                <TextBlock Text="Relay de capacidad" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" />
+                                <TextBlock Text="https://misil-web.pages.dev" FontFamily="Consolas" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
+                            </StackPanel>
+                            <TextBlock Text="10 s" FontFamily="{StaticResource FontLabel}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Section 3: Privacy -->
                 <TextBlock Text="Privacidad y Seguridad" FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,0,10" />
                 <Border Style="{StaticResource MISILCard}" Margin="0,0,0,24">
                     <StackPanel>
@@ -63,7 +85,7 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Section 3: Testing / Reset -->
+                <!-- Section 4: Testing / Reset -->
                 <TextBlock Text="Pruebas" FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,0,10" />
                 <Border Style="{StaticResource MISILCard}" Margin="0,0,0,24">
                     <Grid>
@@ -80,7 +102,7 @@
                 </Border>
 
                 <!-- Version Info -->
-                <TextBlock Text="MISIL Local Alpha 0.1.2 · Windows (x64 / arm64)" FontSize="12" Foreground="{StaticResource BrushTextMuted}" Margin="0,10,0,0" />
+                <TextBlock Text="MISIL Local Alpha 0.2.0 · Windows (x64)" FontSize="12" Foreground="{StaticResource BrushTextMuted}" Margin="0,10,0,0" />
 
             </StackPanel>
         </ScrollViewer>

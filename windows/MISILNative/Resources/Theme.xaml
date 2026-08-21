@@ -11,6 +11,7 @@
     <Color x:Key="ColorAccentHover">#FF5555</Color>
     <Color x:Key="ColorAccentDark">#CC2222</Color>
     <Color x:Key="ColorDanger">#EF5350</Color>
+    <Color x:Key="ColorSuccess">#45D483</Color>
     <Color x:Key="ColorTextPrimary">#F5F5F5</Color>
     <Color x:Key="ColorTextSecondary">#8B9BAB</Color>
     <Color x:Key="ColorTextMuted">#6C7883</Color>
@@ -26,10 +27,29 @@
     <SolidColorBrush x:Key="BrushAccentHover" Color="{StaticResource ColorAccentHover}" />
     <SolidColorBrush x:Key="BrushAccentDark" Color="{StaticResource ColorAccentDark}" />
     <SolidColorBrush x:Key="BrushDanger" Color="{StaticResource ColorDanger}" />
+    <SolidColorBrush x:Key="BrushSuccess" Color="{StaticResource ColorSuccess}" />
     <SolidColorBrush x:Key="BrushTextPrimary" Color="{StaticResource ColorTextPrimary}" />
     <SolidColorBrush x:Key="BrushTextSecondary" Color="{StaticResource ColorTextSecondary}" />
     <SolidColorBrush x:Key="BrushTextMuted" Color="{StaticResource ColorTextMuted}" />
     <SolidColorBrush x:Key="BrushBorder" Color="{StaticResource ColorBorder}" />
+    <SolidColorBrush x:Key="BrushGlass" Color="#0DFFFFFF" />
+    <SolidColorBrush x:Key="BrushGlassHover" Color="#17FFFFFF" />
+    <SolidColorBrush x:Key="BrushAccentGlass" Color="#2AFF3737" />
+    <SolidColorBrush x:Key="BrushAccentBorder" Color="#66FF3737" />
+
+    <LinearGradientBrush x:Key="BrushAccentGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FF3737" Offset="0" />
+        <GradientStop Color="#CC2222" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Bundled MISIL type system -->
+    <FontFamily x:Key="FontHeadline">pack://application:,,,/MISIL;component/Resources/Fonts/#Space Grotesk</FontFamily>
+    <FontFamily x:Key="FontBody">pack://application:,,,/MISIL;component/Resources/Fonts/#Inter</FontFamily>
+    <FontFamily x:Key="FontLabel">pack://application:,,,/MISIL;component/Resources/Fonts/#Plus Jakarta Sans</FontFamily>
+
+    <Style TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource FontBody}" />
+    </Style>
 
     <!-- Corner Radii -->
     <CornerRadius x:Key="RadiusSm">10</CornerRadius>
@@ -39,26 +59,30 @@
 
     <!-- Primary Button Style -->
     <Style x:Key="MISILPrimaryButton" TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource BrushAccent}" />
+        <Setter Property="Background" Value="{StaticResource BrushAccentGlass}" />
         <Setter Property="Foreground" Value="White" />
+        <Setter Property="FontFamily" Value="{StaticResource FontLabel}" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="Height" Value="42" />
         <Setter Property="Padding" Value="18,0" />
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushAccentBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="border"
                             Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="{StaticResource RadiusSm}"
                             Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="{StaticResource BrushAccentHover}" />
+                            <Setter TargetName="border" Property="Background" Value="#42FF3737" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="border" Property="Background" Value="{StaticResource BrushAccentDark}" />
@@ -76,6 +100,7 @@
     <Style x:Key="MISILSecondaryButton" TargetType="Button">
         <Setter Property="Background" Value="{StaticResource BrushBgSurface}" />
         <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+        <Setter Property="FontFamily" Value="{StaticResource FontLabel}" />
         <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="Height" Value="42" />
@@ -126,6 +151,7 @@
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CaretBrush" Value="{StaticResource BrushAccent}" />
+        <Setter Property="FontFamily" Value="{StaticResource FontBody}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="Height" Value="40" />
         <Setter Property="Padding" Value="12,8" />

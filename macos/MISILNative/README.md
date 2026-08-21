@@ -12,6 +12,7 @@ Aplicación nativa escrita con Swift 6 y SwiftUI. No contiene Electron, WebView 
 - Explicación previa antes de que macOS solicite acceso a esa clave.
 - Preparación real del directorio y prueba de escritura.
 - Dashboard disponible únicamente cuando el nodo aporta almacenamiento.
+- Capacidad total Windows/macOS actualizada por Internet cada 10 segundos y baja automática de nodos sin señal.
 - Chat local nativo de prueba, persistido en Application Support.
 - Ajustes para cambiar la cuota o repetir el onboarding.
 
@@ -37,4 +38,4 @@ Para distribuirla sin ese aviso se necesita un certificado Developer ID Applicat
 
 ## Datos
 
-La aplicación escribe en `~/Library/Application Support/MISIL/`. La configuración y los mensajes están allí; la clave de almacenamiento está separada en el Llavero de macOS.
+La aplicación escribe en `~/Library/Application Support/MISIL/`. La configuración y los mensajes están allí; la clave de almacenamiento y la identidad de presencia están separadas en el Llavero de macOS.

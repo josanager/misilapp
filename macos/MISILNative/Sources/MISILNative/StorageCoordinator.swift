@@ -131,6 +131,16 @@ actor StorageCoordinator {
         )
     }
 
+    func isStorageHealthy(configuration: AppConfiguration?) -> Bool {
+        guard let configuration,
+              configuration.sharesStorage,
+              configuration.quotaBytes > 0,
+              fileManager.fileExists(atPath: configuration.storageDirectory),
+              (try? KeychainService.loadOrCreateMasterKey().count) == 32
+        else { return false }
+        return directoryAllocatedSize(at: blobsDirectory) <= configuration.quotaBytes
+    }
+
     func resetConfiguration() {
         try? fileManager.removeItem(at: configurationURL)
     }

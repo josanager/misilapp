@@ -17,6 +17,7 @@ namespace MISILNative.Services
 
         private static readonly string MasterKeyPath = Path.Combine(SecurityDirectory, "master.key.dat");
         private static readonly string RelayIdentityPath = Path.Combine(SecurityDirectory, "relay.identity.dat");
+        private static readonly string NetworkIdentityPath = Path.Combine(SecurityDirectory, "network.identity.dat");
 
         static CredentialService()
         {
@@ -117,6 +118,50 @@ namespace MISILNative.Services
                 }
             }
             catch { }
+        }
+
+        public static NetworkNodeIdentity LoadOrCreateNetworkIdentity()
+        {
+            if (File.Exists(NetworkIdentityPath))
+            {
+                try
+                {
+                    byte[] encrypted = File.ReadAllBytes(NetworkIdentityPath);
+                    byte[] decrypted = ProtectedData.Unprotect(
+                        encrypted,
+                        optionalEntropy: Encoding.UTF8.GetBytes("MISIL.Desktop.Network.v1"),
+                        scope: DataProtectionScope.CurrentUser
+                    );
+                    var existing = JsonSerializer.Deserialize<NetworkNodeIdentity>(decrypted);
+                    if (existing != null && Guid.TryParse(existing.NodeId, out _) && existing.AccessToken.Length >= 32)
+                    {
+                        return existing;
+                    }
+                }
+                catch { }
+            }
+
+            byte[] tokenBytes = new byte[32];
+            RandomNumberGenerator.Fill(tokenBytes);
+            var identity = new NetworkNodeIdentity
+            {
+                NodeId = Guid.NewGuid().ToString().ToLowerInvariant(),
+                AccessToken = Convert.ToBase64String(tokenBytes)
+                    .Replace("+", "-")
+                    .Replace("/", "_")
+                    .TrimEnd('='),
+                CreatedAt = DateTime.UtcNow.ToString("o")
+            };
+
+            byte[] plain = JsonSerializer.SerializeToUtf8Bytes(identity);
+            byte[] protectedIdentity = ProtectedData.Protect(
+                plain,
+                optionalEntropy: Encoding.UTF8.GetBytes("MISIL.Desktop.Network.v1"),
+                scope: DataProtectionScope.CurrentUser
+            );
+            Directory.CreateDirectory(SecurityDirectory);
+            File.WriteAllBytes(NetworkIdentityPath, protectedIdentity);
+            return identity;
         }
     }
 }

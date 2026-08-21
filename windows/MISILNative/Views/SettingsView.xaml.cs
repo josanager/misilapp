@@ -1,5 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.ComponentModel;
+using System.Windows.Media;
 using MISILNative.Models;
 using MISILNative.ViewModels;
 
@@ -13,6 +15,7 @@ namespace MISILNative.Views
         {
             InitializeComponent();
             Loaded += OnLoaded;
+            Unloaded += OnUnloaded;
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
@@ -20,7 +23,22 @@ namespace MISILNative.Views
             if (DataContext is AppState state)
             {
                 _appState = state;
+                _appState.PropertyChanged -= OnAppStateChanged;
+                _appState.PropertyChanged += OnAppStateChanged;
                 UpdateUI();
+            }
+        }
+
+        private void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            if (_appState != null) _appState.PropertyChanged -= OnAppStateChanged;
+        }
+
+        private void OnAppStateChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName is nameof(AppState.NetworkStatus) or nameof(AppState.NetworkSnapshot))
+            {
+                Dispatcher.Invoke(UpdateUI);
             }
         }
 
@@ -37,6 +55,22 @@ namespace MISILNative.Views
             {
                 TxtQuotaStatus.Text = "No estás compartiendo espacio";
                 BtnChangeQuota.Content = "Configurar";
+            }
+
+            switch (_appState.NetworkStatus)
+            {
+                case NetworkConnectionStatus.Online:
+                    NetworkSettingDot.Fill = (SolidColorBrush)FindResource("BrushSuccess");
+                    TxtNetworkSettingStatus.Text = $"En línea · {_appState.NetworkSnapshot.OnlineNodes} nodos disponibles";
+                    break;
+                case NetworkConnectionStatus.Connecting:
+                    NetworkSettingDot.Fill = (SolidColorBrush)FindResource("BrushAccent");
+                    TxtNetworkSettingStatus.Text = "Sincronizando con la red MISIL";
+                    break;
+                default:
+                    NetworkSettingDot.Fill = (SolidColorBrush)FindResource("BrushTextMuted");
+                    TxtNetworkSettingStatus.Text = "Sin conexión · reintento automático";
+                    break;
             }
         }
 

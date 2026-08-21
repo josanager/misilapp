@@ -79,12 +79,13 @@ private struct NodeFooter: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Image(systemName: appState.sharesStorage ? "externaldrive.fill.badge.checkmark" : "externaldrive")
-                .foregroundStyle(appState.sharesStorage ? MISILTheme.accent : MISILTheme.textMuted)
+            Circle()
+                .fill(statusColor)
+                .frame(width: 9, height: 9)
             VStack(alignment: .leading, spacing: 2) {
-                Text(appState.sharesStorage ? "Nodo activo" : "Nodo inactivo")
+                Text(statusTitle)
                     .font(.system(size: 12, weight: .semibold))
-                Text(appState.sharesStorage ? appState.storageSnapshot.quotaBytes.misilFileSize : "Sin espacio compartido")
+                Text(statusDetail)
                     .font(.system(size: 10))
                     .foregroundStyle(MISILTheme.textMuted)
             }
@@ -93,6 +94,33 @@ private struct NodeFooter: View {
         .padding(14)
         .overlay(alignment: .top) {
             Rectangle().fill(MISILTheme.border).frame(height: 1)
+        }
+    }
+
+    private var statusTitle: String {
+        switch appState.networkStatus {
+        case .online: "Red en línea"
+        case .connecting: "Sincronizando"
+        case .offline: "Sin conexión"
+        }
+    }
+
+    private var statusDetail: String {
+        switch appState.networkStatus {
+        case .online:
+            "\(appState.networkSnapshot.onlineNodes) nodos · \(appState.networkSnapshot.totalQuotaBytes.misilFileSize)"
+        case .connecting:
+            appState.sharesStorage ? "Este Mac aporta \(appState.storageSnapshot.quotaBytes.misilFileSize)" : "Comprobando capacidad"
+        case .offline:
+            "Reintento automático"
+        }
+    }
+
+    private var statusColor: Color {
+        switch appState.networkStatus {
+        case .online: Color(red: 69 / 255, green: 212 / 255, blue: 131 / 255)
+        case .connecting: MISILTheme.accent
+        case .offline: MISILTheme.textMuted
         }
     }
 }

@@ -31,7 +31,10 @@ namespace MISILNative.Views
                     {
                         UpdateView();
                     }
-                    if (args.PropertyName == nameof(_appState.StorageSnapshot) || args.PropertyName == nameof(_appState.SharesStorage))
+                    if (args.PropertyName == nameof(_appState.StorageSnapshot)
+                        || args.PropertyName == nameof(_appState.SharesStorage)
+                        || args.PropertyName == nameof(_appState.NetworkSnapshot)
+                        || args.PropertyName == nameof(_appState.NetworkStatus))
                     {
                         UpdateFooter();
                     }
@@ -98,17 +101,25 @@ namespace MISILNative.Views
         {
             if (_appState == null) return;
 
-            if (_appState.SharesStorage)
+            if (_appState.NetworkStatus == NetworkConnectionStatus.Online)
+            {
+                NodeStatusDot.Background = (SolidColorBrush)FindResource("BrushSuccess");
+                TxtNodeStatusTitle.Text = "Red en línea";
+                TxtNodeStatusDetail.Text = $"{_appState.NetworkSnapshot.OnlineNodes} nodos · {FormatUtils.FormatByteSize(_appState.NetworkSnapshot.TotalQuotaBytes)}";
+            }
+            else if (_appState.NetworkStatus == NetworkConnectionStatus.Connecting)
             {
                 NodeStatusDot.Background = (SolidColorBrush)FindResource("BrushAccent");
-                TxtNodeStatusTitle.Text = "Nodo activo";
-                TxtNodeStatusDetail.Text = $"{FormatUtils.FormatByteSize(_appState.StorageSnapshot.QuotaBytes)} compartidos";
+                TxtNodeStatusTitle.Text = "Sincronizando";
+                TxtNodeStatusDetail.Text = _appState.SharesStorage
+                    ? $"Este PC aporta {FormatUtils.FormatByteSize(_appState.StorageSnapshot.QuotaBytes)}"
+                    : "Comprobando capacidad";
             }
             else
             {
                 NodeStatusDot.Background = (SolidColorBrush)FindResource("BrushTextMuted");
-                TxtNodeStatusTitle.Text = "Nodo inactivo";
-                TxtNodeStatusDetail.Text = "Sin espacio compartido";
+                TxtNodeStatusTitle.Text = "Sin conexión";
+                TxtNodeStatusDetail.Text = "Reintento automático";
             }
         }
 

@@ -12,9 +12,16 @@ namespace MISILNative.Models
         Settings
     }
 
+    public enum NetworkConnectionStatus
+    {
+        Connecting,
+        Online,
+        Offline
+    }
+
     public class AppConfiguration
     {
-        public const int CurrentSchemaVersion = 1;
+        public const int CurrentSchemaVersion = 2;
 
         [JsonPropertyName("schemaVersion")]
         public int SchemaVersion { get; set; } = CurrentSchemaVersion;
@@ -33,6 +40,9 @@ namespace MISILNative.Models
 
         [JsonPropertyName("configuredAt")]
         public DateTime ConfiguredAt { get; set; } = DateTime.UtcNow;
+
+        [JsonPropertyName("networkBaseUrl")]
+        public string NetworkBaseUrl { get; set; } = "https://misil-web.pages.dev";
     }
 
     public class StorageSnapshot
@@ -50,6 +60,71 @@ namespace MISILNative.Models
             UsedBytes = usedBytes;
             DiskAvailableBytes = diskAvailableBytes;
         }
+    }
+
+    public class NetworkNodeIdentity
+    {
+        [JsonPropertyName("version")]
+        public int Version { get; set; } = 1;
+
+        [JsonPropertyName("nodeId")]
+        public string NodeId { get; set; } = string.Empty;
+
+        [JsonPropertyName("accessToken")]
+        public string AccessToken { get; set; } = string.Empty;
+
+        [JsonPropertyName("createdAt")]
+        public string CreatedAt { get; set; } = string.Empty;
+    }
+
+    public class PlatformCapacity
+    {
+        [JsonPropertyName("platform")]
+        public string Platform { get; set; } = string.Empty;
+
+        [JsonPropertyName("onlineNodes")]
+        public int OnlineNodes { get; set; }
+
+        [JsonPropertyName("quotaBytes")]
+        public ulong QuotaBytes { get; set; }
+    }
+
+    public class NetworkCapacitySnapshot
+    {
+        [JsonPropertyName("protocolVersion")]
+        public int ProtocolVersion { get; set; } = 1;
+
+        [JsonPropertyName("generatedAt")]
+        public string GeneratedAt { get; set; } = string.Empty;
+
+        [JsonPropertyName("heartbeatIntervalSeconds")]
+        public int HeartbeatIntervalSeconds { get; set; } = 10;
+
+        [JsonPropertyName("offlineAfterSeconds")]
+        public int OfflineAfterSeconds { get; set; } = 35;
+
+        [JsonPropertyName("onlineNodes")]
+        public int OnlineNodes { get; set; }
+
+        [JsonPropertyName("totalQuotaBytes")]
+        public ulong TotalQuotaBytes { get; set; }
+
+        [JsonPropertyName("totalUsedBytes")]
+        public ulong TotalUsedBytes { get; set; }
+
+        [JsonPropertyName("availableBytes")]
+        public ulong AvailableBytes { get; set; }
+
+        [JsonPropertyName("platforms")]
+        public List<PlatformCapacity> Platforms { get; set; } = new();
+
+        [JsonIgnore]
+        public int WindowsNodes => Platforms.Find(item => item.Platform == "windows")?.OnlineNodes ?? 0;
+
+        [JsonIgnore]
+        public int MacNodes => Platforms.Find(item => item.Platform == "macos")?.OnlineNodes ?? 0;
+
+        public static NetworkCapacitySnapshot Empty => new();
     }
 
     public class SetupProgress

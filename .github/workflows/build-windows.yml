@@ -1,0 +1,66 @@
+name: Build MISIL for Windows
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npm run test:local
+      - run: npm run build
+
+  windows:
+    needs: verify
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Publish self-contained executable
+        shell: pwsh
+        run: >-
+          dotnet publish windows/MISILNative/MISILNative.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          -o windows/MISILNative/dist
+      - name: Package executable and checksum
+        shell: pwsh
+        run: |
+          Compress-Archive -Path windows/MISILNative/dist/MISIL.exe -DestinationPath MISIL-Windows-x64-0.2.0.zip
+          (Get-FileHash MISIL-Windows-x64-0.2.0.zip -Algorithm SHA256).Hash.ToLower() + "  MISIL-Windows-x64-0.2.0.zip" | Out-File MISIL-Windows-x64-0.2.0.sha256 -Encoding ascii
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MISIL-Windows-x64-0.2.0
+          path: |
+            MISIL-Windows-x64-0.2.0.zip
+            MISIL-Windows-x64-0.2.0.sha256
+          if-no-files-found: error
+      - name: Publish tagged release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "${{ github.ref_name }}"
+          MISIL-Windows-x64-0.2.0.zip
+          MISIL-Windows-x64-0.2.0.sha256
+          --title "MISIL 0.2.0"
+          --notes "Red de almacenamiento en tiempo real para Windows y macOS. Incluye MISIL.exe autónomo para Windows 10/11 x64."

@@ -1,4 +1,5 @@
 using System.Windows;
+using System.ComponentModel;
 using MISILNative.ViewModels;
 
 namespace MISILNative
@@ -6,6 +7,7 @@ namespace MISILNative
     public partial class MainWindow : Window
     {
         private readonly AppState _appState;
+        private bool _shutdownComplete;
 
         public MainWindow()
         {
@@ -13,6 +15,17 @@ namespace MISILNative
             _appState = new AppState();
             DataContext = _appState;
             Loaded += OnLoaded;
+            Closing += OnClosing;
+        }
+
+        private async void OnClosing(object? sender, CancelEventArgs e)
+        {
+            if (_shutdownComplete) return;
+            e.Cancel = true;
+            IsEnabled = false;
+            await _appState.ShutdownAsync();
+            _shutdownComplete = true;
+            Close();
         }
 
         private async void OnLoaded(object sender, RoutedEventArgs e)

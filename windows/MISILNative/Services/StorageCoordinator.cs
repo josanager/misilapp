@@ -159,6 +159,25 @@ namespace MISILNative.Services
             );
         }
 
+        public bool IsStorageHealthy(AppConfiguration? configuration)
+        {
+            if (configuration == null || !configuration.SharesStorage || configuration.QuotaBytes == 0)
+            {
+                return false;
+            }
+
+            try
+            {
+                return Directory.Exists(configuration.StorageDirectory)
+                    && CredentialService.LoadMasterKey()?.Length == 32
+                    && DirectoryAllocatedSize(configuration.StorageDirectory) <= configuration.QuotaBytes;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public void ResetConfiguration()
         {
             try

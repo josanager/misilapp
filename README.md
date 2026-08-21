@@ -35,6 +35,7 @@ El proyecto se divide en tres niveles complementarios:
    - **Windows:** Aplicación nativa en **C# / .NET 8 WPF** que resguarda la clave maestra de 256 bits mediante la **Windows Data Protection API (DPAPI)**.
    - **macOS:** Aplicación nativa en **Swift 6 / SwiftUI** que resguarda la clave maestra en el **Keychain** de macOS.
    - Ambas aplicaciones permiten al usuario aportar una cuota de su disco duro (10, 50, 100, 500 GB o personalizada), ver el dashboard de capacidad y sincronizarse con salas de chat web.
+   - Desde la versión 0.2.0, ambas publican presencia autenticada por Internet y muestran en tiempo casi real la suma de cuotas de todos los nodos sanos y conectados.
 
 ---
 
@@ -137,7 +138,7 @@ npm run mac:dmg
 
 El instalador se generará en:
 ```text
-macos/MISILNative/dist/MISIL-Local-Alpha-0.1.2-macOS-arm64.dmg
+macos/MISILNative/dist/MISIL-Local-Alpha-0.2.0-macOS-arm64.dmg
 ```
 
 ---
@@ -180,3 +181,6 @@ npm run deploy:pages
 | `MISIL_DATA_DIR` | `.misil-data` | Directorio local de base de datos y blobs |
 | `MISIL_QUOTA_BYTES` | `10737418240` (10 GiB) | Límite de cuota del nodo local de desarrollo |
 | `VITE_RELAY_API_URL` | *(vacío para relay local)* | URL del relay en producción (ej. `https://misil-web.pages.dev`) |
+| `MISIL_RELAY_URL` | `https://misil-web.pages.dev` | Relay usado por las apps nativas para presencia y capacidad; útil para pruebas locales. |
+
+La arquitectura y el protocolo del contador de capacidad están documentados en [`docs/network-presence.md`](docs/network-presence.md).

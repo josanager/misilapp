@@ -56,5 +56,8 @@ struct RootView: View {
         }
         .frame(minWidth: 820, minHeight: 580)
         .foregroundStyle(MISILTheme.textPrimary)
+        .onDisappear {
+            Task { await appState.shutdown() }
+        }
     }
 }

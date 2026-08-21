@@ -11,6 +11,7 @@ Aplicación nativa de escritorio escrita en **C# y .NET 8.0 con WPF (Windows Pre
 - **Validación de disco:** Detección en tiempo real del espacio libre disponible mediante `DriveInfo` reservando siempre 5 GB de margen de seguridad para Windows.
 - **Seguridad nativa con Windows DPAPI:** La clave maestra de 256 bits se genera aleatoriamente y se cifra con la **Windows Data Protection API (`System.Security.Cryptography.ProtectedData`)** a nivel de `CurrentUser`.
 - **Dashboard de almacenamiento:** Métricas de cuota aportada, espacio consumido, espacio libre y botón para abrir directamente la carpeta de bloques en el **Explorador de Archivos de Windows**.
+- **Capacidad de red en tiempo real:** Latido autenticado cada 10 segundos, suma de cuotas Windows/macOS, desglose de nodos por plataforma y baja automática de equipos desconectados.
 - **Chat nativo e integración con MISIL Web:** Conversación local persistida y sincronización mediante sobres cifrados con **AES-256-GCM** compatibles con el relay temporal web.
 - **Ajustes:** Modificación de cuota en caliente y opción para restablecer la configuración inicial de prueba preservando los datos.
 
@@ -43,6 +44,8 @@ dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=
 
 El ejecutable autónomo `MISIL.exe` se generará en `windows/MISILNative/dist/MISIL.exe`. Puede ejecutarse en cualquier PC con Windows 10/11 sin necesidad de tener .NET instalado previamente gracias al modo *self-contained*.
 
+Cada push a `main` genera además el artefacto descargable `MISIL-Windows-x64-0.2.0`. Las etiquetas `v*` publican el ZIP y su SHA-256 en GitHub Releases.
+
 ---
 
 ## Ubicación de los Datos en Windows
@@ -54,8 +57,11 @@ La aplicación almacena sus datos de forma aislada en:
 ├── native-messages.json      -> Historial local de mensajes de chat
 ├── Security\
 │   ├── master.key.dat        -> Clave de 256 bits cifrada con Windows DPAPI
-│   └── relay.identity.dat    -> Credenciales del relay web cifradas con DPAPI
+│   ├── relay.identity.dat    -> Credenciales del relay web cifradas con DPAPI
+│   └── network.identity.dat  -> Identidad de presencia cifrada con DPAPI
 └── Storage\
     ├── Blobs\                -> Fragmentos de 4 MiB cifrados
     └── Temporary\            -> Directorio temporal y pruebas de integridad
 ```
+
+La app sólo comunica plataforma, versión, cuota, uso y salud del almacén. No envía el nombre del PC ni la ruta local. Si Windows se cierra correctamente, el nodo se retira de inmediato; ante un apagado abrupto caduca en un máximo de 35 segundos.

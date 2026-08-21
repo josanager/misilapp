@@ -70,7 +70,7 @@ struct SettingsView: View {
                         }
                     }
 
-                    Text("MISIL Local Alpha 0.1.2 · macOS")
+                    Text("MISIL Local Alpha 0.2.0 · macOS")
                         .font(.system(size: 11))
                         .foregroundStyle(MISILTheme.textMuted)
                 }
