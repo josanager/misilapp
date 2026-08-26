@@ -11,8 +11,8 @@
     "mac:build": "macos/MISILNative/scripts/build-app.sh",
     "mac:dmg": "macos/MISILNative/scripts/build-dmg.sh",
     "win:build": "dotnet publish windows/MISILNative/MISILNative.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o windows/MISILNative/dist",
-    "test:local": "node --test local-node/*.test.mjs",
-    "test:hub": "node --test misil-hub/*.test.mjs",
+    "test:local": "node --test local-node/server.test.mjs",
+    "test:hub": "node --test misil-hub/server.test.mjs",
     "test": "npm run test:local && npm run test:hub"
   },
   "dependencies": {
