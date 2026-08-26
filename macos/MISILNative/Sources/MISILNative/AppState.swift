@@ -21,6 +21,7 @@ final class AppState: ObservableObject {
     let agerbotConversationStore: AgerbotConversationStore
     let agerbotCapabilityViewModel: AgerbotCapabilityViewModel
     let agerbotUpdateController: AgerbotModelUpdateController
+    let peerStorage = PeerStorageService()
 
     private let storage: StorageCoordinator
 
@@ -81,6 +82,7 @@ final class AppState: ObservableObject {
     func load() async {
         configuration = await storage.loadConfiguration()
         storageSnapshot = await storageSnapshotForCurrentConfiguration()
+        peerStorage.start(configuration: configuration)
         isLoading = false
         if let selected = await agerbotInstallationManager.discover(using: agerbotSettingsStore.settings) {
             agerbotSettingsStore.applyDiscoveredModel(selected)
@@ -123,6 +125,7 @@ final class AppState: ObservableObject {
             }
             self.configuration = configuration
             storageSnapshot = await storage.snapshot(for: configuration)
+            peerStorage.start(configuration: configuration)
             try? await Task.sleep(for: .milliseconds(350))
             isPreparing = false
             showsContributionSetup = false
@@ -145,6 +148,7 @@ final class AppState: ObservableObject {
 
     func resetOnboardingForTesting() async {
         await storage.resetConfiguration()
+        peerStorage.stop()
         configuration = nil
         storageSnapshot = StorageSnapshot(
             quotaBytes: 0,

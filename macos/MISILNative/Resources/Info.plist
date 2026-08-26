@@ -30,6 +30,8 @@
     <string>14.0</string>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>MISIL necesita acceder a tu red local para descubrir tus otros equipos y compartir almacenamiento directamente.</string>
     <key>NSHumanReadableCopyright</key>
     <string>Copyright © 2026 MISIL</string>
     <key>NSPrincipalClass</key>

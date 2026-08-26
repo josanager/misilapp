@@ -11,8 +11,8 @@
         <Border BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1" Padding="30,0">
             <Grid VerticalAlignment="Center">
                 <StackPanel>
-                    <TextBlock Text="Almacenamiento local" FontFamily="{StaticResource FontHeadline}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" />
-                    <TextBlock Text="Controla la cuota cifrada de este equipo" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,3,0,0" />
+                    <TextBlock Text="Almacenamiento compartido" FontFamily="{StaticResource FontHeadline}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" />
+                    <TextBlock Text="Capacidad directa entre equipos MISIL de tu red" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,3,0,0" />
                 </StackPanel>
                 <Border HorizontalAlignment="Right" Background="{StaticResource BrushGlass}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="10" Padding="10,6">
                     <StackPanel Orientation="Horizontal">
@@ -44,9 +44,9 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel>
-                                <TextBlock Text="CUOTA DE ESTE PC" FontFamily="{StaticResource FontLabel}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushTextSecondary}" />
+                                <TextBlock Text="CAPACIDAD MISIL DISPONIBLE" FontFamily="{StaticResource FontLabel}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushTextSecondary}" />
                                 <TextBlock x:Name="TxtQuota" Text="0 B" FontFamily="{StaticResource FontHeadline}" FontSize="46" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,7,0,0" />
-                                <TextBlock Text="Los archivos permanecen cifrados y guardados en este equipo." FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,4,0,0" />
+                                <TextBlock Text="Suma este PC y los equipos MISIL activos en la misma red Wi‑Fi." FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,4,0,0" />
                             </StackPanel>
                             <Button x:Name="BtnOpenFolder" Grid.Column="1" Content="Abrir carpeta" Style="{StaticResource MISILSecondaryButton}" Height="36" Padding="16,0" Click="OnOpenFolderClick" VerticalAlignment="Top" />
                         </Grid>
@@ -57,6 +57,18 @@
                                 <TextBlock x:Name="TxtAvailable" Text="0 B libres" FontFamily="{StaticResource FontLabel}" FontSize="10" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" />
                             </Grid>
                         </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource MISILCard}" Padding="18" Margin="0,0,0,18">
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="RED P2P MISIL" FontFamily="{StaticResource FontLabel}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushAccent}" />
+                            <TextBlock x:Name="TxtNetworkStatus" Text="Buscando otros equipos MISIL…" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,7,0,0" TextWrapping="Wrap" />
+                            <TextBlock x:Name="TxtPeers" Text="Este PC" FontFamily="{StaticResource FontLabel}" FontSize="10" Foreground="{StaticResource BrushTextMuted}" Margin="0,7,0,0" />
+                        </StackPanel>
+                        <Button x:Name="BtnTestStorage" Grid.Column="1" Content="Probar transferencia" Style="{StaticResource MISILPrimaryButton}" Padding="16,0" Click="OnTestStorageClick" />
                     </Grid>
                 </Border>
 
@@ -97,7 +109,7 @@
                 </Border>
 
                 <Border Background="{StaticResource BrushGlass}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="10" Padding="14,10">
-                    <TextBlock Text="MISIL funciona como aplicación de escritorio. Este panel no publica datos ni depende de servicios web." FontSize="10" Foreground="{StaticResource BrushTextMuted}" TextWrapping="Wrap" />
+                    <TextBlock Text="Conexión directa: ninguna nube intermedia. Los equipos deben estar activos en la misma red Wi‑Fi y permitir MISIL en el firewall privado." FontSize="10" Foreground="{StaticResource BrushTextMuted}" TextWrapping="Wrap" />
                 </Border>
             </StackPanel>
         </ScrollViewer>

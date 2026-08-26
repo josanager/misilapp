@@ -38,7 +38,8 @@ namespace MISILNative.Views
 
         private void OnAppStateChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName is nameof(AppState.StorageSnapshot) or nameof(AppState.Configuration))
+            if (e.PropertyName is nameof(AppState.StorageSnapshot) or nameof(AppState.Configuration)
+                or nameof(AppState.StoragePeers) or nameof(AppState.StorageNetworkStatus))
                 Dispatcher.Invoke(UpdateUI);
         }
 
@@ -47,9 +48,9 @@ namespace MISILNative.Views
             if (_appState == null) return;
             var storage = _appState.StorageSnapshot;
             bool active = _appState.SharesStorage;
-            string quota = active ? FormatUtils.FormatByteSize(storage.QuotaBytes) : "0 B";
-            string used = FormatUtils.FormatByteSize(storage.UsedBytes);
-            string free = active ? FormatUtils.FormatByteSize(storage.AvailableWithinQuota) : "0 B";
+            string quota = active ? FormatUtils.FormatByteSize(_appState.NetworkQuotaBytes) : "0 B";
+            string used = FormatUtils.FormatByteSize(_appState.NetworkUsedBytes);
+            string free = active ? FormatUtils.FormatByteSize(_appState.NetworkAvailableBytes) : "0 B";
 
             TxtQuota.Text = quota;
             TxtQuotaMetric.Text = quota;
@@ -57,13 +58,26 @@ namespace MISILNative.Views
             TxtUsedMetric.Text = used;
             TxtAvailable.Text = $"{free} libres";
             TxtFreeMetric.Text = free;
-            UsageProgress.Value = storage.QuotaBytes == 0 ? 0 : Math.Min(100, (double)storage.UsedBytes / storage.QuotaBytes * 100);
+            UsageProgress.Value = _appState.NetworkQuotaBytes == 0 ? 0 : Math.Min(100, (double)_appState.NetworkUsedBytes / _appState.NetworkQuotaBytes * 100);
             TxtStorageDirectory.Text = _appState.Configuration?.StorageDirectory ?? string.Empty;
             LocalStatusDot.Fill = (SolidColorBrush)FindResource(active ? "BrushSuccess" : "BrushTextMuted");
             TxtLocalStatus.Text = active ? "ACTIVO" : "INACTIVO";
             PanelActive.Visibility = active ? Visibility.Visible : Visibility.Collapsed;
             PanelInactive.Visibility = active ? Visibility.Collapsed : Visibility.Visible;
             BtnOpenFolder.IsEnabled = active;
+            TxtNetworkStatus.Text = _appState.StorageNetworkStatus;
+            TxtPeers.Text = _appState.StoragePeers.Count == 0
+                ? "Este PC · esperando otro nodo"
+                : "Este PC · " + string.Join(" · ", _appState.StoragePeers.Select(peer => $"{peer.DisplayName} ({peer.Platform})"));
+            BtnTestStorage.IsEnabled = active && _appState.StoragePeers.Count > 0;
+        }
+
+        private async void OnTestStorageClick(object sender, RoutedEventArgs e)
+        {
+            if (_appState == null) return;
+            BtnTestStorage.IsEnabled = false;
+            await _appState.TestSharedStorageAsync();
+            UpdateUI();
         }
 
         private void OnOpenFolderClick(object sender, RoutedEventArgs e)

@@ -23,6 +23,7 @@ namespace MISILNative.ViewModels
         private readonly string _agerbotManagedRoot;
         private readonly string _misilUpdatesRoot;
         private readonly DiagnosticLogService _diagnostics;
+        private readonly PeerStorageService _peerStorage;
         private CancellationTokenSource? _agerbotInstallCancellation;
         private AgerbotHardwareCapabilities? _agerbotHardware;
         private AgerbotStorageSnapshot? _agerbotStorageUsage;
@@ -38,12 +39,15 @@ namespace MISILNative.ViewModels
         private bool _isPreparing;
         private AppRoute _currentRoute = AppRoute.Chats;
         private string? _presentationError;
+        private string _storageNetworkStatus = "Buscando otros equipos MISIL…";
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public AppState(StorageCoordinator? storage = null)
         {
             _storage = storage ?? new StorageCoordinator();
+            _peerStorage = new PeerStorageService(_storage);
+            _peerStorage.PeersChanged += (_, _) => OnPeerStorageChanged();
             AgerbotSettingsStore = new AgerbotSettingsStore();
             _agerbotCapabilityService = new AgerbotCapabilityService();
             _agerbotRuntimeClient = new AgerbotRuntimeClient();
@@ -202,11 +206,17 @@ namespace MISILNative.ViewModels
         public bool HasCompletedOnboarding => Configuration?.OnboardingCompleted == true;
 
         public bool SharesStorage => Configuration?.SharesStorage == true;
+        public IReadOnlyList<PeerStorageNode> StoragePeers => _peerStorage.Peers;
+        public ulong NetworkQuotaBytes => StorageSnapshot.QuotaBytes + (ulong)StoragePeers.Sum(peer => (decimal)peer.QuotaBytes);
+        public ulong NetworkUsedBytes => StorageSnapshot.UsedBytes + (ulong)StoragePeers.Sum(peer => (decimal)peer.UsedBytes);
+        public ulong NetworkAvailableBytes => NetworkQuotaBytes > NetworkUsedBytes ? NetworkQuotaBytes - NetworkUsedBytes : 0;
+        public string StorageNetworkStatus { get => _storageNetworkStatus; private set { _storageNetworkStatus = value; OnPropertyChanged(); } }
 
         public async Task LoadAsync()
         {
             Configuration = _storage.LoadConfiguration();
             StorageSnapshot = _storage.Snapshot(Configuration);
+            _peerStorage.Start(Configuration);
             AgerbotHardware = await _agerbotCapabilityService.DetectAsync();
             _cudaRuntimeAvailable = File.Exists(AgerbotSettingsStore.Settings.CudaRuntimeExecutablePath);
             OnPropertyChanged(nameof(AgerbotRecommendation));
@@ -255,6 +265,7 @@ namespace MISILNative.ViewModels
 
                 Configuration = config;
                 StorageSnapshot = _storage.Snapshot(config);
+                _peerStorage.Start(config);
                 await Task.Delay(350);
 
                 IsPreparing = false;
@@ -273,6 +284,25 @@ namespace MISILNative.ViewModels
         {
             StorageSnapshot = _storage.Snapshot(Configuration);
             return Task.CompletedTask;
+        }
+
+        public async Task TestSharedStorageAsync()
+        {
+            StorageNetworkStatus = "Verificando escritura y lectura remotas…";
+            try { StorageNetworkStatus = await _peerStorage.TestFirstPeerAsync(); }
+            catch (Exception ex) { StorageNetworkStatus = ex.Message; }
+            await RefreshStorageAsync();
+        }
+
+        private void OnPeerStorageChanged()
+        {
+            OnPropertyChanged(nameof(StoragePeers));
+            OnPropertyChanged(nameof(NetworkQuotaBytes));
+            OnPropertyChanged(nameof(NetworkUsedBytes));
+            OnPropertyChanged(nameof(NetworkAvailableBytes));
+            StorageNetworkStatus = StoragePeers.Count == 0
+                ? "Buscando otros equipos MISIL en esta red Wi‑Fi…"
+                : $"{StoragePeers.Count + 1} equipos activos · capacidad actualizada en tiempo real";
         }
 
         public async Task InstallAgerbotRuntimeAsync()
@@ -492,6 +522,7 @@ namespace MISILNative.ViewModels
         public Task ResetOnboardingForTestingAsync()
         {
             _storage.ResetConfiguration();
+            _peerStorage.Stop();
             Configuration = null;
             StorageSnapshot = new StorageSnapshot(0, 0, _storage.DiskAvailableBytes());
             SetupProgress = SetupProgress.Idle;
@@ -517,6 +548,7 @@ namespace MISILNative.ViewModels
             _agerbotDownloads.Dispose();
             _agerbotRuntimeReleaseService.Dispose();
             _agerbotRuntimeClient.Dispose();
+            _peerStorage.Dispose();
         }
 
         protected void OnPropertyChanged([CallerMemberName] string? name = null)
