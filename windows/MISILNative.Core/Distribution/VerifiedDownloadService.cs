@@ -42,26 +42,28 @@ public sealed class VerifiedDownloadService : IDisposable
             throw new HttpRequestException($"La descarga respondió HTTP {(int)response.StatusCode}.");
         if (existing > 0 && response.StatusCode == HttpStatusCode.OK) existing = 0;
 
-        await using var output = new FileStream(
-            partial,
-            existing > 0 ? FileMode.Append : FileMode.Create,
-            FileAccess.Write,
-            FileShare.None,
-            1024 * 1024,
-            useAsync: true);
-        await using var input = await response.Content.ReadAsStreamAsync(cancellationToken);
-        byte[] buffer = new byte[1024 * 1024];
         long written = existing;
-        while (true)
+        await using (var output = new FileStream(
+                         partial,
+                         existing > 0 ? FileMode.Append : FileMode.Create,
+                         FileAccess.Write,
+                         FileShare.None,
+                         1024 * 1024,
+                         useAsync: true))
+        await using (var input = await response.Content.ReadAsStreamAsync(cancellationToken))
         {
-            int read = await input.ReadAsync(buffer, cancellationToken);
-            if (read == 0) break;
-            written = checked(written + read);
-            if ((ulong)written > expectedSize) throw new InvalidDataException("La descarga supera el tamaño declarado.");
-            await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
-            progress?.Report(expectedSize == 0 ? 0 : Math.Min(1, (double)(ulong)written / expectedSize));
+            byte[] buffer = new byte[1024 * 1024];
+            while (true)
+            {
+                int read = await input.ReadAsync(buffer, cancellationToken);
+                if (read == 0) break;
+                written = checked(written + read);
+                if ((ulong)written > expectedSize) throw new InvalidDataException("La descarga supera el tamaño declarado.");
+                await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+                progress?.Report(expectedSize == 0 ? 0 : Math.Min(1, (double)(ulong)written / expectedSize));
+            }
+            await output.FlushAsync(cancellationToken);
         }
-        await output.FlushAsync(cancellationToken);
         if ((ulong)written != expectedSize) throw new InvalidDataException("La descarga está truncada.");
         File.Move(partial, destination, overwrite: true);
         progress?.Report(1);
