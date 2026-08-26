@@ -1,10 +1,17 @@
 param(
     [Parameter(Mandatory = $true)]
     [ValidatePattern('^\d+\.\d+\.\d+$')]
-    [string]$Version
+    [string]$Version,
+
+    [string]$ReleaseTag,
+
+    [ValidateSet('stable', 'beta')]
+    [string]$Channel = 'stable'
 )
 
 $ErrorActionPreference = 'Stop'
+if ([string]::IsNullOrWhiteSpace($ReleaseTag)) { $ReleaseTag = "v$Version" }
+if ($ReleaseTag -notmatch '^v\d+\.\d+\.\d+(-beta\.\d+)?$') { throw "El tag '$ReleaseTag' no es válido." }
 $RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $ArtifactsRoot = Join-Path $RepositoryRoot 'windows\artifacts'
 $PublishRoot = Join-Path $ArtifactsRoot 'publish'
@@ -72,12 +79,12 @@ Compress-Archive -Path (Join-Path $PublishRoot '*') -DestinationPath $Portable -
 
 $InstallerHash = (Get-FileHash $Installer -Algorithm SHA256).Hash.ToLowerInvariant()
 $InstallerSize = (Get-Item $Installer).Length
-$ReleaseUrl = "https://github.com/josanager/misilapp/releases/download/v$Version/$InstallerName"
+$ReleaseUrl = "https://github.com/josanager/misilapp/releases/download/$ReleaseTag/$InstallerName"
 $Manifest = [ordered]@{
     schemaVersion = 1
     product = 'MISIL'
     version = $Version
-    channel = 'stable'
+    channel = $Channel
     publishedAt = [DateTimeOffset]::UtcNow.ToString('o')
     architecture = 'x64'
     minimumWindowsVersion = '10.0.19041'

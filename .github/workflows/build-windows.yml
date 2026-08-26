@@ -68,7 +68,10 @@ jobs:
 
       - name: Publish self-contained executables and build installer
         shell: pwsh
-        run: ./windows/scripts/build-release.ps1 -Version $env:MISIL_VERSION
+        run: |
+          $releaseTag = if ('${{ github.ref_type }}' -eq 'tag') { '${{ github.ref_name }}' } else { "v$env:MISIL_VERSION" }
+          $channel = if ($env:MISIL_PRERELEASE -eq 'true') { 'beta' } else { 'stable' }
+          ./windows/scripts/build-release.ps1 -Version $env:MISIL_VERSION -ReleaseTag $releaseTag -Channel $channel
 
       - name: Verify required release files
         shell: pwsh
