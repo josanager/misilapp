@@ -1,0 +1,29 @@
+services:
+  hub:
+    build:
+      context: .
+      dockerfile: misil-hub/Dockerfile
+    restart: unless-stopped
+    volumes:
+      - hub-data:/var/lib/misil-hub
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - hub
+    environment:
+      MISIL_HUB_DOMAIN: ${MISIL_HUB_DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./misil-hub/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  hub-data:
+  caddy-data:
+  caddy-config:

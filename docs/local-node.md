@@ -2,11 +2,11 @@
 
 ## Alcance de esta fase
 
-La aplicación trabaja como un nodo autónomo en un solo equipo. El navegador solamente presenta la interfaz; `local-node/server.mjs` conserva el estado y los archivos. No se necesita una cuenta remota y el nodo no escucha conexiones desde la red local o Internet.
+La aplicación trabaja como un nodo autónomo en un solo equipo. `local-node/server.mjs` conserva el estado y los archivos para los procesos de escritorio que lo integren. No se necesita una cuenta remota y el nodo no escucha conexiones desde la red local o Internet.
 
 ## Flujo de datos
 
-1. La interfaz envía mensajes y archivos a `http://127.0.0.1:4317/v1`.
+1. El cliente de escritorio envía mensajes y archivos a `http://127.0.0.1:4317/v1`.
 2. Los metadatos se validan y se escriben en `.misil-data/misil.sqlite`.
 3. Cada archivo se procesa como flujo, se separa en bloques de 4 MiB y se cifra con AES-256-GCM.
 4. Cada bloque recibe un IV aleatorio y una etiqueta de autenticación independientes.

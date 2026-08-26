@@ -1,10 +1,6 @@
 <UserControl x:Class="MISILNative.Views.DashboardView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             mc:Ignorable="d"
-             d:DesignHeight="760" d:DesignWidth="920"
              Background="{StaticResource BrushBgPrimary}">
     <Grid>
         <Grid.RowDefinitions>
@@ -12,29 +8,29 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1" Padding="30,0">
+        <Border BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1" Padding="30,0">
             <Grid VerticalAlignment="Center">
                 <StackPanel>
-                    <TextBlock Text="Red de almacenamiento" FontFamily="{StaticResource FontHeadline}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" />
-                    <TextBlock x:Name="TxtDashboardSubtitle" Text="Sincronizando capacidad entre dispositivos" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,3,0,0" />
+                    <TextBlock Text="Almacenamiento local" FontFamily="{StaticResource FontHeadline}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" />
+                    <TextBlock Text="Controla la cuota cifrada de este equipo" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,3,0,0" />
                 </StackPanel>
-                <Border x:Name="NetworkStatusPill" HorizontalAlignment="Right" Background="{StaticResource BrushGlass}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="10" Padding="10,6">
+                <Border HorizontalAlignment="Right" Background="{StaticResource BrushGlass}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="10" Padding="10,6">
                     <StackPanel Orientation="Horizontal">
-                        <Ellipse x:Name="NetworkStatusDot" Width="7" Height="7" Fill="{StaticResource BrushTextMuted}" Margin="0,0,7,0" VerticalAlignment="Center" />
-                        <TextBlock x:Name="TxtNetworkStatus" Text="Conectando" FontFamily="{StaticResource FontLabel}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" />
+                        <Ellipse x:Name="LocalStatusDot" Width="7" Height="7" Fill="{StaticResource BrushTextMuted}" Margin="0,0,7,0" VerticalAlignment="Center" />
+                        <TextBlock x:Name="TxtLocalStatus" Text="INACTIVO" FontFamily="{StaticResource FontLabel}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" />
                     </StackPanel>
                 </Border>
             </Grid>
         </Border>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="30">
-            <StackPanel MaxWidth="920" HorizontalAlignment="Left">
+            <StackPanel MaxWidth="860" HorizontalAlignment="Left">
                 <Border CornerRadius="18" BorderBrush="{StaticResource BrushAccentBorder}" BorderThickness="1" Padding="28" Margin="0,0,0,18">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Color="#4AFF3737" Offset="0" />
-                            <GradientStop Color="#20260000" Offset="0.56" />
-                            <GradientStop Color="#0DFFFFFF" Offset="1" />
+                            <GradientStop Color="#40FF3737" Offset="0" />
+                            <GradientStop Color="#20260000" Offset="0.58" />
+                            <GradientStop Color="#0AFFFFFF" Offset="1" />
                         </LinearGradientBrush>
                     </Border.Background>
                     <Grid>
@@ -48,22 +44,17 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel>
-                                <TextBlock Text="CAPACIDAD TOTAL EN LÍNEA" FontFamily="{StaticResource FontLabel}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushTextSecondary}" />
-                                <TextBlock x:Name="TxtNetworkTotal" Text="—" FontFamily="{StaticResource FontHeadline}" FontSize="48" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,7,0,0" />
-                                <TextBlock x:Name="TxtNetworkCaption" Text="Esperando la primera actualización" FontSize="13" Foreground="{StaticResource BrushTextSecondary}" Margin="0,4,0,0" />
+                                <TextBlock Text="CUOTA DE ESTE PC" FontFamily="{StaticResource FontLabel}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushTextSecondary}" />
+                                <TextBlock x:Name="TxtQuota" Text="0 B" FontFamily="{StaticResource FontHeadline}" FontSize="46" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,7,0,0" />
+                                <TextBlock Text="Los archivos permanecen cifrados y guardados en este equipo." FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,4,0,0" />
                             </StackPanel>
-                            <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top">
-                                <TextBlock Text="ESTE EQUIPO" FontFamily="{StaticResource FontLabel}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" HorizontalAlignment="Right" />
-                                <TextBlock x:Name="TxtLocalHeroQuota" Text="0 GB" FontFamily="{StaticResource FontHeadline}" FontSize="24" FontWeight="SemiBold" Foreground="{StaticResource BrushAccent}" HorizontalAlignment="Right" Margin="0,5,0,0" />
-                                <TextBlock x:Name="TxtLastUpdate" Text="Todavía sin sincronizar" FontSize="10" Foreground="{StaticResource BrushTextMuted}" HorizontalAlignment="Right" Margin="0,7,0,0" />
-                            </StackPanel>
+                            <Button x:Name="BtnOpenFolder" Grid.Column="1" Content="Abrir carpeta" Style="{StaticResource MISILSecondaryButton}" Height="36" Padding="16,0" Click="OnOpenFolderClick" VerticalAlignment="Top" />
                         </Grid>
-
-                        <StackPanel Grid.Row="1" Margin="0,24,0,0">
-                            <ProgressBar x:Name="NetworkUsageProgress" Minimum="0" Maximum="100" Value="0" Height="5" Background="#22FFFFFF" Foreground="{StaticResource BrushAccent}" BorderThickness="0" />
-                            <Grid Margin="0,8,0,0">
-                                <TextBlock x:Name="TxtNetworkUsed" Text="0 B utilizados" FontFamily="{StaticResource FontLabel}" FontSize="10" Foreground="{StaticResource BrushTextMuted}" />
-                                <TextBlock x:Name="TxtNetworkAvailable" Text="0 B disponibles" FontFamily="{StaticResource FontLabel}" FontSize="10" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" />
+                        <StackPanel Grid.Row="1" Margin="0,25,0,0">
+                            <ProgressBar x:Name="UsageProgress" Minimum="0" Maximum="100" Height="5" Background="#22FFFFFF" Foreground="{StaticResource BrushAccent}" BorderThickness="0" />
+                            <Grid Margin="0,9,0,0">
+                                <TextBlock x:Name="TxtUsed" Text="0 B utilizados" FontFamily="{StaticResource FontLabel}" FontSize="10" Foreground="{StaticResource BrushTextMuted}" />
+                                <TextBlock x:Name="TxtAvailable" Text="0 B libres" FontFamily="{StaticResource FontLabel}" FontSize="10" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" />
                             </Grid>
                         </StackPanel>
                     </Grid>
@@ -77,98 +68,36 @@
                         <ColumnDefinition Width="12" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-
                     <Border Grid.Column="0" Style="{StaticResource MISILCard}" Padding="18">
-                        <StackPanel>
-                            <TextBlock Text="NODOS EN LÍNEA" FontFamily="{StaticResource FontLabel}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" />
-                            <TextBlock x:Name="TxtOnlineNodes" Text="0" FontFamily="{StaticResource FontHeadline}" FontSize="26" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,6,0,0" />
-                            <TextBlock Text="activos ahora" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" />
-                        </StackPanel>
+                        <StackPanel><TextBlock Text="CUOTA" FontFamily="{StaticResource FontLabel}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtQuotaMetric" Text="0 B" FontFamily="{StaticResource FontHeadline}" FontSize="22" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,7,0,0" /></StackPanel>
                     </Border>
-
                     <Border Grid.Column="2" Style="{StaticResource MISILCard}" Padding="18">
-                        <StackPanel>
-                            <TextBlock Text="WINDOWS" FontFamily="{StaticResource FontLabel}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" />
-                            <TextBlock x:Name="TxtWindowsNodes" Text="0" FontFamily="{StaticResource FontHeadline}" FontSize="26" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,6,0,0" />
-                            <TextBlock Text="equipos conectados" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" />
-                        </StackPanel>
+                        <StackPanel><TextBlock Text="UTILIZADO" FontFamily="{StaticResource FontLabel}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtUsedMetric" Text="0 B" FontFamily="{StaticResource FontHeadline}" FontSize="22" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,7,0,0" /></StackPanel>
                     </Border>
-
                     <Border Grid.Column="4" Style="{StaticResource MISILCard}" Padding="18">
-                        <StackPanel>
-                            <TextBlock Text="MACOS" FontFamily="{StaticResource FontLabel}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" />
-                            <TextBlock x:Name="TxtMacNodes" Text="0" FontFamily="{StaticResource FontHeadline}" FontSize="26" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,6,0,0" />
-                            <TextBlock Text="equipos conectados" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" />
-                        </StackPanel>
+                        <StackPanel><TextBlock Text="LIBRE" FontFamily="{StaticResource FontLabel}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtFreeMetric" Text="0 B" FontFamily="{StaticResource FontHeadline}" FontSize="22" FontWeight="Bold" Foreground="{StaticResource BrushAccent}" Margin="0,7,0,0" /></StackPanel>
                     </Border>
                 </Grid>
 
-                <StackPanel x:Name="PanelActive" Visibility="Visible">
-                    <Grid Margin="0,2,0,10">
-                        <TextBlock Text="Este nodo" FontFamily="{StaticResource FontHeadline}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" />
-                        <TextBlock Text="La cuota es un límite; MISIL sólo ocupa el espacio que necesita." FontSize="11" Foreground="{StaticResource BrushTextMuted}" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                    </Grid>
+                <Border x:Name="PanelActive" Style="{StaticResource MISILCard}" Padding="18" Margin="0,0,0,14">
+                    <StackPanel>
+                        <TextBlock Text="Directorio privado" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource BrushTextPrimary}" />
+                        <TextBlock x:Name="TxtStorageDirectory" FontFamily="Consolas" FontSize="10" Foreground="{StaticResource BrushTextMuted}" Margin="0,6,0,0" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Border>
 
-                    <Border Style="{StaticResource MISILCard}" Margin="0,0,0,12" Padding="18">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="1" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="1" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Margin="0,0,18,0">
-                                <TextBlock Text="CUOTA LOCAL" FontFamily="{StaticResource FontLabel}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" />
-                                <TextBlock x:Name="TxtSharedQuota" Text="0 B" FontFamily="{StaticResource FontHeadline}" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,6,0,0" />
-                            </StackPanel>
-                            <Rectangle Grid.Column="1" Fill="{StaticResource BrushBorder}" />
-                            <StackPanel Grid.Column="2" Margin="18,0">
-                                <TextBlock Text="UTILIZADO" FontFamily="{StaticResource FontLabel}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" />
-                                <TextBlock x:Name="TxtUsedStorage" Text="0 B" FontFamily="{StaticResource FontHeadline}" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,6,0,0" />
-                            </StackPanel>
-                            <Rectangle Grid.Column="3" Fill="{StaticResource BrushBorder}" />
-                            <StackPanel Grid.Column="4" Margin="18,0,0,0">
-                                <TextBlock Text="LIBRE EN CUOTA" FontFamily="{StaticResource FontLabel}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" />
-                                <TextBlock x:Name="TxtAvailableQuota" Text="0 B" FontFamily="{StaticResource FontHeadline}" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource BrushAccent}" Margin="0,6,0,0" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-
-                    <Border Style="{StaticResource MISILCard}" Margin="0,0,0,16" Padding="18">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Margin="0,0,18,0">
-                                <TextBlock Text="Directorio cifrado del nodo" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource BrushTextPrimary}" />
-                                <TextBlock x:Name="TxtStorageDirectory" Text="C:\Users\...\MISIL\Storage\Blobs" FontFamily="Consolas" FontSize="10" Foreground="{StaticResource BrushTextMuted}" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" />
-                            </StackPanel>
-                            <Button Grid.Column="1" Content="Abrir carpeta" Style="{StaticResource MISILSecondaryButton}" Height="34" Padding="14,0" FontSize="11" Click="OnOpenFolderClick" />
-                        </Grid>
-                    </Border>
-                </StackPanel>
-
-                <Border x:Name="PanelInactive" Style="{StaticResource MISILCard}" Visibility="Collapsed" Padding="22" Margin="0,0,0,16">
+                <Border x:Name="PanelInactive" Style="{StaticResource MISILCard}" Visibility="Collapsed" Padding="22" Margin="0,0,0,14">
                     <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="Este PC todavía no aporta espacio" FontFamily="{StaticResource FontHeadline}" FontSize="17" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" />
-                            <TextBlock Text="Activa una cuota para que el equipo aparezca como nodo disponible en la red." FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,5,0,0" />
+                            <TextBlock Text="El almacenamiento está desactivado" FontFamily="{StaticResource FontHeadline}" FontSize="17" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" />
+                            <TextBlock Text="Configura una cuota local para reservar espacio cifrado en este PC." FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,5,0,0" />
                         </StackPanel>
-                        <Button Grid.Column="1" Content="Compartir almacenamiento" Style="{StaticResource MISILPrimaryButton}" Margin="18,0,0,0" Padding="16,0" Click="OnShareStorageClick" />
+                        <Button Content="Configurar cuota" Style="{StaticResource MISILPrimaryButton}" HorizontalAlignment="Right" Padding="16,0" Click="OnShareStorageClick" />
                     </Grid>
                 </Border>
 
                 <Border Background="{StaticResource BrushGlass}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="10" Padding="14,10">
-                    <Grid>
-                        <Ellipse Width="7" Height="7" Fill="{StaticResource BrushAccent}" HorizontalAlignment="Left" VerticalAlignment="Center" />
-                        <TextBlock Text="La identidad del nodo está cifrada con Windows DPAPI. Sólo se publican plataforma, cuota, uso y estado; nunca rutas ni nombres de equipo." FontSize="10" Foreground="{StaticResource BrushTextMuted}" Margin="17,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" />
-                    </Grid>
+                    <TextBlock Text="MISIL funciona como aplicación de escritorio. Este panel no publica datos ni depende de servicios web." FontSize="10" Foreground="{StaticResource BrushTextMuted}" TextWrapping="Wrap" />
                 </Border>
             </StackPanel>
         </ScrollViewer>

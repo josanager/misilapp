@@ -1,22 +1,26 @@
-# MISIL Local Alpha para macOS
+# MISIL para macOS
 
-Aplicación nativa escrita con Swift 6 y SwiftUI. No contiene Electron, WebView ni un runtime de Node.js. El bundle, el volumen de instalación y la interfaz usan el logotipo oficial de `public/favicon.svg`.
+Aplicación nativa escrita con Swift 6 y SwiftUI. No utiliza Electron ni WebView. Los chats humanos se comunican con el MISIL Hub configurado por el usuario; el contacto especial Agerbot usa únicamente el runtime local `127.0.0.1:4318`. Los instaladores toman el logotipo de `desktop-assets/MISILLogo.svg`.
 
-## Funciones de esta alpha
+## Funciones
 
-- Onboarding sin cuenta.
-- Elección de aportar almacenamiento o continuar sin hacerlo.
-- Cuotas de 10, 50, 100 y 500 GB, más una cantidad personalizada mínima de 10 GB.
-- Validación del espacio real disponible y reserva de 5 GB para macOS.
-- Clave local de 256 bits guardada en el Llavero.
-- Explicación previa antes de que macOS solicite acceso a esa clave.
-- Preparación real del directorio y prueba de escritura.
-- Dashboard disponible únicamente cuando el nodo aporta almacenamiento.
-- Capacidad total Windows/macOS actualizada por Internet cada 10 segundos y baja automática de nodos sin señal.
-- Chat local nativo de prueba, persistido en Application Support.
-- Ajustes para cambiar la cuota o repetir el onboarding.
+- Onboarding local sin cuenta.
+- Cuotas de 10, 50, 100 y 500 GB, además de una cantidad personalizada.
+- Reserva de seguridad de 5 GB y validación del espacio disponible.
+- Clave maestra de 256 bits protegida por el Llavero de macOS.
+- Dashboard local con cuota, uso, espacio libre y acceso a Finder.
+- Conversación de prueba persistida únicamente en Application Support.
+- Identidad única, enlace personal y mensajería por Internet en tiempo real.
+- Reconexión automática y recepción de mensajes pendientes.
+- Contacto local Agerbot separado de MISIL Hub.
+- Inicio, comprobación de salud, cancelación y parada de Agerbot sin Terminal.
+- Detección de CPU, memoria, acelerador y dispositivo de inferencia.
+- Historial Agerbot separado en `agerbot-conversation.json`.
+- Descubrimiento de modelos estables por manifiesto y Semantic Versioning.
+- Actualización reanudable mediante GitHub Releases, SHA-256, activación atómica y rollback.
+- Cambio de cuota y restablecimiento del onboarding sin borrar archivos.
 
-La cuota no crea un archivo vacío del tamaño seleccionado. Es un límite máximo y el almacenamiento crece conforme se escriben datos.
+La cuota es un límite máximo; el directorio crece únicamente cuando se guardan datos.
 
 ## Compilar y probar
 
@@ -28,14 +32,11 @@ macos/MISILNative/scripts/build-dmg.sh
 
 Los artefactos se generan en `macos/MISILNative/dist/`.
 
-## Instalar la alpha local
-
-1. Abre el archivo `.dmg`.
-2. Arrastra MISIL a Applications.
-3. Esta compilación está firmada de forma ad hoc. Si Gatekeeper la bloquea, haz clic derecho en MISIL, selecciona **Abrir** y confirma una vez.
-
-Para distribuirla sin ese aviso se necesita un certificado Developer ID Application y notarización de Apple.
-
 ## Datos
 
-La aplicación escribe en `~/Library/Application Support/MISIL/`. La configuración y los mensajes están allí; la clave de almacenamiento y la identidad de presencia están separadas en el Llavero de macOS.
+La aplicación escribe configuración, mensajes y almacenamiento en `~/Library/Application Support/MISIL/`. La clave maestra permanece separada en el Llavero.
+
+Los ajustes de Agerbot se guardan en `agerbot-settings.json`; su conversación se
+guarda en `agerbot-conversation.json`. Los modelos administrados viven bajo
+`~/Library/Application Support/MISIL/Agerbot/`, fuera de `MISIL.app`. El runtime
+continúa siendo una instalación independiente elegida explícitamente.

@@ -24,61 +24,6 @@ enum AppRoute: String, CaseIterable, Identifiable {
     }
 }
 
-enum NetworkConnectionStatus: Sendable {
-    case connecting
-    case online
-    case offline
-}
-
-struct NetworkNodeIdentity: Codable, Equatable, Sendable {
-    let version: Int
-    let nodeId: String
-    let accessToken: String
-    let createdAt: String
-
-    static var ephemeral: NetworkNodeIdentity {
-        NetworkNodeIdentity(
-            version: 1,
-            nodeId: UUID().uuidString.lowercased(),
-            accessToken: (UUID().uuidString + UUID().uuidString).replacingOccurrences(of: "-", with: ""),
-            createdAt: ISO8601DateFormatter().string(from: Date())
-        )
-    }
-}
-
-struct PlatformCapacity: Codable, Equatable, Sendable {
-    let platform: String
-    let onlineNodes: Int
-    let quotaBytes: UInt64
-}
-
-struct NetworkCapacitySnapshot: Codable, Equatable, Sendable {
-    let protocolVersion: Int
-    let generatedAt: String
-    let heartbeatIntervalSeconds: Int
-    let offlineAfterSeconds: Int
-    let onlineNodes: Int
-    let totalQuotaBytes: UInt64
-    let totalUsedBytes: UInt64
-    let availableBytes: UInt64
-    let platforms: [PlatformCapacity]
-
-    var windowsNodes: Int { platforms.first(where: { $0.platform == "windows" })?.onlineNodes ?? 0 }
-    var macNodes: Int { platforms.first(where: { $0.platform == "macos" })?.onlineNodes ?? 0 }
-
-    static let empty = NetworkCapacitySnapshot(
-        protocolVersion: 1,
-        generatedAt: "",
-        heartbeatIntervalSeconds: 10,
-        offlineAfterSeconds: 35,
-        onlineNodes: 0,
-        totalQuotaBytes: 0,
-        totalUsedBytes: 0,
-        availableBytes: 0,
-        platforms: []
-    )
-}
-
 struct AppConfiguration: Codable, Equatable, Sendable {
     static let currentSchemaVersion = 1
 

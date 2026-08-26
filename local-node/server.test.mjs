@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'node:net';
 import { spawn } from 'node:child_process';
-import { createHash, randomUUID } from 'node:crypto';
 import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -44,7 +43,6 @@ test('el nodo cifra, deduplica, sirve rangos y aplica la cuota', async (t) => {
       MISIL_DATA_DIR: dataDir,
       MISIL_NODE_PORT: String(port),
       MISIL_QUOTA_BYTES: String(quota),
-      MISIL_PRESENCE_TTL_MS: '150',
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -112,119 +110,4 @@ test('el nodo cifra, deduplica, sirve rangos y aplica la cuota', async (t) => {
   const finalStatus = await fetch(`${baseUrl}/v1/storage`).then((response) => response.json());
   assert.equal(finalStatus.usedBytes, 0);
 
-  const roomId = randomUUID();
-  const accessToken = 'relay-test-token-that-is-long-enough-for-authentication';
-  const tokenHash = createHash('sha256').update(accessToken).digest('hex');
-  const roomResponse = await fetch(`${baseUrl}/api/relay/rooms`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ roomId, tokenHash }),
-  });
-  assert.equal(roomResponse.status, 201);
-
-  const envelope = {
-    roomId,
-    id: randomUUID(),
-    ciphertext: 'c29icmUtY2lmcmFkby1zaW4tdGV4dG8tbGVnaWJsZQ',
-    iv: 'dmVjdG9yLWluaWNpYWw',
-    createdAt: new Date().toISOString(),
-  };
-  const relayHeaders = {
-    Authorization: `Bearer ${accessToken}`,
-    'Content-Type': 'application/json',
-  };
-  const relaySend = await fetch(`${baseUrl}/api/relay/messages`, {
-    method: 'POST', headers: relayHeaders, body: JSON.stringify(envelope),
-  });
-  assert.equal(relaySend.status, 201);
-
-  const relayList = await fetch(`${baseUrl}/api/relay/messages?roomId=${roomId}`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  assert.equal(relayList.status, 200);
-  const relayBody = await relayList.json();
-  assert.equal(relayBody.messages.length, 1);
-  assert.equal(relayBody.messages[0].ciphertext, envelope.ciphertext);
-  assert.equal(JSON.stringify(relayBody).includes('texto-legible'), false);
-
-  const deniedRelay = await fetch(`${baseUrl}/api/relay/messages?roomId=${roomId}`, {
-    headers: { Authorization: 'Bearer token-incorrecto-que-tambien-es-suficientemente-largo' },
-  });
-  assert.equal(deniedRelay.status, 403);
-
-  const quota10GiB = 10 * 1024 * 1024 * 1024;
-  const registerNode = async (platform) => {
-    const nodeId = randomUUID();
-    const token = `network-${platform}-${randomUUID().replaceAll('-', '')}`;
-    const tokenHash = createHash('sha256').update(token).digest('hex');
-    const registration = await fetch(`${baseUrl}/api/network/nodes`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nodeId, tokenHash, platform, appVersion: '0.2.0' }),
-    });
-    assert.equal(registration.status, 201);
-    return { nodeId, token, platform };
-  };
-
-  const heartbeat = async (node) => fetch(`${baseUrl}/api/network/presence`, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${node.token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      nodeId: node.nodeId,
-      platform: node.platform,
-      appVersion: '0.2.0',
-      quotaBytes: quota10GiB,
-      usedBytes: 0,
-      storageHealthy: true,
-    }),
-  });
-
-  const windowsNode = await registerNode('windows');
-  const macNode = await registerNode('macos');
-  assert.equal((await heartbeat(windowsNode)).status, 200);
-  const combinedResponse = await heartbeat(macNode);
-  assert.equal(combinedResponse.status, 200);
-  const combined = await combinedResponse.json();
-  assert.equal(combined.onlineNodes, 2);
-  assert.equal(combined.totalQuotaBytes, quota10GiB * 2);
-  assert.deepEqual(combined.platforms.map((item) => item.platform), ['macos', 'windows']);
-
-  const deniedPresence = await fetch(`${baseUrl}/api/network/presence`, {
-    method: 'PUT',
-    headers: {
-      Authorization: 'Bearer network-token-incorrecto-pero-suficientemente-largo',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      nodeId: windowsNode.nodeId,
-      platform: 'windows',
-      appVersion: '0.2.0',
-      quotaBytes: quota10GiB,
-      usedBytes: 0,
-      storageHealthy: true,
-    }),
-  });
-  assert.equal(deniedPresence.status, 403);
-
-  const offlineMac = await fetch(`${baseUrl}/api/network/presence`, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${macNode.token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ nodeId: macNode.nodeId }),
-  });
-  assert.equal(offlineMac.status, 200);
-  const afterOffline = await fetch(`${baseUrl}/api/network/capacity`).then((response) => response.json());
-  assert.equal(afterOffline.onlineNodes, 1);
-  assert.equal(afterOffline.totalQuotaBytes, quota10GiB);
-
-  assert.equal((await heartbeat(macNode)).status, 200);
-  await new Promise((resolve) => setTimeout(resolve, 220));
-  const afterExpiry = await fetch(`${baseUrl}/api/network/capacity`).then((response) => response.json());
-  assert.equal(afterExpiry.onlineNodes, 0);
-  assert.equal(afterExpiry.totalQuotaBytes, 0);
 });

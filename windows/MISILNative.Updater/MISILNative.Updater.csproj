@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>MISIL.Updater</AssemblyName>
+    <RootNamespace>MISILNative.Updater</RootNamespace>
+    <Version>0.3.0</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MISILNative.Core\MISILNative.Core.csproj" />
+  </ItemGroup>
+</Project>

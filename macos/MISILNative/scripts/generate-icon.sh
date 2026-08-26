@@ -11,7 +11,7 @@ SOURCE_PNG="$PACKAGE_DIR/.build/AppIcon-1024.png"
 /bin/mkdir -p "$ICONSET_DIR"
 
 /usr/bin/xcrun swift "$PACKAGE_DIR/scripts/generate-icon.swift" \
-  "$REPOSITORY_ROOT/public/favicon.svg" \
+  "$REPOSITORY_ROOT/desktop-assets/MISILLogo.svg" \
   "$SOURCE_PNG"
 
 for spec in \

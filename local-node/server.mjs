@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { mkdir } from 'node:fs/promises';
-import { createHash, randomUUID } from 'node:crypto';
-import { DATA_DIR, MAX_JSON_BYTES, NODE_HOST, NODE_PORT, PRESENCE_TTL_MS } from './config.mjs';
+import { randomUUID } from 'node:crypto';
+import { DATA_DIR, MAX_JSON_BYTES, NODE_HOST, NODE_PORT } from './config.mjs';
 import { booleanize, db, LOCAL_USER_ID, seedLocalWorkspace } from './database.mjs';
 import {
   initializeStorage,
@@ -16,11 +16,6 @@ const GROUP_BOOLEANS = [
   'show_members', 'show_media', 'show_links', 'show_files',
 ];
 const MESSAGE_BOOLEANS = ['is_edited'];
-const NODE_ID_PATTERN = /^[0-9a-f-]{36}$/i;
-const TOKEN_HASH_PATTERN = /^[0-9a-f]{64}$/i;
-const APP_VERSION_PATTERN = /^[0-9A-Za-z.+_-]{1,32}$/;
-const NETWORK_PLATFORMS = new Set(['windows', 'macos']);
-const MAX_NODE_QUOTA_BYTES = 16 * 1024 * 1024 * 1024 * 1024;
 
 function json(response, status, data) {
   const body = JSON.stringify(data);
@@ -66,111 +61,6 @@ function profile() {
   return booleanize(db.prepare('SELECT * FROM profiles WHERE id = ?').get(LOCAL_USER_ID), ['can_create_groups']);
 }
 
-function relayToken(request) {
-  const match = /^Bearer ([A-Za-z0-9_-]{32,128})$/.exec(String(request.headers.authorization || ''));
-  if (!match) throw Object.assign(new Error('Falta la credencial del espacio.'), { statusCode: 401 });
-  return createHash('sha256').update(match[1]).digest('hex');
-}
-
-function validateRelayRoom(value) {
-  if (!/^[0-9a-f-]{36}$/i.test(String(value || ''))) {
-    throw Object.assign(new Error('Identificador de espacio no válido.'), { statusCode: 400 });
-  }
-  return String(value);
-}
-
-function validateNodeId(value) {
-  const nodeId = String(value || '').toLowerCase();
-  if (!NODE_ID_PATTERN.test(nodeId)) {
-    throw Object.assign(new Error('Identificador de nodo no válido.'), { statusCode: 400 });
-  }
-  return nodeId;
-}
-
-function validateNodeTokenHash(value) {
-  const tokenHash = String(value || '').toLowerCase();
-  if (!TOKEN_HASH_PATTERN.test(tokenHash)) {
-    throw Object.assign(new Error('Credencial de nodo no válida.'), { statusCode: 400 });
-  }
-  return tokenHash;
-}
-
-function validateNodePlatform(value) {
-  const platform = String(value || '').toLowerCase();
-  if (!NETWORK_PLATFORMS.has(platform)) {
-    throw Object.assign(new Error('Plataforma de nodo no válida.'), { statusCode: 400 });
-  }
-  return platform;
-}
-
-function validateAppVersion(value) {
-  const appVersion = String(value || 'unknown');
-  if (!APP_VERSION_PATTERN.test(appVersion)) {
-    throw Object.assign(new Error('Versión de aplicación no válida.'), { statusCode: 400 });
-  }
-  return appVersion;
-}
-
-function validateByteCount(value, name, maximum = MAX_NODE_QUOTA_BYTES) {
-  const byteCount = Number(value);
-  if (!Number.isSafeInteger(byteCount) || byteCount < 0 || byteCount > maximum) {
-    throw Object.assign(new Error(`${name} no válido.`), { statusCode: 400 });
-  }
-  return byteCount;
-}
-
-function authorizeNetworkNode(request, nodeId) {
-  const match = /^Bearer ([A-Za-z0-9_-]{32,128})$/.exec(String(request.headers.authorization || ''));
-  if (!match) throw Object.assign(new Error('Falta la credencial del nodo.'), { statusCode: 401 });
-  const node = db.prepare('SELECT token_hash FROM network_nodes WHERE id = ?').get(nodeId);
-  if (!node) throw Object.assign(new Error('El nodo no está registrado.'), { statusCode: 404 });
-  const tokenHash = createHash('sha256').update(match[1]).digest('hex');
-  if (node.token_hash !== tokenHash) {
-    throw Object.assign(new Error('Credencial de nodo incorrecta.'), { statusCode: 403 });
-  }
-}
-
-function networkCapacitySnapshot(now = Date.now()) {
-  const cutoff = now - PRESENCE_TTL_MS;
-  const summary = db.prepare(`
-    SELECT COUNT(*) AS onlineNodes,
-           COALESCE(SUM(quota_bytes), 0) AS totalQuotaBytes,
-           COALESCE(SUM(used_bytes), 0) AS totalUsedBytes
-    FROM network_nodes
-    WHERE last_seen_at >= ? AND storage_healthy = 1 AND quota_bytes > 0
-  `).get(cutoff);
-  const platforms = db.prepare(`
-    SELECT platform, COUNT(*) AS onlineNodes, COALESCE(SUM(quota_bytes), 0) AS quotaBytes
-    FROM network_nodes
-    WHERE last_seen_at >= ? AND storage_healthy = 1 AND quota_bytes > 0
-    GROUP BY platform ORDER BY platform
-  `).all(cutoff);
-  const totalQuotaBytes = Number(summary.totalQuotaBytes || 0);
-  const totalUsedBytes = Number(summary.totalUsedBytes || 0);
-  return {
-    protocolVersion: 1,
-    generatedAt: new Date(now).toISOString(),
-    heartbeatIntervalSeconds: 10,
-    offlineAfterSeconds: Math.ceil(PRESENCE_TTL_MS / 1000),
-    onlineNodes: Number(summary.onlineNodes || 0),
-    totalQuotaBytes,
-    totalUsedBytes,
-    availableBytes: Math.max(0, totalQuotaBytes - totalUsedBytes),
-    platforms: platforms.map((row) => ({
-      platform: row.platform,
-      onlineNodes: Number(row.onlineNodes || 0),
-      quotaBytes: Number(row.quotaBytes || 0),
-    })),
-  };
-}
-
-function authorizeRelay(request, roomId) {
-  const room = db.prepare('SELECT token_hash, expires_at FROM relay_rooms WHERE id = ?').get(roomId);
-  if (!room || room.expires_at <= Date.now()) throw Object.assign(new Error('Este espacio ya no existe.'), { statusCode: 404 });
-  if (room.token_hash !== relayToken(request)) throw Object.assign(new Error('Credencial incorrecta.'), { statusCode: 403 });
-  db.prepare('UPDATE relay_rooms SET last_seen_at = ? WHERE id = ?').run(Date.now(), roomId);
-}
-
 function decorateMessage(row) {
   if (!row) return row;
   return {
@@ -198,100 +88,6 @@ async function handle(request, response) {
   }
   const url = new URL(request.url, `http://${request.headers.host || `${NODE_HOST}:${NODE_PORT}`}`);
   const { pathname } = url;
-
-  if (request.method === 'POST' && pathname === '/api/network/nodes') {
-    const body = await readJson(request);
-    const nodeId = validateNodeId(body.nodeId);
-    const tokenHash = validateNodeTokenHash(body.tokenHash);
-    const platform = validateNodePlatform(body.platform);
-    const appVersion = validateAppVersion(body.appVersion);
-    const existing = db.prepare('SELECT token_hash FROM network_nodes WHERE id = ?').get(nodeId);
-    if (existing && existing.token_hash !== tokenHash) {
-      return json(response, 409, { error: 'Ese identificador de nodo ya está registrado.' });
-    }
-    const now = Date.now();
-    db.prepare(`
-      INSERT INTO network_nodes
-        (id, token_hash, platform, app_version, quota_bytes, used_bytes, storage_healthy, created_at, last_seen_at)
-      VALUES (?, ?, ?, ?, 0, 0, 0, ?, 0)
-      ON CONFLICT(id) DO UPDATE SET platform = excluded.platform, app_version = excluded.app_version
-    `).run(nodeId, tokenHash, platform, appVersion, now);
-    return json(response, existing ? 200 : 201, { ok: true, nodeId, protocolVersion: 1 });
-  }
-
-  if ((request.method === 'PUT' || request.method === 'DELETE') && pathname === '/api/network/presence') {
-    const body = await readJson(request);
-    const nodeId = validateNodeId(body.nodeId);
-    authorizeNetworkNode(request, nodeId);
-    if (request.method === 'DELETE') {
-      db.prepare(`
-        UPDATE network_nodes
-        SET last_seen_at = 0, quota_bytes = 0, used_bytes = 0, storage_healthy = 0
-        WHERE id = ?
-      `).run(nodeId);
-      return json(response, 200, { ok: true, nodeId, offline: true });
-    }
-    const quotaBytes = validateByteCount(body.quotaBytes, 'Cuota del nodo');
-    const usedBytes = validateByteCount(body.usedBytes, 'Uso del nodo', quotaBytes);
-    const platform = validateNodePlatform(body.platform);
-    const appVersion = validateAppVersion(body.appVersion);
-    const storageHealthy = body.storageHealthy === true ? 1 : 0;
-    const now = Date.now();
-    db.prepare(`
-      UPDATE network_nodes
-      SET platform = ?, app_version = ?, quota_bytes = ?, used_bytes = ?,
-          storage_healthy = ?, last_seen_at = ?
-      WHERE id = ?
-    `).run(platform, appVersion, quotaBytes, usedBytes, storageHealthy, now, nodeId);
-    return json(response, 200, networkCapacitySnapshot(now));
-  }
-
-  if (request.method === 'GET' && pathname === '/api/network/capacity') {
-    return json(response, 200, networkCapacitySnapshot());
-  }
-
-  if (request.method === 'POST' && pathname === '/api/relay/rooms') {
-    const body = await readJson(request);
-    const roomId = validateRelayRoom(body.roomId);
-    if (!/^[0-9a-f]{64}$/i.test(String(body.tokenHash || ''))) {
-      throw Object.assign(new Error('Credencial no válida.'), { statusCode: 400 });
-    }
-    const now = Date.now();
-    const result = db.prepare(`INSERT OR IGNORE INTO relay_rooms (id, token_hash, created_at, last_seen_at, expires_at) VALUES (?, ?, ?, ?, ?)`)
-      .run(roomId, String(body.tokenHash).toLowerCase(), now, now, now + 90 * 24 * 60 * 60 * 1000);
-    if (!result.changes) return json(response, 409, { error: 'Ese espacio ya existe.' });
-    return json(response, 201, { ok: true, roomId });
-  }
-
-  if ((request.method === 'GET' || request.method === 'POST') && pathname === '/api/relay/messages') {
-    const body = request.method === 'POST' ? await readJson(request) : {};
-    const roomId = validateRelayRoom(body.roomId || url.searchParams.get('roomId'));
-    authorizeRelay(request, roomId);
-    db.prepare('DELETE FROM relay_messages WHERE room_id = ? AND expires_at <= ?').run(roomId, Date.now());
-    if (request.method === 'GET') {
-      const messages = db.prepare(`SELECT id, ciphertext, iv, created_at AS createdAt FROM relay_messages WHERE room_id = ? AND expires_at > ? ORDER BY created_at ASC LIMIT 500`)
-        .all(roomId, Date.now());
-      return json(response, 200, { messages });
-    }
-    const id = validateRelayRoom(body.id);
-    const ciphertext = String(body.ciphertext || '');
-    const iv = String(body.iv || '');
-    if (!/^[A-Za-z0-9_-]+$/.test(ciphertext) || ciphertext.length > 64 * 1024 || !/^[A-Za-z0-9_-]+$/.test(iv) || iv.length > 64) {
-      throw Object.assign(new Error('Sobre cifrado no válido.'), { statusCode: 400 });
-    }
-    const createdAt = Date.parse(body.createdAt);
-    if (!Number.isFinite(createdAt) || Math.abs(createdAt - Date.now()) > 10 * 60 * 1000) {
-      throw Object.assign(new Error('La fecha del mensaje no es válida.'), { statusCode: 400 });
-    }
-    const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
-    db.prepare(`INSERT OR IGNORE INTO relay_messages (id, room_id, ciphertext, iv, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)`)
-      .run(id, roomId, ciphertext, iv, body.createdAt, expiresAt);
-    return json(response, 201, { ok: true, id, expiresAt });
-  }
-
-  if (request.method === 'GET' && pathname === '/api/relay/health') {
-    return json(response, 200, { ok: true, service: 'misil-relay-local', messageTtlDays: 7 });
-  }
 
   if (request.method === 'GET' && pathname === '/v1/health') {
     return json(response, 200, { ok: true, version: 1, storage: storageStatus(), profile: profile() });

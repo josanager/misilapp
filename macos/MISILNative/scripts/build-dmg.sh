@@ -7,7 +7,7 @@ OUTPUT_DIR="$PACKAGE_DIR/dist"
 STAGE_DIR="$PACKAGE_DIR/.build/dmg-stage-$ARCH"
 MOUNT_DIR="$PACKAGE_DIR/.build/dmg-mount-$ARCH"
 RW_DMG="$PACKAGE_DIR/.build/MISIL-Local-Alpha-$ARCH-rw.dmg"
-DMG_PATH="$OUTPUT_DIR/MISIL-Local-Alpha-0.2.0-macOS-$ARCH.dmg"
+DMG_PATH="$OUTPUT_DIR/MISIL-Desktop-Alpha-0.3.0-macOS-$ARCH.dmg"
 
 "$PACKAGE_DIR/scripts/build-app.sh"
 

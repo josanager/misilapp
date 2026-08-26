@@ -36,7 +36,7 @@ BIN_DIR="$PACKAGE_DIR/.build/native-$ARCH"
 /usr/bin/ditto "$BIN_DIR/MISIL" "$CONTENTS_DIR/MacOS/MISIL"
 /usr/bin/ditto "$PACKAGE_DIR/Resources/Info.plist" "$CONTENTS_DIR/Info.plist"
 /usr/bin/ditto "$PACKAGE_DIR/Resources/AppIcon.icns" "$CONTENTS_DIR/Resources/AppIcon.icns"
-/usr/bin/ditto "$PACKAGE_DIR/../../public/favicon.svg" "$CONTENTS_DIR/Resources/MISILLogo.svg"
+/usr/bin/ditto "$PACKAGE_DIR/../../desktop-assets/MISILLogo.svg" "$CONTENTS_DIR/Resources/MISILLogo.svg"
 /bin/chmod 755 "$CONTENTS_DIR/MacOS/MISIL"
 
 /usr/bin/codesign --force --deep --sign - --timestamp=none "$APP_DIR"

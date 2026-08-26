@@ -32,9 +32,7 @@ namespace MISILNative.Views
                         UpdateView();
                     }
                     if (args.PropertyName == nameof(_appState.StorageSnapshot)
-                        || args.PropertyName == nameof(_appState.SharesStorage)
-                        || args.PropertyName == nameof(_appState.NetworkSnapshot)
-                        || args.PropertyName == nameof(_appState.NetworkStatus))
+                        || args.PropertyName == nameof(_appState.SharesStorage))
                     {
                         UpdateFooter();
                     }
@@ -63,6 +61,7 @@ namespace MISILNative.Views
                 case AppRoute.Chats:
                     if (_chatsView != null)
                     {
+                        _chatsView.DataContext = _appState;
                         ContentHost.Children.Add(_chatsView);
                     }
                     break;
@@ -101,25 +100,17 @@ namespace MISILNative.Views
         {
             if (_appState == null) return;
 
-            if (_appState.NetworkStatus == NetworkConnectionStatus.Online)
+            if (_appState.SharesStorage)
             {
                 NodeStatusDot.Background = (SolidColorBrush)FindResource("BrushSuccess");
-                TxtNodeStatusTitle.Text = "Red en línea";
-                TxtNodeStatusDetail.Text = $"{_appState.NetworkSnapshot.OnlineNodes} nodos · {FormatUtils.FormatByteSize(_appState.NetworkSnapshot.TotalQuotaBytes)}";
-            }
-            else if (_appState.NetworkStatus == NetworkConnectionStatus.Connecting)
-            {
-                NodeStatusDot.Background = (SolidColorBrush)FindResource("BrushAccent");
-                TxtNodeStatusTitle.Text = "Sincronizando";
-                TxtNodeStatusDetail.Text = _appState.SharesStorage
-                    ? $"Este PC aporta {FormatUtils.FormatByteSize(_appState.StorageSnapshot.QuotaBytes)}"
-                    : "Comprobando capacidad";
+                TxtNodeStatusTitle.Text = "Almacenamiento activo";
+                TxtNodeStatusDetail.Text = $"Cuota local · {FormatUtils.FormatByteSize(_appState.StorageSnapshot.QuotaBytes)}";
             }
             else
             {
                 NodeStatusDot.Background = (SolidColorBrush)FindResource("BrushTextMuted");
-                TxtNodeStatusTitle.Text = "Sin conexión";
-                TxtNodeStatusDetail.Text = "Reintento automático";
+                TxtNodeStatusTitle.Text = "Almacenamiento inactivo";
+                TxtNodeStatusDetail.Text = "Sólo datos locales";
             }
         }
 

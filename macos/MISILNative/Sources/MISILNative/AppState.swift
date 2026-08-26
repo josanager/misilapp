@@ -9,26 +9,65 @@ final class AppState: ObservableObject {
         diskAvailableBytes: 0
     )
     @Published private(set) var setupProgress = SetupProgress.idle
-    @Published private(set) var networkSnapshot = NetworkCapacitySnapshot.empty
-    @Published private(set) var networkStatus: NetworkConnectionStatus = .connecting
-    @Published private(set) var lastNetworkUpdate: Date?
-    @Published private(set) var networkError: String?
     @Published private(set) var isLoading = true
     @Published private(set) var isPreparing = false
     @Published var route: AppRoute = .chats
     @Published var presentationError: String?
     @Published var showsContributionSetup = false
 
-    private let storage: StorageCoordinator
-    private let network: NetworkPresenceService
-    private var networkTask: Task<Void, Never>?
+    let agerbotSettingsStore: AgerbotSettingsStore
+    let agerbotInstallationManager: AgerbotInstallationManager
+    let agerbotProcessManager: AgerbotProcessManager
+    let agerbotConversationStore: AgerbotConversationStore
+    let agerbotCapabilityViewModel: AgerbotCapabilityViewModel
+    let agerbotUpdateController: AgerbotModelUpdateController
 
-    init(
-        storage: StorageCoordinator = StorageCoordinator(),
-        network: NetworkPresenceService = NetworkPresenceService()
-    ) {
+    private let storage: StorageCoordinator
+
+    init(storage: StorageCoordinator = StorageCoordinator()) {
         self.storage = storage
-        self.network = network
+        let settingsStore = AgerbotSettingsStore()
+        let installationManager = AgerbotInstallationManager()
+        let processManager = AgerbotProcessManager.shared
+        let runtimeClient = AgerbotRuntimeClient()
+        let activationGate = AgerbotActivationGate()
+        let currentStore = AgerbotCurrentModelStore(
+            fileURL: installationManager.managedRoot.appendingPathComponent("current-model.json")
+        )
+        let failedStore = AgerbotFailedVersionStore(
+            fileURL: installationManager.managedRoot.appendingPathComponent("update-state.json")
+        )
+        let runtimeActivator = AgerbotManagedRuntimeActivator(
+            processManager: processManager,
+            settingsStore: settingsStore,
+            installationManager: installationManager
+        )
+        let activationEngine = AgerbotAtomicActivationEngine(
+            gate: activationGate,
+            currentStore: currentStore,
+            failedStore: failedStore
+        )
+        agerbotSettingsStore = settingsStore
+        agerbotInstallationManager = installationManager
+        agerbotProcessManager = processManager
+        agerbotConversationStore = AgerbotConversationStore(
+            client: runtimeClient,
+            processManager: processManager,
+            settingsStore: settingsStore,
+            installationManager: installationManager,
+            activationGate: activationGate
+        )
+        agerbotCapabilityViewModel = AgerbotCapabilityViewModel(client: runtimeClient)
+        agerbotUpdateController = AgerbotModelUpdateController(
+            downloadService: AgerbotModelDownloadService(),
+            validator: AgerbotCandidateValidator(),
+            settingsStore: settingsStore,
+            installationManager: installationManager,
+            currentStore: currentStore,
+            failedStore: failedStore,
+            activationEngine: activationEngine,
+            runtimeActivator: runtimeActivator
+        )
     }
 
     var hasCompletedOnboarding: Bool {
@@ -43,7 +82,26 @@ final class AppState: ObservableObject {
         configuration = await storage.loadConfiguration()
         storageSnapshot = await storageSnapshotForCurrentConfiguration()
         isLoading = false
-        await restartNetworkSync()
+        if let selected = await agerbotInstallationManager.discover(using: agerbotSettingsStore.settings) {
+            agerbotSettingsStore.applyDiscoveredModel(selected)
+            let previous = agerbotInstallationManager.availableModels
+                .first { $0.version < selected.version }?.manifest.model.version
+            agerbotSettingsStore.setPreviousVersionIfMissing(previous)
+        }
+        agerbotInstallationManager.refresh(using: agerbotSettingsStore.settings)
+        agerbotCapabilityViewModel.startMonitoring()
+        if agerbotSettingsStore.settings.startWithMISIL {
+            Task { [weak self] in
+                guard let self else { return }
+                await self.agerbotProcessManager.start(
+                    settings: self.agerbotSettingsStore.settings,
+                    installationStatus: self.agerbotInstallationManager.status
+                )
+                self.agerbotUpdateController.scheduleAutomaticCheck()
+            }
+        } else {
+            agerbotUpdateController.scheduleAutomaticCheck()
+        }
     }
 
     func availableDiskBytes() async -> UInt64 {
@@ -65,7 +123,6 @@ final class AppState: ObservableObject {
             }
             self.configuration = configuration
             storageSnapshot = await storage.snapshot(for: configuration)
-            await restartNetworkSync()
             try? await Task.sleep(for: .milliseconds(350))
             isPreparing = false
             showsContributionSetup = false
@@ -87,7 +144,6 @@ final class AppState: ObservableObject {
     }
 
     func resetOnboardingForTesting() async {
-        await stopNetworkSync(sendOffline: true)
         await storage.resetConfiguration()
         configuration = nil
         storageSnapshot = StorageSnapshot(
@@ -97,67 +153,6 @@ final class AppState: ObservableObject {
         )
         setupProgress = .idle
         route = .chats
-    }
-
-    func shutdown() async {
-        await stopNetworkSync(sendOffline: true)
-    }
-
-    private func restartNetworkSync() async {
-        await stopNetworkSync(sendOffline: false)
-        networkTask = Task { [weak self] in
-            guard let self else { return }
-            await self.runNetworkLoop()
-        }
-    }
-
-    private func stopNetworkSync(sendOffline: Bool) async {
-        let task = networkTask
-        networkTask = nil
-        task?.cancel()
-        await task?.value
-        if sendOffline, sharesStorage {
-            try? await network.goOffline()
-        }
-    }
-
-    private func runNetworkLoop() async {
-        var delaySeconds = 5
-        while !Task.isCancelled {
-            do {
-                let localSnapshot = await storageSnapshotForCurrentConfiguration()
-                storageSnapshot = localSnapshot
-                if lastNetworkUpdate == nil { networkStatus = .connecting }
-
-                let snapshot: NetworkCapacitySnapshot
-                if sharesStorage {
-                    snapshot = try await network.heartbeat(
-                        storage: localSnapshot,
-                        storageHealthy: await storage.isStorageHealthy(configuration: configuration)
-                    )
-                } else {
-                    snapshot = try await network.capacity()
-                }
-
-                networkSnapshot = snapshot
-                networkStatus = .online
-                lastNetworkUpdate = Date()
-                networkError = nil
-                delaySeconds = min(30, max(5, snapshot.heartbeatIntervalSeconds))
-            } catch is CancellationError {
-                break
-            } catch {
-                networkStatus = .offline
-                networkError = error.localizedDescription
-                delaySeconds = 5
-            }
-
-            do {
-                try await Task.sleep(for: .seconds(delaySeconds))
-            } catch {
-                break
-            }
-        }
     }
 
     private func storageSnapshotForCurrentConfiguration() async -> StorageSnapshot {

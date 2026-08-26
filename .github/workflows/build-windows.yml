@@ -1,66 +1,113 @@
-name: Build MISIL for Windows
+name: Build and package MISIL for Windows
 
 on:
   push:
     branches: [main]
-    tags: ['v*']
+    tags: ['v*.*.*']
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  verify:
-    runs-on: ubuntu-latest
+  windows-x64:
+    runs-on: windows-latest
+    timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: npm
-      - run: npm ci
-      - run: npm run test:local
-      - run: npm run build
 
-  windows:
-    needs: verify
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
-      - name: Publish self-contained executable
-        shell: pwsh
-        run: >-
-          dotnet publish windows/MISILNative/MISILNative.csproj
-          -c Release
-          -r win-x64
-          --self-contained true
-          -p:PublishSingleFile=true
-          -p:IncludeNativeLibrariesForSelfExtract=true
-          -p:EnableCompressionInSingleFile=true
-          -o windows/MISILNative/dist
-      - name: Package executable and checksum
+      - name: Restore JavaScript dependencies
+        run: npm ci
+
+      - name: Test local storage and MISIL Hub
+        run: npm test
+
+      - name: Run Windows service checks
+        run: dotnet run --project windows/MISILNative.Checks/MISILNative.Checks.csproj -c Release
+
+      - name: Resolve and validate release version
         shell: pwsh
         run: |
-          Compress-Archive -Path windows/MISILNative/dist/MISIL.exe -DestinationPath MISIL-Windows-x64-0.2.0.zip
-          (Get-FileHash MISIL-Windows-x64-0.2.0.zip -Algorithm SHA256).Hash.ToLower() + "  MISIL-Windows-x64-0.2.0.zip" | Out-File MISIL-Windows-x64-0.2.0.sha256 -Encoding ascii
-      - uses: actions/upload-artifact@v4
+          [xml]$project = Get-Content windows/MISILNative/MISILNative.csproj
+          $version = [string]$project.Project.PropertyGroup.Version
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "La versión '$version' no es SemVer estable." }
+          $isPrerelease = $false
+          if ('${{ github.ref_type }}' -eq 'tag') {
+            $stableTag = "v$version"
+            $betaPattern = '^v' + [Regex]::Escape($version) + '-beta\.\d+$'
+            $isPrerelease = '${{ github.ref_name }}' -match $betaPattern
+            if ('${{ github.ref_name }}' -ne $stableTag -and -not $isPrerelease) {
+              throw "El tag ${{ github.ref_name }} no coincide con $stableTag ni con una beta de esa versión."
+            }
+          }
+          "MISIL_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "MISIL_PRERELEASE=$($isPrerelease.ToString().ToLowerInvariant())" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Ensure Inno Setup 6 is available
+        shell: pwsh
+        run: |
+          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $iscc)) { choco install innosetup --no-progress --yes }
+          if (-not (Test-Path $iscc)) { throw 'No se encontró ISCC.exe.' }
+
+      - name: Publish self-contained executables and build installer
+        shell: pwsh
+        run: ./windows/scripts/build-release.ps1 -Version $env:MISIL_VERSION
+
+      - name: Verify required release files
+        shell: pwsh
+        run: |
+          $release = 'windows/artifacts/release'
+          $required = @(
+            "MISIL-Setup-$env:MISIL_VERSION-x64.exe",
+            "MISIL-$env:MISIL_VERSION-win-x64.zip",
+            'misil-release.json',
+            'checksums-sha256.txt'
+          )
+          foreach ($file in $required) {
+            if (-not (Test-Path (Join-Path $release $file))) { throw "Falta el artefacto $file" }
+          }
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
         with:
-          name: MISIL-Windows-x64-0.2.0
-          path: |
-            MISIL-Windows-x64-0.2.0.zip
-            MISIL-Windows-x64-0.2.0.sha256
+          name: MISIL-${{ env.MISIL_VERSION }}-windows-x64
+          path: windows/artifacts/release/*
           if-no-files-found: error
-      - name: Publish tagged release
-        if: startsWith(github.ref, 'refs/tags/v')
+          retention-days: 14
+
+      - name: Publish tagged GitHub Release
+        if: github.ref_type == 'tag'
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-        run: >-
-          gh release create "${{ github.ref_name }}"
-          MISIL-Windows-x64-0.2.0.zip
-          MISIL-Windows-x64-0.2.0.sha256
-          --title "MISIL 0.2.0"
-          --notes "Red de almacenamiento en tiempo real para Windows y macOS. Incluye MISIL.exe autónomo para Windows 10/11 x64."
+        run: |
+          $assets = Get-ChildItem 'windows/artifacts/release' -File | ForEach-Object { $_.FullName }
+          if ($assets.Count -lt 4) { throw 'No están completos los artefactos de la release.' }
+          $releaseTitle = if ($env:MISIL_PRERELEASE -eq 'true') { "MISIL $env:MISIL_VERSION Beta" } else { "MISIL $env:MISIL_VERSION" }
+          $arguments = @(
+            'release'; 'create'; '${{ github.ref_name }}'
+            $assets
+            '--repo'; '${{ github.repository }}'
+            '--title'; $releaseTitle
+            '--generate-notes'
+            '--verify-tag'
+          )
+          if ($env:MISIL_PRERELEASE -eq 'true') { $arguments += '--prerelease' }
+          gh @arguments

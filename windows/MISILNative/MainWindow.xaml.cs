@@ -1,6 +1,7 @@
 using System.Windows;
 using System.ComponentModel;
 using MISILNative.ViewModels;
+using Microsoft.Win32;
 
 namespace MISILNative
 {
@@ -16,16 +17,32 @@ namespace MISILNative
             DataContext = _appState;
             Loaded += OnLoaded;
             Closing += OnClosing;
+            SystemEvents.PowerModeChanged += OnPowerModeChanged;
         }
 
         private async void OnClosing(object? sender, CancelEventArgs e)
         {
             if (_shutdownComplete) return;
             e.Cancel = true;
-            IsEnabled = false;
-            await _appState.ShutdownAsync();
-            _shutdownComplete = true;
-            Close();
+            try { await _appState.ShutdownAsync(); }
+            finally
+            {
+                SystemEvents.PowerModeChanged -= OnPowerModeChanged;
+                _shutdownComplete = true;
+                Close();
+            }
+        }
+
+        private async void OnPowerModeChanged(object sender, PowerModeChangedEventArgs e)
+        {
+            if (e.Mode == PowerModes.Suspend)
+            {
+                _appState.NotifySystemSuspending();
+            }
+            else if (e.Mode == PowerModes.Resume)
+            {
+                await Dispatcher.InvokeAsync(_appState.RecoverAfterSystemResumeAsync).Task.Unwrap();
+            }
         }
 
         private async void OnLoaded(object sender, RoutedEventArgs e)

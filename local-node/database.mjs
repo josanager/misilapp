@@ -117,40 +117,6 @@ db.exec(`
     UNIQUE(message_id, user_id)
   ) STRICT;
 
-  CREATE TABLE IF NOT EXISTS relay_rooms (
-    id TEXT PRIMARY KEY,
-    token_hash TEXT NOT NULL,
-    created_at INTEGER NOT NULL,
-    last_seen_at INTEGER NOT NULL,
-    expires_at INTEGER NOT NULL
-  ) STRICT;
-
-  CREATE TABLE IF NOT EXISTS relay_messages (
-    id TEXT PRIMARY KEY,
-    room_id TEXT NOT NULL REFERENCES relay_rooms(id) ON DELETE CASCADE,
-    ciphertext TEXT NOT NULL,
-    iv TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    expires_at INTEGER NOT NULL
-  ) STRICT;
-
-  CREATE INDEX IF NOT EXISTS relay_messages_room_created_idx ON relay_messages(room_id, created_at);
-  CREATE INDEX IF NOT EXISTS relay_messages_expiry_idx ON relay_messages(expires_at);
-
-  CREATE TABLE IF NOT EXISTS network_nodes (
-    id TEXT PRIMARY KEY,
-    token_hash TEXT NOT NULL,
-    platform TEXT NOT NULL CHECK(platform IN ('windows', 'macos')),
-    app_version TEXT NOT NULL,
-    quota_bytes INTEGER NOT NULL DEFAULT 0 CHECK(quota_bytes >= 0),
-    used_bytes INTEGER NOT NULL DEFAULT 0 CHECK(used_bytes >= 0),
-    storage_healthy INTEGER NOT NULL DEFAULT 0 CHECK(storage_healthy IN (0, 1)),
-    created_at INTEGER NOT NULL,
-    last_seen_at INTEGER NOT NULL DEFAULT 0
-  ) STRICT;
-
-  CREATE INDEX IF NOT EXISTS network_nodes_presence_idx ON network_nodes(last_seen_at, storage_healthy);
-  CREATE INDEX IF NOT EXISTS network_nodes_platform_idx ON network_nodes(platform, last_seen_at);
 `);
 
 export const LOCAL_USER_ID = '00000000-0000-4000-8000-000000000001';

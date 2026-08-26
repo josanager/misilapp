@@ -1,0 +1,4 @@
+{$MISIL_HUB_DOMAIN} {
+    encode zstd gzip
+    reverse_proxy hub:4320
+}

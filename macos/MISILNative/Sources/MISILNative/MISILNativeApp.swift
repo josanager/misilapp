@@ -33,6 +33,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         true
     }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        MainActor.assumeIsolated {
+            AgerbotProcessManager.shared.stopForApplicationTermination()
+        }
+    }
 }
 
 struct RootView: View {
@@ -56,8 +62,5 @@ struct RootView: View {
         }
         .frame(minWidth: 820, minHeight: 580)
         .foregroundStyle(MISILTheme.textPrimary)
-        .onDisappear {
-            Task { await appState.shutdown() }
-        }
     }
 }

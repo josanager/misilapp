@@ -41,24 +41,114 @@
                     </Grid>
                 </Border>
 
-                <!-- Section 2: Network -->
-                <TextBlock Text="Red" FontFamily="{StaticResource FontHeadline}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,0,10" />
+                <TextBlock Text="Agerbot local" FontFamily="{StaticResource FontHeadline}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,0,10" />
                 <Border Style="{StaticResource MISILCard}" Margin="0,0,0,24">
                     <StackPanel>
-                        <Grid Margin="0,4">
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel>
-                                <TextBlock Text="Presencia en Internet" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" />
-                                <TextBlock x:Name="TxtNetworkSettingStatus" Text="Comprobando conexión" FontSize="12" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Agerbot" FontFamily="{StaticResource FontHeadline}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" />
+                                    <Border Background="{StaticResource BrushAccentGlass}" BorderBrush="{StaticResource BrushAccentBorder}" BorderThickness="1" CornerRadius="8" Padding="6,2" Margin="7,0,0,0">
+                                        <TextBlock Text="LOCAL" FontFamily="{StaticResource FontLabel}" FontSize="8" FontWeight="Bold" Foreground="{StaticResource BrushAccent}" />
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock Text="La conversación permanece en este PC y no utiliza MISIL Hub." FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,0" />
                             </StackPanel>
-                            <Ellipse x:Name="NetworkSettingDot" Width="9" Height="9" Fill="{StaticResource BrushTextMuted}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                            <Border Grid.Column="1" Background="{StaticResource BrushGlass}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="10" Padding="10,6" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal">
+                                    <Ellipse x:Name="AgerbotSettingsStatusDot" Width="7" Height="7" Fill="{StaticResource BrushTextMuted}" Margin="0,0,7,0" VerticalAlignment="Center" />
+                                    <TextBlock x:Name="TxtAgerbotStatus" Text="NO INSTALADO" FontFamily="{StaticResource FontLabel}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource BrushTextSecondary}" />
+                                </StackPanel>
+                            </Border>
                         </Grid>
-                        <Rectangle Height="1" Fill="{StaticResource BrushBorder}" Margin="0,8" />
-                        <Grid Margin="0,4">
+
+                        <Rectangle Height="1" Fill="{StaticResource BrushBorder}" Margin="0,0,0,12" />
+                        <Grid Margin="0,3"><TextBlock Text="Runtime" FontSize="11" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtAgerbotRuntimeVersion" Text="No disponible" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" /></Grid>
+                        <Grid Margin="0,3"><TextBlock Text="Modelo activo" FontSize="11" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtAgerbotModelVersion" Text="Ninguno" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" /></Grid>
+                        <Grid Margin="0,3"><TextBlock Text="Versión anterior" FontSize="11" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtAgerbotPreviousVersion" Text="Ninguna" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" /></Grid>
+                        <Grid Margin="0,3"><TextBlock Text="Tokenizador" FontSize="11" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtAgerbotTokenizer" Text="—" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" /></Grid>
+                        <Grid Margin="0,3"><TextBlock Text="Parámetros" FontSize="11" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtAgerbotParameters" Text="—" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" /></Grid>
+                        <Grid Margin="0,3"><TextBlock Text="Contexto" FontSize="11" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtAgerbotContext" Text="—" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" /></Grid>
+                        <Grid Margin="0,3"><TextBlock Text="Acelerador activo" FontSize="11" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtAgerbotDevice" Text="—" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" /></Grid>
+
+                        <Rectangle Height="1" Fill="{StaticResource BrushBorder}" Margin="0,12" />
+                        <TextBlock Text="Capacidades de este PC" FontFamily="{StaticResource FontLabel}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,0,6" />
+                        <Grid Margin="0,3"><TextBlock Text="Windows" FontSize="11" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtAgerbotWindows" Text="Detectando…" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" /></Grid>
+                        <Grid Margin="0,3"><TextBlock Text="Arquitectura" FontSize="11" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtAgerbotArchitecture" Text="—" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" /></Grid>
+                        <Grid Margin="0,3"><TextBlock Text="CPU" FontSize="11" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtAgerbotCpu" Text="Detectando…" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" MaxWidth="430" TextTrimming="CharacterEllipsis" /></Grid>
+                        <Grid Margin="0,3"><TextBlock Text="RAM" FontSize="11" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtAgerbotRam" Text="—" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" /></Grid>
+                        <Grid Margin="0,3"><TextBlock Text="GPU" FontSize="11" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtAgerbotGpu" Text="No detectada" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" MaxWidth="430" TextTrimming="CharacterEllipsis" /></Grid>
+                        <Grid Margin="0,3"><TextBlock Text="VRAM" FontSize="11" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtAgerbotVram" Text="—" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" /></Grid>
+                        <Grid Margin="0,3"><TextBlock Text="DirectML" FontSize="11" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtAgerbotDirectMl" Text="—" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" /></Grid>
+                        <Grid Margin="0,3"><TextBlock Text="Disco disponible" FontSize="11" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtAgerbotDisk" Text="—" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" /></Grid>
+                        <Grid Margin="0,3"><TextBlock Text="Espacio usado por Agerbot" FontSize="11" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtAgerbotUsed" Text="—" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" /></Grid>
+                        <Grid Margin="0,3"><TextBlock Text="Disponible en la cuota" FontSize="11" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtAgerbotQuotaAvailable" Text="—" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" /></Grid>
+                        <Grid Margin="0,3"><TextBlock Text="Carpeta administrada" FontSize="11" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtAgerbotFolder" Text="—" FontSize="10" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" MaxWidth="430" TextTrimming="CharacterEllipsis" /></Grid>
+                        <TextBlock x:Name="TxtAgerbotRecommendation" Text="Calculando recomendación…" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" TextWrapping="Wrap" Margin="0,8,0,0" />
+
+                        <Grid Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="130" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel>
-                                <TextBlock Text="Relay de capacidad" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" />
-                                <TextBlock Text="https://misil-web.pages.dev" FontFamily="Consolas" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
+                                <TextBlock Text="Cuota de Agerbot" FontFamily="{StaticResource FontLabel}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" />
+                                <TextBlock Text="Incluye runtime, modelos, temporales y una versión para rollback." FontSize="10" Foreground="{StaticResource BrushTextMuted}" Margin="0,3,12,0" />
                             </StackPanel>
-                            <TextBlock Text="10 s" FontFamily="{StaticResource FontLabel}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                            <ComboBox x:Name="AgerbotQuotaPicker" Grid.Column="1" IsEditable="True" Height="34" VerticalContentAlignment="Center" Foreground="{StaticResource BrushTextPrimary}" Background="{StaticResource BrushBgSurface}">
+                                <ComboBoxItem Content="1" /><ComboBoxItem Content="2" /><ComboBoxItem Content="5" /><ComboBoxItem Content="10" />
+                            </ComboBox>
+                            <Button Grid.Column="2" Content="Aplicar GB" Style="{StaticResource MISILSecondaryButton}" Height="34" Padding="12,0" FontSize="11" Margin="8,0,0,0" Click="OnApplyAgerbotQuotaClick" />
+                        </Grid>
+
+                        <CheckBox x:Name="ChkStartAgerbot" Content="Iniciar Agerbot al abrir MISIL" Foreground="{StaticResource BrushTextPrimary}" FontFamily="{StaticResource FontLabel}" FontSize="12" Margin="0,14,0,0" Checked="OnStartAgerbotSettingChanged" Unchecked="OnStartAgerbotSettingChanged" />
+                        <CheckBox x:Name="ChkAutomaticModelUpdates" Content="Descargar y activar automáticamente modelos estables compatibles" Foreground="{StaticResource BrushTextPrimary}" FontFamily="{StaticResource FontLabel}" FontSize="12" Margin="0,8,0,0" Checked="OnAutomaticModelUpdatesChanged" Unchecked="OnAutomaticModelUpdatesChanged" />
+                        <TextBlock x:Name="TxtAgerbotInstallStatus" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" TextWrapping="Wrap" Margin="0,10,0,0" Visibility="Collapsed" />
+                        <ProgressBar x:Name="AgerbotInstallProgress" Height="4" Minimum="0" Maximum="1" Margin="0,8,0,0" Visibility="Collapsed" />
+                        <TextBlock x:Name="TxtAgerbotModelUpdateStatus" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" TextWrapping="Wrap" Margin="0,8,0,0" />
+                        <ProgressBar x:Name="AgerbotModelUpdateProgress" Height="4" Minimum="0" Maximum="1" Margin="0,8,0,0" Visibility="Collapsed" />
+                        <TextBlock x:Name="TxtAgerbotError" FontSize="11" Foreground="{StaticResource BrushDanger}" TextWrapping="Wrap" Margin="0,8,0,0" Visibility="Collapsed" />
+                        <WrapPanel Margin="0,14,0,0">
+                            <Button x:Name="BtnInstallAgerbot" Content="Instalar Agerbot" Style="{StaticResource MISILPrimaryButton}" Height="34" Padding="14,0" FontSize="11" Click="OnInstallAgerbotClick" />
+                            <Button x:Name="BtnCancelAgerbotInstall" Content="Cancelar" Style="{StaticResource MISILSecondaryButton}" Height="34" Padding="14,0" FontSize="11" Margin="8,0,0,0" Click="OnCancelAgerbotInstallClick" Visibility="Collapsed" />
+                            <Button x:Name="BtnStartAgerbot" Content="Iniciar" Style="{StaticResource MISILSecondaryButton}" Height="34" Padding="14,0" FontSize="11" Margin="8,0,0,0" Click="OnStartAgerbotClick" />
+                            <Button x:Name="BtnStopAgerbot" Content="Detener" Style="{StaticResource MISILSecondaryButton}" Height="34" Padding="14,0" FontSize="11" Margin="8,0,0,0" Click="OnStopAgerbotClick" />
+                            <Button x:Name="BtnCheckAgerbotUpdates" Content="Buscar actualizaciones" Style="{StaticResource MISILSecondaryButton}" Height="34" Padding="14,0" FontSize="11" Margin="8,8,0,0" Click="OnCheckAgerbotUpdatesClick" />
+                            <Button x:Name="BtnUpdateAgerbotModel" Content="Actualizar modelo" Style="{StaticResource MISILPrimaryButton}" Height="34" Padding="14,0" FontSize="11" Margin="8,8,0,0" Click="OnUpdateAgerbotModelClick" />
+                            <Button x:Name="BtnCancelModelUpdate" Content="Cancelar descarga" Style="{StaticResource MISILSecondaryButton}" Height="34" Padding="14,0" FontSize="11" Margin="8,8,0,0" Click="OnCancelModelUpdateClick" />
+                            <Button x:Name="BtnRollbackAgerbot" Content="Volver a versión anterior" Style="{StaticResource MISILSecondaryButton}" Height="34" Padding="14,0" FontSize="11" Margin="8,8,0,0" Click="OnRollbackAgerbotClick" />
+                            <Button x:Name="BtnRepairAgerbot" Content="Reparar instalación" Style="{StaticResource MISILSecondaryButton}" Height="34" Padding="14,0" FontSize="11" Margin="8,8,0,0" Click="OnRepairAgerbotClick" />
+                            <Button x:Name="BtnUninstallAgerbot" Content="Desinstalar Agerbot" Style="{StaticResource MISILSecondaryButton}" Height="34" Padding="14,0" FontSize="11" Margin="8,8,0,0" Click="OnUninstallAgerbotClick" />
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Text="Actualizaciones de MISIL" FontFamily="{StaticResource FontHeadline}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,0,10" />
+                <Border Style="{StaticResource MISILCard}" Margin="0,0,0,24">
+                    <StackPanel>
+                        <Grid Margin="0,3"><TextBlock Text="Versión instalada" FontSize="11" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtMisilInstalledVersion" Text="0.3.0" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" /></Grid>
+                        <Grid Margin="0,3"><TextBlock Text="Versión disponible" FontSize="11" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtMisilAvailableVersion" Text="Ninguna" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" /></Grid>
+                        <Grid Margin="0,3"><TextBlock Text="Tamaño" FontSize="11" Foreground="{StaticResource BrushTextMuted}" /><TextBlock x:Name="TxtMisilUpdateSize" Text="—" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" /></Grid>
+                        <TextBlock x:Name="TxtMisilUpdateStatus" Text="Sin comprobar" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" TextWrapping="Wrap" Margin="0,9,0,0" />
+                        <TextBlock x:Name="TxtMisilReleaseNotes" FontSize="10" Foreground="{StaticResource BrushTextMuted}" TextWrapping="Wrap" MaxHeight="72" Margin="0,6,0,0" />
+                        <ProgressBar x:Name="MisilUpdateProgress" Height="4" Minimum="0" Maximum="1" Margin="0,8,0,0" Visibility="Collapsed" />
+                        <WrapPanel Margin="0,12,0,0">
+                            <Button x:Name="BtnCheckMisilUpdate" Content="Buscar actualización" Style="{StaticResource MISILSecondaryButton}" Height="34" Padding="14,0" FontSize="11" Click="OnCheckMisilUpdateClick" />
+                            <Button x:Name="BtnDownloadMisilUpdate" Content="Descargar" Style="{StaticResource MISILPrimaryButton}" Height="34" Padding="14,0" FontSize="11" Margin="8,0,0,0" Click="OnDownloadMisilUpdateClick" />
+                            <Button x:Name="BtnCancelMisilUpdate" Content="Cancelar" Style="{StaticResource MISILSecondaryButton}" Height="34" Padding="14,0" FontSize="11" Margin="8,0,0,0" Click="OnCancelMisilUpdateClick" />
+                            <Button x:Name="BtnInstallMisilUpdate" Content="Actualizar y reiniciar" Style="{StaticResource MISILPrimaryButton}" Height="34" Padding="14,0" FontSize="11" Margin="8,0,0,0" Click="OnInstallMisilUpdateClick" />
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Text="Conexión por Internet" FontFamily="{StaticResource FontHeadline}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,0,10" />
+                <Border Style="{StaticResource MISILCard}" Margin="0,0,0,24">
+                    <StackPanel>
+                        <TextBlock Text="Nombre único de este equipo" FontFamily="{StaticResource FontLabel}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" />
+                        <TextBox x:Name="TxtMessagingUsername" Style="{StaticResource MISILTextBox}" Margin="0,6,0,12" />
+                        <TextBlock Text="Dirección del MISIL Hub" FontFamily="{StaticResource FontLabel}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" />
+                        <TextBox x:Name="TxtHubUrl" Style="{StaticResource MISILTextBox}" Margin="0,6,0,8" />
+                        <Grid>
+                            <TextBlock x:Name="TxtHubSaveStatus" Text="Usa wss:// cuando el Hub esté publicado en Internet." FontSize="11" Foreground="{StaticResource BrushTextMuted}" VerticalAlignment="Center" />
+                            <Button Content="Guardar y reiniciar" Style="{StaticResource MISILPrimaryButton}" Height="34" Padding="14,0" HorizontalAlignment="Right" Click="OnSaveHubClick" />
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -70,7 +160,7 @@
                         <Grid Margin="0,4">
                             <StackPanel>
                                 <TextBlock Text="Perfil local" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" />
-                                <TextBlock Text="No existe una cuenta ni una sesión en servidores remotos." FontSize="12" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
+                                <TextBlock Text="La identidad pertenece a este equipo y se registra únicamente en tu MISIL Hub." FontSize="12" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" />
                             </StackPanel>
                             <TextBlock Text="✓" FontSize="14" FontWeight="Bold" Foreground="{StaticResource BrushAccent}" HorizontalAlignment="Right" VerticalAlignment="Center" />
                         </Grid>
@@ -102,7 +192,7 @@
                 </Border>
 
                 <!-- Version Info -->
-                <TextBlock Text="MISIL Local Alpha 0.2.0 · Windows (x64)" FontSize="12" Foreground="{StaticResource BrushTextMuted}" Margin="0,10,0,0" />
+                <TextBlock Text="MISIL Desktop Alpha 0.3.0 · Windows (x64)" FontSize="12" Foreground="{StaticResource BrushTextMuted}" Margin="0,10,0,0" />
 
             </StackPanel>
         </ScrollViewer>

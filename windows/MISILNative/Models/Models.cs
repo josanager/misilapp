@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace MISILNative.Models
@@ -12,11 +10,32 @@ namespace MISILNative.Models
         Settings
     }
 
-    public enum NetworkConnectionStatus
+    public enum MessagingConnectionStatus
     {
         Connecting,
         Online,
         Offline
+    }
+
+    public class MessagingIdentity
+    {
+        [JsonPropertyName("deviceId")]
+        public string DeviceId { get; set; } = string.Empty;
+
+        [JsonPropertyName("deviceKey")]
+        public string DeviceKey { get; set; } = string.Empty;
+
+        [JsonPropertyName("username")]
+        public string Username { get; set; } = string.Empty;
+
+        [JsonPropertyName("displayName")]
+        public string DisplayName { get; set; } = string.Empty;
+
+        [JsonPropertyName("hubUrl")]
+        public string HubUrl { get; set; } = "ws://127.0.0.1:4320/v1/connect";
+
+        [JsonIgnore]
+        public string PersonalLink => $"misil://contacto/{Username}/{DeviceId}";
     }
 
     public class AppConfiguration
@@ -41,8 +60,6 @@ namespace MISILNative.Models
         [JsonPropertyName("configuredAt")]
         public DateTime ConfiguredAt { get; set; } = DateTime.UtcNow;
 
-        [JsonPropertyName("networkBaseUrl")]
-        public string NetworkBaseUrl { get; set; } = "https://misil-web.pages.dev";
     }
 
     public class StorageSnapshot
@@ -60,71 +77,6 @@ namespace MISILNative.Models
             UsedBytes = usedBytes;
             DiskAvailableBytes = diskAvailableBytes;
         }
-    }
-
-    public class NetworkNodeIdentity
-    {
-        [JsonPropertyName("version")]
-        public int Version { get; set; } = 1;
-
-        [JsonPropertyName("nodeId")]
-        public string NodeId { get; set; } = string.Empty;
-
-        [JsonPropertyName("accessToken")]
-        public string AccessToken { get; set; } = string.Empty;
-
-        [JsonPropertyName("createdAt")]
-        public string CreatedAt { get; set; } = string.Empty;
-    }
-
-    public class PlatformCapacity
-    {
-        [JsonPropertyName("platform")]
-        public string Platform { get; set; } = string.Empty;
-
-        [JsonPropertyName("onlineNodes")]
-        public int OnlineNodes { get; set; }
-
-        [JsonPropertyName("quotaBytes")]
-        public ulong QuotaBytes { get; set; }
-    }
-
-    public class NetworkCapacitySnapshot
-    {
-        [JsonPropertyName("protocolVersion")]
-        public int ProtocolVersion { get; set; } = 1;
-
-        [JsonPropertyName("generatedAt")]
-        public string GeneratedAt { get; set; } = string.Empty;
-
-        [JsonPropertyName("heartbeatIntervalSeconds")]
-        public int HeartbeatIntervalSeconds { get; set; } = 10;
-
-        [JsonPropertyName("offlineAfterSeconds")]
-        public int OfflineAfterSeconds { get; set; } = 35;
-
-        [JsonPropertyName("onlineNodes")]
-        public int OnlineNodes { get; set; }
-
-        [JsonPropertyName("totalQuotaBytes")]
-        public ulong TotalQuotaBytes { get; set; }
-
-        [JsonPropertyName("totalUsedBytes")]
-        public ulong TotalUsedBytes { get; set; }
-
-        [JsonPropertyName("availableBytes")]
-        public ulong AvailableBytes { get; set; }
-
-        [JsonPropertyName("platforms")]
-        public List<PlatformCapacity> Platforms { get; set; } = new();
-
-        [JsonIgnore]
-        public int WindowsNodes => Platforms.Find(item => item.Platform == "windows")?.OnlineNodes ?? 0;
-
-        [JsonIgnore]
-        public int MacNodes => Platforms.Find(item => item.Platform == "macos")?.OnlineNodes ?? 0;
-
-        public static NetworkCapacitySnapshot Empty => new();
     }
 
     public class SetupProgress
@@ -160,148 +112,34 @@ namespace MISILNative.Models
         [JsonPropertyName("senderName")]
         public string? SenderName { get; set; }
 
+        [JsonPropertyName("peerUsername")]
+        public string? PeerUsername { get; set; }
+
+        [JsonPropertyName("isOutgoing")]
+        public bool IsOutgoing { get; set; } = true;
+
         public string FormattedTime => CreatedAt.ToLocalTime().ToString("HH:mm");
     }
 
-    public class NativeRelayIdentity
-    {
-        [JsonPropertyName("version")]
-        public int Version { get; set; } = 1;
-
-        [JsonPropertyName("baseURL")]
-        public string BaseUrl { get; set; } = string.Empty;
-
-        [JsonPropertyName("roomID")]
-        public string RoomId { get; set; } = string.Empty;
-
-        [JsonPropertyName("accessToken")]
-        public string AccessToken { get; set; } = string.Empty;
-
-        [JsonPropertyName("encryptionKey")]
-        public string EncryptionKey { get; set; } = string.Empty;
-
-        [JsonPropertyName("deviceID")]
-        public string DeviceId { get; set; } = string.Empty;
-
-        [JsonPropertyName("displayName")]
-        public string DisplayName { get; set; } = string.Empty;
-
-        [JsonPropertyName("createdAt")]
-        public string CreatedAt { get; set; } = string.Empty;
-
-        [JsonIgnore]
-        public string AccessCode
-        {
-            get
-            {
-                var secret = new SharedRoomSecret
-                {
-                    V = 1,
-                    R = RoomId,
-                    T = AccessToken,
-                    K = EncryptionKey
-                };
-                var json = JsonSerializer.Serialize(secret);
-                var bytes = System.Text.Encoding.UTF8.GetBytes(json);
-                return Convert.ToBase64String(bytes)
-                    .Replace("+", "-")
-                    .Replace("/", "_")
-                    .TrimEnd('=');
-            }
-        }
-    }
-
-    public class SharedRoomSecret
-    {
-        [JsonPropertyName("v")]
-        public int V { get; set; } = 1;
-
-        [JsonPropertyName("r")]
-        public string R { get; set; } = string.Empty;
-
-        [JsonPropertyName("t")]
-        public string T { get; set; } = string.Empty;
-
-        [JsonPropertyName("k")]
-        public string K { get; set; } = string.Empty;
-    }
-
-    public class RoomRegistration
-    {
-        [JsonPropertyName("roomId")]
-        public string RoomId { get; set; } = string.Empty;
-
-        [JsonPropertyName("tokenHash")]
-        public string TokenHash { get; set; } = string.Empty;
-    }
-
-    public class OutgoingEnvelope
-    {
-        [JsonPropertyName("roomId")]
-        public string RoomId { get; set; } = string.Empty;
-
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = string.Empty;
-
-        [JsonPropertyName("ciphertext")]
-        public string Ciphertext { get; set; } = string.Empty;
-
-        [JsonPropertyName("iv")]
-        public string Iv { get; set; } = string.Empty;
-
-        [JsonPropertyName("createdAt")]
-        public string CreatedAt { get; set; } = string.Empty;
-    }
-
-    public class EnvelopeList
-    {
-        [JsonPropertyName("messages")]
-        public List<IncomingEnvelope> Messages { get; set; } = new();
-    }
-
-    public class IncomingEnvelope
+    public class HubMessage
     {
         [JsonPropertyName("id")]
         public string Id { get; set; } = string.Empty;
 
-        [JsonPropertyName("ciphertext")]
-        public string Ciphertext { get; set; } = string.Empty;
+        [JsonPropertyName("senderUsername")]
+        public string SenderUsername { get; set; } = string.Empty;
 
-        [JsonPropertyName("iv")]
-        public string Iv { get; set; } = string.Empty;
+        [JsonPropertyName("senderDisplayName")]
+        public string SenderDisplayName { get; set; } = string.Empty;
 
-        [JsonPropertyName("createdAt")]
-        public string CreatedAt { get; set; } = string.Empty;
-    }
-
-    public class RelayPayload
-    {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = string.Empty;
+        [JsonPropertyName("recipientUsername")]
+        public string RecipientUsername { get; set; } = string.Empty;
 
         [JsonPropertyName("content")]
         public string Content { get; set; } = string.Empty;
 
         [JsonPropertyName("createdAt")]
         public string CreatedAt { get; set; } = string.Empty;
-
-        [JsonPropertyName("sender")]
-        public RelaySender Sender { get; set; } = new();
-    }
-
-    public class RelaySender
-    {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = string.Empty;
-
-        [JsonPropertyName("displayName")]
-        public string DisplayName { get; set; } = string.Empty;
-    }
-
-    public class RelayFailure
-    {
-        [JsonPropertyName("error")]
-        public string? Error { get; set; }
     }
 
     public static class FormatUtils

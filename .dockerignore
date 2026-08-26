@@ -1,0 +1,9 @@
+.git
+.misil-data
+.misil-hub
+node_modules
+macos/MISILNative/.build
+macos/MISILNative/dist
+windows/MISILNative/bin
+windows/MISILNative/obj
+windows/MISILNative/dist

@@ -8,18 +8,24 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>MISIL</AssemblyName>
     <RootNamespace>MISILNative</RootNamespace>
-    <Version>0.2.0</Version>
-    <AssemblyVersion>0.2.0.0</AssemblyVersion>
-    <FileVersion>0.2.0.0</FileVersion>
+    <Version>0.3.0</Version>
+    <AssemblyVersion>0.3.0.0</AssemblyVersion>
+    <FileVersion>0.3.0.0</FileVersion>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <Authors>MISIL Team</Authors>
     <Company>MISIL</Company>
     <Product>MISIL</Product>
     <Description>Cliente y nodo local nativo de MISIL para Windows</Description>
+    <ApplicationManifest>Resources\app.manifest</ApplicationManifest>
+    <ApplicationIcon>Resources\MISIL.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MISILNative.Core\MISILNative.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

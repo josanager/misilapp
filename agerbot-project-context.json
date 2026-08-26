@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 2,
+  "updatedAt": "2026-08-25",
+  "product": {
+    "host": "MISIL",
+    "localModel": "Agerbot",
+    "betaAudience": "Aproximadamente 20 familiares y amigos",
+    "vision": "MISIL integra Agerbot como contacto local y administra modelos estables verificables sin enviar esa conversación a MISIL Hub."
+  },
+  "repositories": {
+    "misil": ".",
+    "agerbot": "../Agerbot",
+    "agerbotPublic": "https://github.com/josanager/Agerbot.git",
+    "mustRemainSeparate": true
+  },
+  "checkpoint": {
+    "path": "../Agerbot/checkpoints/gastronomia-peruana-v2/best.pt",
+    "modelVersion": "0.2.0",
+    "trainingName": "gastronomia-peruana-v2",
+    "tokenizer": "char-v1",
+    "contextLength": 256,
+    "parameters": 10773504,
+    "sha256": "686857e611edabafcfec814fff5501993feaac5cce9d5f5bdcc995fe1c5aa10a",
+    "sizeBytes": 129373343
+  },
+  "phase": {
+    "current": 2,
+    "name": "Modelos versionados y distribución verificable",
+    "completed": [
+      "Runtime compatible con byte-v1 y char-v1",
+      "Descubrimiento local por manifiestos y Semantic Versioning",
+      "Migración automática de Agerbot 0.1.0 a 0.2.0",
+      "Consulta y simulación completa de GitHub Releases",
+      "Descarga reanudable, validación aislada, activación atómica y rollback",
+      "Interfaz de actualizaciones en Ajustes"
+    ],
+    "pendingExternal": [
+      "Publicar el repositorio público de Agerbot",
+      "Crear la primera GitHub Release model-v0.2.0 con sus cuatro assets",
+      "Empaquetar Python y PyTorch para usuarios sin proyecto de desarrollo"
+    ]
+  },
+  "architecture": {
+    "runtimeBaseURL": "http://127.0.0.1:4318",
+    "runtimeVersion": "0.2.0",
+    "reservedConversationId": "agerbot-local",
+    "transport": "HTTP JSON local",
+    "chatResponseMode": "complete",
+    "humanChatsUseMisilHub": true,
+    "agerbotChatsUseMisilHub": false,
+    "agerbotHistoryIsLocalOnly": true,
+    "automaticModelUpdates": true,
+    "modelReleaseSource": "GitHub Releases de josanager/Agerbot",
+    "releaseEndpoint": "https://api.github.com/repos/josanager/Agerbot/releases/latest",
+    "releaseStatus": "No existe una release pública al 2026-08-25; endpoint 404. Flujo validado con HTTP simulado.",
+    "checkpointRequiresManifestHash": true,
+    "activationIsAtomic": true,
+    "automaticRollback": true,
+    "managedModelRoot": "~/Library/Application Support/MISIL/Agerbot/"
+  },
+  "requiredMacComponents": [
+    "AgerbotRuntimeClient",
+    "AgerbotProcessManager",
+    "AgerbotInstallationManager",
+    "AgerbotConversationStore",
+    "AgerbotSettingsStore",
+    "AgerbotModelDiscoveryService",
+    "AgerbotReleaseService",
+    "AgerbotModelDownloadService",
+    "AgerbotCandidateValidator",
+    "AgerbotAtomicActivationEngine",
+    "AgerbotModelUpdateController"
+  ],
+  "modelLifecycle": [
+    "training",
+    "candidate",
+    "evaluated",
+    "stable",
+    "rejected",
+    "superseded"
+  ],
+  "securityPosition": {
+    "claimsEndToEndEncryption": false,
+    "claimsPrivacy": false,
+    "claimsAnonymity": false,
+    "runtimeLoopbackOnly": true,
+    "loadsCheckpointsWithWeightsOnly": true,
+    "logsConversationContent": false,
+    "notes": "La beta verifica manifiesto, tamaño, SHA-256, compatibilidad y parámetros finitos antes de activar un modelo."
+  },
+  "knownRisks": [
+    "La evaluación v2 obtuvo 4 respuestas correctas de 20; el conocimiento todavía no es fiable.",
+    "PyTorch y el runtime de Python todavía no están empaquetados para usuarios finales.",
+    "La carga inicial y la inferencia pueden ser lentas en CPU.",
+    "GitHub Releases no puede validarse de extremo a extremo hasta publicar model-v0.2.0.",
+    "La respuesta de chat todavía no usa streaming."
+  ],
+  "testCommands": {
+    "misil": "npm test",
+    "misilMacUnit": "npm run mac:test",
+    "misilMacBuild": "npm run mac:build",
+    "agerbot": "cd ../Agerbot && uv run python -m unittest discover -s tests -v",
+    "agerbotServer": "cd ../Agerbot && uv run agerbot-serve --checkpoint checkpoints/gastronomia-peruana-v2/best.pt",
+    "prepareRelease": "cd ../Agerbot && uv run python scripts/prepare_release.py --checkpoint checkpoints/gastronomia-peruana-v2/best.pt --evaluation reports/gastronomia-peruana-v2-evaluation.json --version 0.2.0 --published-at 2026-08-25T19:24:51Z"
+  },
+  "nextSteps": [
+    "Revisar los archivos de Agerbot que se incluirán en el primer commit.",
+    "Publicar el código sin checkpoints .pt.",
+    "Crear model-v0.2.0 y adjuntar los cuatro archivos de dist/releases/0.2.0/.",
+    "Probar una descarga real desde una segunda instalación limpia de MISIL."
+  ]
+}
