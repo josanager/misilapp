@@ -1,64 +1,79 @@
 # MISIL Desktop
 
-MISIL es una aplicación nativa de escritorio para Windows y macOS con almacenamiento local cifrado y mensajería por Internet mediante infraestructura autoalojada.
+**App nativa de escritorio (Windows / macOS) con almacenamiento local cifrado y mensajería opcional autoalojada.**  
+Pensada para quien quiere datos en el propio equipo (local-first), cifrado en disco y, si lo necesita, chat por Internet sin depender de un SaaS de terceros.
 
-## Descargar MISIL
+> **Beta · v0.2.0** — úsala con datos de prueba y conserva copias de lo importante. Release estable actual: [v0.2.0](https://github.com/josanager/misilapp/releases/tag/v0.2.0) (Windows).
 
-> **Beta:** usa MISIL con datos de prueba y conserva copias de los archivos importantes.
+## Descargar
 
-[**Descargar MISIL para Windows**](https://github.com/josanager/misilapp/releases/latest) · [Ver todas las versiones](https://github.com/josanager/misilapp/releases)
+### [Descargas / Releases](https://github.com/josanager/misilapp/releases/latest)
 
-El usuario normal descarga `MISIL-Setup-VERSION-x64.exe` desde una GitHub Release estable; no necesita descargar el código fuente ni instalar Git, Python, PyTorch, Visual Studio o el SDK de .NET.
+- **Windows (x64):** descarga el artefacto de la última release (`MISIL-Windows-x64-…`). No hace falta clonar el repo ni instalar el SDK de .NET para usarla.
+- **macOS:** la build nativa existe en el código; el DMG/distribución pública llegará cuando haya un paquete firmado o claramente marcado como beta.
 
-Requisitos mínimos para Windows: Windows 10 versión 2004 (build 19041) o Windows 11, procesador x64 y conexión a Internet. El instalador es por usuario, se guarda bajo `%LOCALAPPDATA%\Programs\MISIL` y no requiere permisos de administrador. La versión macOS distribuible aparecerá en la misma página cuando exista un DMG firmado o claramente identificado como beta.
+Requisitos orientativos (Windows): Windows 10 (2004+) o Windows 11, procesador x64.
 
-### Instalar, actualizar y desinstalar
+---
 
-1. Abre la release estable más reciente y descarga únicamente `MISIL-Setup-VERSION-x64.exe`.
-2. Ejecuta el instalador y abre MISIL desde el menú Inicio.
-3. Para Agerbot, entra en **Ajustes → Agerbot local**, elige una cuota y pulsa **Instalar Agerbot**. MISIL descargará runtime y modelo compatibles cuando sus releases oficiales estén disponibles.
-4. Las actualizaciones de MISIL aparecen por separado en **Actualizaciones de MISIL**. El botón **Actualizar y reiniciar** verifica SHA-256, cierra MISIL y Agerbot, instala mediante un proceso externo y vuelve a abrir la aplicación.
-5. **Desinstalar Agerbot** conserva el chat local. Para eliminar MISIL usa **Aplicaciones instaladas** de Windows; el desinstalador pregunta qué datos personales deseas conservar.
+## Capturas
 
-Consulta la [guía de release de Windows](docs/windows-release.md) y la [validación en una laptop Windows real](docs/windows-validation.md).
+Aún no hay capturas de la UI de escritorio actual. Se añadirán pronto (no se incluyen capturas de productos antiguos para no confundir).
 
-## Componentes
+---
 
-```text
-desktop-assets/          Recursos visuales compartidos por los instaladores
-local-node/              Motor local de almacenamiento cifrado y SQLite
-misil-hub/               Servidor WebSocket propio para identidad y mensajes
-macos/MISILNative/       Aplicación nativa SwiftUI
-windows/MISILNative/     Aplicación nativa WPF para .NET 8
-windows/MISILNative.Core/ Servicios comprobables de Agerbot y actualizaciones
-windows/installer/       Instalador per-user Inno Setup
-docs/local-node.md       Arquitectura y garantías del almacenamiento local
-docs/internet-messaging.md Despliegue del Hub y conexión entre equipos
-docs/agerbot-runtime.md  Contrato del modelo local opcional Agerbot
-```
+## Qué es / para qué sirve / objetivo
 
-El motor local escucha exclusivamente en `127.0.0.1`, cifra los archivos por bloques con AES-256-GCM y guarda los metadatos en SQLite. No publica datos en Internet.
+- **Qué es:** MISIL Desktop — cliente nativo de escritorio con motor local de almacenamiento cifrado (AES-256-GCM + SQLite) y un nodo local solo en `127.0.0.1`.
+- **Para qué sirve:** guardar y organizar datos en el propio equipo con cifrado en reposo; mensajería opcional entre equipos vía un hub WebSocket autoalojado (`misil-hub`); Agerbot opcional (asistente/modelo local) sin pasar el chat por el hub.
+- **Objetivo:** demostrar un producto **local-first** real (nativo + cifrado + red opcional autoalojada), útil como pieza de portfolio técnico y como base de un cliente de escritorio honesto sobre privacidad y control de datos.
 
-## Desarrollo
+---
+
+## Stack / componentes (alto nivel)
+
+| Pieza | Tecnología |
+|:---|:---|
+| Cliente macOS | **SwiftUI** (`macos/MISILNative`) |
+| Cliente Windows | **WPF / .NET 8** (`windows/MISILNative` + Core) |
+| Motor local | **Node.js** en `127.0.0.1` — cifrado AES-256-GCM, metadatos en **SQLite** (`local-node/`) |
+| Hub (opcional) | **misil-hub** — servidor WebSocket autoalojado para identidad y mensajes |
+| Agerbot (opcional) | Runtime/modelo local; chat guardado en el equipo, no en el hub |
+| Empaquetado Windows | Publicación self-contained + artefactos en GitHub Releases |
+
+El motor local **no** publica datos en Internet por defecto. Las claves se protegen con el Llavero de macOS o DPAPI en Windows según la plataforma.
+
+---
+
+## Características (resumen)
+
+- Almacenamiento local cifrado (AES-256-GCM + SQLite)
+- Nodo local acotado a `127.0.0.1`
+- Mensajería por Internet **opcional** con hub autoalojado
+- Integración opcional con Agerbot (modelo local)
+- Clientes nativos: SwiftUI (macOS) y WPF/.NET (Windows)
+- Release Windows publicada en GitHub Releases (v0.2.0)
+
+---
+
+## Desarrollo (resumen)
+
+Necesitas Node.js para el motor local y el hub. Para el cliente Windows, .NET 8; para macOS, el toolchain de Xcode/Swift.
 
 ```bash
 npm install
 npm run test:local
-npm run dev
+npm run dev          # motor local en http://127.0.0.1:4317
 ```
 
-`npm run dev` inicia únicamente el motor local en `http://127.0.0.1:4317`.
-
-Para probar la comunicación entre dos equipos simulados:
+Hub (dos equipos simulados):
 
 ```bash
 npm run test:hub
 npm run hub:start
 ```
 
-El despliegue público autoalojado está documentado en [`docs/internet-messaging.md`](docs/internet-messaging.md).
-
-## macOS
+macOS:
 
 ```bash
 npm run mac:test
@@ -66,31 +81,7 @@ npm run mac:build
 npm run mac:dmg
 ```
 
-Los artefactos se escriben en `macos/MISILNative/dist/`.
-
-### Agerbot en macOS
-
-MISIL descubre automáticamente modelos estables de Agerbot, inicia su
-runtime en `http://127.0.0.1:4318` y muestra el modelo como un contacto especial.
-Ese chat se guarda en `agerbot-conversation.json` y nunca pasa por MISIL Hub.
-
-Para el entorno de desarrollo actual:
-
-```bash
-cd ../Agerbot
-uv sync
-cd ../MISIL
-npm run mac:build
-open macos/MISILNative/dist/MISIL.app
-```
-
-MISIL puede comprobar GitHub Releases cada seis horas, descargar un modelo más
-nuevo en segundo plano, verificarlo y activarlo con rollback. No descarga ni
-actualiza automáticamente el runtime Python/PyTorch. Consulta
-[`docs/agerbot-vision.md`](docs/agerbot-vision.md) y
-[`docs/agerbot-runtime.md`](docs/agerbot-runtime.md).
-
-## Windows
+Windows (publicación self-contained):
 
 ```powershell
 dotnet publish windows/MISILNative/MISILNative.csproj `
@@ -99,14 +90,26 @@ dotnet publish windows/MISILNative/MISILNative.csproj `
   -o windows/MISILNative/dist
 ```
 
-El publish autónomo se empaqueta como instalador mediante el workflow
-`Build and package MISIL for Windows`. Los artefactos de una ejecución manual son
-temporales; los usuarios deben descargar siempre desde GitHub Releases.
-
-## Datos locales
+### Datos locales (desarrollo / runtime)
 
 - macOS: `~/Library/Application Support/MISIL/`
 - Windows: `%LOCALAPPDATA%\MISIL\`
 - Motor local de desarrollo: `.misil-data/`
 
-Las claves se protegen con el Llavero de macOS o Windows DPAPI según la plataforma.
+---
+
+## Documentación
+
+Detalle técnico en `docs/` (no duplicado aquí):
+
+- [`docs/local-node.md`](docs/local-node.md) — arquitectura y garantías del almacenamiento local
+- [`docs/internet-messaging.md`](docs/internet-messaging.md) — despliegue del hub y conexión entre equipos
+- [`docs/windows-release.md`](docs/windows-release.md) — guía de release Windows
+- [`docs/windows-validation.md`](docs/windows-validation.md) — validación en laptop Windows real
+- [`docs/agerbot-runtime.md`](docs/agerbot-runtime.md) / [`docs/agerbot-vision.md`](docs/agerbot-vision.md) — Agerbot opcional
+
+---
+
+## Licencia / uso
+
+Proyecto personal de portfolio en **beta**. Revisa el repositorio y las [Releases](https://github.com/josanager/misilapp/releases) para el estado actual del código y de los binarios.
